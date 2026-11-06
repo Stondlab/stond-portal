@@ -279,12 +279,12 @@ const V={
   const fd=F.date?fmtD(F.date).replace(/^\w+, /,''):'';
   const wait='<p class="wait">Entra no fechamento do mês.</p>';
   const kw=X.keywords?Object.entries(X.keywords).sort((a,b)=>b[1]-a[1]):[],kmax=kw.length?kw[0][1]:1;
-  const best=X.best?posts().find(p=>p.id===X.best.post_id):null;
+  const best=X.best?(posts().find(p=>p.id===X.best.post_id)||(X.best.permalink?{title:X.best.caption||'Post do mês',type:'post',media:X.best.thumb?[{url:X.best.thumb,kind:'image'}]:[]}:null)):null;
   const fm=X.formats?Object.entries(X.formats):[],fmc={reels:'var(--red)',carrossel:'var(--carr)',story:'#8a5560'};
   const now=new Date(),mk=iso(now).slice(0,7),mp=posts().filter(p=>String(p.date).startsWith(mk)),pub=mp.filter(p=>p.status==='publicado'||p.status==='aprovado').length;
   return `<div class="top"><div><h2>Métricas</h2><p>Como o seu Instagram está evoluindo${fd?' desde '+fd:''}.</p></div></div>
   <div class="bento">
-   <div class="bx hero w2 h2 w2m"><span class="lb">Seguidores</span><div class="num">${nf(L.followers)}${dl!=null?`<small>${dl>=0?'+':''}${nf(dl)} desde ${fd}</small>`:''}</div>${chart}
+   <div class="bx hero w2 h2 w2m"><span class="lb">Seguidores</span><div class="num">${nf(L.followers)}${dl!=null?`<small style="${dl<0?'color:var(--red)':''}">${dl>=0?'+':''}${nf(dl)} desde ${fd}</small>`:''}</div>${chart}
     ${F.followers!=null?`<span class="ft">Ponto de partida: ${nf(F.followers)} seguidores, ${nf(F.posts)} posts, ${nf(F.following)} seguindo</span>`:''}</div>
    <div class="bx"><span class="lb">Alcance do mês</span>${L.reach!=null?`<div class="num">${kf(L.reach)}</div><span class="ft">Contas alcançadas</span>`:wait}</div>
    <div class="bx"><span class="lb">Engajamento</span>${L.engagement!=null?`<div class="ring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" stroke-opacity=".1" stroke-width="3.4"/><circle cx="18" cy="18" r="15.5" fill="none" stroke="#f80b1d" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="${(Math.min(10,L.engagement)/10*97.4).toFixed(1)} 97.4" transform="rotate(-90 18 18)"/></svg><div><div class="num" style="font-size:30px">${Number(L.engagement).toLocaleString('pt-BR')}%</div><span class="ft">curtidas, comentários e salvos por alcance</span></div></div>`:wait}</div>

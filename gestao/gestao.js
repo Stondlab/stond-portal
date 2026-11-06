@@ -260,7 +260,7 @@ V.cli=()=>{
 /* Métricas */
 V.met=()=>{
   const c=fv('mc',CL()[0]?.id),M=D.metrics.filter(x=>x.client_id===c),L=M.slice(-1)[0]||{},F=M[0]||{};
-  return shell(topb('Métricas','Os números que o cliente vê no portal',`<button class="btn red" data-new="metric">Lançar números</button>`)+`<div class="filters">${segF('mc',CL().map(k=>[k.id,k.name]))}</div>
+  return shell(topb('Métricas','Os números que o cliente vê no portal',`<span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-sync-met>Puxar do Meta</button><button class="btn red" data-new="metric">Lançar números</button></span>`)+`<div class="filters">${segF('mc',CL().map(k=>[k.id,k.name]))}</div>
   <div class="bento"><div class="bx hero w2 w2m"><span class="lb">Seguidores</span><div class="num">${nf(L.followers)}${M.length>1?`<small>${L.followers-F.followers>=0?'+':''}${nf(L.followers-F.followers)} desde ${fmtD(F.date)}</small>`:''}</div><span class="ft">${L.date?'Última medição '+fmtD(L.date):'Sem medição ainda'}</span></div>
   <div class="bx"><span class="lb">Alcance</span><div class="num">${nf(L.reach)}</div></div><div class="bx"><span class="lb">Engajamento</span><div class="num">${L.engagement!=null?Number(L.engagement).toLocaleString('pt-BR')+'%':'—'}</div></div></div>
   <p class="eyebrow" style="margin-top:20px">Medições</p>${M.length?`<div class="list">${M.slice().reverse().map(r=>`<div class="row"><div class="t"><b>${fmtD(r.date)}</b><small>${nf(r.followers)} seguidores · ${nf(r.following)} seguindo · ${nf(r.posts)} posts${r.reach!=null?' · alcance '+nf(r.reach):''}${r.views!=null?' · visualizações '+nf(r.views):''}</small></div></div>`).join('')}</div>`:empty('Nenhuma medição.')}`);
@@ -485,6 +485,10 @@ document.addEventListener('click',async e=>{
   const t=e.target;
   if(t.closest('[data-theme-toggle]')){ls.set('stond-tema',document.documentElement.classList.contains('light')?'dark':'light');applyTheme();render();return}
   if(t.closest('[data-out]')){await sb.auth.signOut();location.reload();return}
+  const sy=t.closest('[data-sync-met]');if(sy){const c=fv('mc',CL()[0]?.id);sy.disabled=true;sy.textContent='Puxando…';
+    try{const {data,error}=await sb.functions.invoke('ig-metrics',{body:{action:'now',client_id:c}});if(error)throw new Error((await error.context.json().catch(()=>({}))).error||error.message);
+      const r=(data.res||[])[0]||{};if(r.error)throw new Error(r.error);await load();render();toast(r.errors&&r.errors.length?'Seguidores atualizados. Alcance e visualizações precisam da permissão de métricas no Meta.':'Números atualizados do Meta')}
+    catch(x){toast(x.message);sy.disabled=false;sy.textContent='Puxar do Meta'}return}
   const sm=t.closest('[data-sec]');if(sm){const k=sm.dataset.sec,c=menuClosed();ls.set('sg-menu',(c.includes(k)?c.filter(x=>x!==k):[...c,k]).join('|'));render();return}
   if(MODAL){
     if(t.closest('[data-x]')||(t.matches('[data-close]'))){MODAL=null;render();return}
