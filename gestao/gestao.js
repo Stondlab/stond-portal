@@ -258,7 +258,7 @@ V.cli=()=>{
    return `<article class="cc" style="--cc:${esc(c.color)}"><div class="cb">${cphoto(c.id)?`<img class="cav" src="${esc(cphoto(c.id))}" alt="">`:`<span class="cav" style="background:${esc(c.color)}">${esc(c.name[0])}</span>`}<div style="min-width:0"><b>${esc(c.name)}</b><small>${c.handle?'@'+esc(c.handle):'Sem Instagram'}</small></div><span class="hpill" title="Saúde do cliente">${h}</span></div>
    <div class="cs"><div><b>${ps.filter(p=>p.status==='pendente').length}</b><small>para aprovar</small></div><div><b>${ps.filter(p=>String(p.date).startsWith(month())).length}</b><small>posts no mês</small></div><div><b>${m?nf(m.followers):'—'}</b><small>seguidores</small></div></div>
    <div class="cx">${info||'Sem mensalidade cadastrada'}</div>${up.length?`<div class="cx up">Oferecer: ${up.join(', ')}</div>`:''}
-   <div class="ca"><button class="lk" data-edit-client="${esc(c.id)}">Editar</button><a class="lk" href="https://portal.stond.com.br/?c=${esc(c.access_token)}&ver=1" target="_blank" rel="noopener">Ver como cliente</a><button class="lk" data-copy="https://portal.stond.com.br/?convite=${esc(c.access_token)}">Copiar convite</button></div></article>`}).join('')}</div>`);
+   <div class="ca"><button class="lk" data-edit-client="${esc(c.id)}">Editar</button><a class="lk" href="https://portal.stond.com.br/?c=${esc(c.access_token)}&ver=1" target="_blank" rel="noopener">Ver como cliente</a><button class="lk" data-invite="${esc(c.id)}">${(c.data||{}).convite_em?'Reenviar convite':'Convidar por e-mail'}</button><button class="lk" data-copy="https://portal.stond.com.br/?convite=${esc(c.access_token)}">Copiar link</button></div></article>`}).join('')}</div>`);
 };
 
 /* Automação de direct (tipo ManyChat) */
@@ -437,8 +437,8 @@ const field=([k,l,t,o],v)=>{const id='f_'+k;const opts=typeof o==='function'?o()
   if(t==='area')return `<div class="fld full"><label for="${id}">${l}</label><textarea id="${id}" name="${k}" rows="3">${esc(v??'')}</textarea></div>`;
   if(t==='chk')return `<label class="fck"><input type="checkbox" name="${k}" ${v?'checked':''}> ${l}</label>`;
   return `<div class="fld"><label for="${id}">${l}</label><input id="${id}" name="${k}" type="${t==='num'?'text':t||'text'}" ${t==='num'?'inputmode="decimal"':''} value="${esc(v??'')}"></div>`};
-function formModal(title,fields,vals,onSave,onDel,extra=''){
-  MODAL={html:()=>`<div class="ovl" data-close><form class="fm" id="fm" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="hd"><b>${esc(title)}</b><button class="x" type="button" data-x aria-label="Fechar">✕</button></div><div class="fg">${fields.map(f=>field(f,vals[f[0]])).join('')}</div>${extra}<div class="fa">${onDel?'<button class="btn sm ghost" type="button" id="fdel">Excluir</button>':''}<span style="flex:1"></span><button class="btn sm ghost" type="button" data-x>Cancelar</button><button class="btn sm red" id="fsave">Salvar</button></div></form></div>`,onSave,onDel,fields};
+function formModal(title,fields,vals,onSave,onDel,extra='',saveLabel='Salvar'){
+  MODAL={html:()=>`<div class="ovl" data-close><form class="fm" id="fm" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="hd"><b>${esc(title)}</b><button class="x" type="button" data-x aria-label="Fechar">✕</button></div><div class="fg">${fields.map(f=>field(f,vals[f[0]])).join('')}</div>${extra}<div class="fa">${onDel?'<button class="btn sm ghost" type="button" id="fdel">Excluir</button>':''}<span style="flex:1"></span><button class="btn sm ghost" type="button" data-x>Cancelar</button><button class="btn sm red" id="fsave">${esc(saveLabel)}</button></div></form></div>`,onSave,onDel,fields};
   render();
 }
 function readForm(fields){const o={};const f=$('#fm');fields.forEach(([k,,t])=>{const el=f.elements[k];if(!el)return;o[k]=t==='chk'?el.checked:t==='num'?(el.value===''?'':num(el.value)):el.value.trim()});return o}
@@ -477,7 +477,7 @@ function colStatus(col,p){
 function openClient(id){
   const c=id?cli(id):{id:'',name:'',color:'#c868b8',status:'ativo',data:{}},d=c.data||{};
   const SV=['Social media','Tráfego pago','Site','Branding','Vídeo','Sistemas'];
-  const F=[['name','Nome'],['handle','Instagram (sem @)'],['color','Cor','color'],['status','Situação','sel',[['ativo','Ativo'],['pausado','Pausado'],['inativo','Inativo']]],['fee','Mensalidade','num'],['since','Cliente desde','date'],['renewAt','Renova em','date'],['nota','Nota do cliente (0 a 10)','num'],['origem','Origem','sel',[['',''],['Indicação','Indicação'],['Instagram','Instagram'],['Site','Site'],['Outro','Outro']]]];
+  const F=[['name','Nome'],['handle','Instagram (sem @)'],['color','Cor','color'],['status','Situação','sel',[['ativo','Ativo'],['pausado','Pausado'],['inativo','Inativo']]],['fee','Mensalidade','num'],['since','Cliente desde','date'],['renewAt','Renova em','date'],['email','E-mail do cliente'],['nota','Nota do cliente (0 a 10)','num'],['origem','Origem','sel',[['',''],['Indicação','Indicação'],['Instagram','Instagram'],['Site','Site'],['Outro','Outro']]]];
   const extra=`<div class="fld full"><label>Serviços</label><div class="svc" style="padding:0">${SV.map(s=>`<label class="fck"><input type="checkbox" data-svc="${esc(s)}" ${(d.services||[]).includes(s)?'checked':''}> ${s}</label>`).join('')}</div></div>`;
   formModal(id?'Cliente':'Novo cliente',F,{name:c.name,handle:c.handle,color:c.color,status:c.status,...d},async v=>{
     const services=[...document.querySelectorAll('[data-svc]')].filter(x=>x.checked).map(x=>x.dataset.svc);
@@ -486,6 +486,18 @@ function openClient(id){
     const {data,error}=await sb.from('clients').upsert(row).select('id,name,handle,color,status,data,access_token').single();if(error)throw new Error(error.message);
     const i=D.clients.findIndex(x=>x.id===data.id);i>=0?D.clients[i]=data:D.clients.push(data);
   },null,extra);
+}
+function openInvite(id){
+  const c=cli(id),d=c.data||{};
+  const extra=`<p class="sub" style="margin:0 20px 6px;font-size:12.5px">${d.convite_em?'Último convite enviado em '+new Date(d.convite_em).toLocaleDateString('pt-BR')+'. ':''}O e-mail sai de naoresponda@stond.com.br com o botão "Abrir meu portal". Se a pessoa já tiver conta, ela recebe um link de acesso.</p>`;
+  formModal('Convidar '+c.name,[['email','E-mail do cliente']],{email:d.email||''},async v=>{
+    if(!v.email)throw new Error('Digite o e-mail');
+    const {data,error}=await sb.functions.invoke('convite',{body:{client_id:id,email:v.email}});
+    let e=data&&data.error;if(!data?.ok&&!e&&error){try{e=(await error.context.json()).error}catch(_){e=error.message}}
+    if(!data?.ok)throw new Error(e||'Não deu para enviar agora');
+    c.data={...d,email:data.email,convite_em:new Date().toISOString()};
+    return data.kind==='link'?'Link de acesso enviado para '+data.email:'Convite enviado para '+data.email;
+  },null,extra,'Enviar convite');
 }
 function openMetric(){
   const c=fv('mc',CL()[0]?.id);
@@ -534,6 +546,7 @@ document.addEventListener('click',async e=>{
   const ep=t.closest('[data-edit-post]');if(ep){openPost(ep.dataset.editPost);return}
   const ed=t.closest('[data-edit-doc]');if(ed){const [c,i]=ed.dataset.editDoc.split(':');openDoc(c,i);return}
   const ec=t.closest('[data-edit-client]');if(ec){openClient(ec.dataset.editClient);return}
+  const iv=t.closest('[data-invite]');if(iv){openInvite(iv.dataset.invite);return}
   const sc=t.closest('[data-sched]');if(sc){openSchedule(sc.dataset.sched);return}
   const nw=t.closest('[data-new]');if(nw){const k=nw.dataset.new;if(k==='post')openPost();else if(k==='kw')openKw();else if(k==='client')openClient();else if(k==='metric')openMetric();else openDoc(k,null,k==='events'?{date:today(),kind:'reuniao'}:k==='fin'?{type:'despesa',date:today()}:k==='leads'?{stage:'novo'}:k==='contracts'?{kind:'proposta',status:'rascunho'}:{});return}
   const nd=t.closest('[data-newday]');if(nd&&t===nd||t.classList?.contains('n')){const c=t.closest('[data-newday]');if(c){openDoc('events',null,{date:c.dataset.newday,kind:'reuniao'});return}}
@@ -548,8 +561,8 @@ document.addEventListener('click',async e=>{
 });
 function confirmDel(b,msg='Toque de novo para excluir'){if(b.dataset.sure)return true;const old=b.textContent;b.dataset.sure='1';b.textContent=msg;setTimeout(()=>{if(b.isConnected){delete b.dataset.sure;b.textContent=old}},3000);return false}
 document.addEventListener('submit',async e=>{
-  if(e.target.id==='fm'){e.preventDefault();const b=$('#fsave');b.disabled=true;b.textContent='Salvando…';
-    try{await MODAL.onSave(readForm(MODAL.fields));MODAL=null;toast('Salvo');render()}catch(x){toast(x.message);b.disabled=false;b.textContent='Salvar'}return}
+  if(e.target.id==='fm'){e.preventDefault();const b=$('#fsave'),bl=b.textContent;b.disabled=true;b.textContent=bl==='Salvar'?'Salvando…':'Enviando…';
+    try{const m=await MODAL.onSave(readForm(MODAL.fields));MODAL=null;toast(typeof m==='string'?m:'Salvo');render()}catch(x){toast(x.message);b.disabled=false;b.textContent=bl}return}
   if(e.target.id==='mf'){e.preventDefault();const v=$('#mt').value.trim();if(!v)return;const c=fv('gc',CL()[0]?.id);
     try{await saveDoc('messages',null,{client:c,text:v,who:'Stond',by:ME.name,at:new Date().toISOString(),readStond:true});render();const i=$('#mt');if(i)i.focus()}catch(x){toast(x.message)}}
 });
