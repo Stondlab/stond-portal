@@ -284,3 +284,6 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 .main{padding-bottom:max(40px,env(safe-area-inset-bottom,0px))}
 .tabbar{padding-bottom:max(10px,env(safe-area-inset-bottom,0px))}
 @media (max-width:720px){.fl{flex-wrap:wrap}.fl .t{flex-basis:60%}}
+
+.lgl{display:inline-block;align-self:flex-start;line-height:0}.lgl:hover .lg{opacity:.85}
+@media (max-width:720px){.lgl{display:none}}

@@ -99,7 +99,7 @@ function login(kind){
   }[kind];
   document.getElementById('app').innerHTML=`<div class="login">
    <form class="form" id="lf" novalidate>
-    <img class="lg in" src="${LOGO}" alt="Stond">
+    <a class="lgl in" href="https://stond.com.br" aria-label="Ir para o site da Stond"><img class="lg" src="${LOGO}" alt="Stond"></a>
     <h2 class="in">${F.h}</h2><p class="sub in">${F.p}</p>
     ${F.body}
     <p class="err" id="lerr" role="alert" hidden></p>
