@@ -33,7 +33,8 @@ const sb=window.supabase.createClient(SB,KEY,{auth:{storage:keepStore,persistSes
 
 const q=new URLSearchParams(location.search);
 const TOKEN=q.get('c');                       // link antigo, sem login
-const CONVITE=q.get('convite');               // convite para criar conta
+const CONVITE=q.get('convite');
+const PREVIEW=q.get('ver')==='1';             // a Stond vendo como o cliente               // convite para criar conta
 if(CONVITE)ls.set('stond-convite',CONVITE);
 
 let D=null, MODE=null, S='inicio', OPEN=null, slide=0, FILTER='pend', CALM=null, RAF=0, RECOVERY=false;
@@ -329,17 +330,17 @@ function modal(){
     <div class="sc">${p.caption?`<div><p class="eyebrow">Legenda</p><div class="cap">${esc(p.caption)}</div></div>`:''}
      ${brief?`<div><p class="eyebrow">Detalhes</p><div class="det">${esc(brief)}</div></div>`:''}
      ${fb.length?`<div><p class="eyebrow">Conversa</p><div class="hist">${fb.map(f=>`<div><b>${esc(f.author||'Você')}</b> <small>${f.kind==='aprovado'?'aprovou':f.kind==='ajuste'?'pediu ajuste':'comentou'} · ${new Date(f.at).toLocaleDateString('pt-BR')}</small>${f.text?`<p>${esc(f.text)}</p>`:''}</div>`).join('')}</div></div>`:''}</div>
-    <div class="act">${MODE==='token'?`<div class="fld"><label for="au">Seu nome</label><input id="au" value="${esc(ls.get('stond-nome')||'')}" autocomplete="name"></div>`:''}
+    ${PREVIEW?`<div class="act"><p class="sub" style="margin:0">Você está vendo como o cliente. Aprovar e pedir ajuste ficam desligados aqui.</p></div>`:`<div class="act">
      <div class="fld"><label for="cm">Comentário ${canDecide?'(opcional para aprovar)':''}</label><textarea id="cm" placeholder="Escreva aqui se quiser mudar algo"></textarea></div>
      <p class="err" id="perr" role="alert" hidden></p>
-     <div class="bt">${canDecide?'<button class="btn red" data-fb="aprovado">Aprovar</button><button class="btn" data-fb="ajuste">Pedir ajuste</button>':''}<button class="btn ghost" data-fb="comentario">Só comentar</button></div></div></div></div></div>`;
+     <div class="bt">${canDecide?'<button class="btn red" data-fb="aprovado">Aprovar</button><button class="btn" data-fb="ajuste">Pedir ajuste</button>':''}<button class="btn ghost" data-fb="comentario">Só comentar</button></div></div>`}</div></div></div>`;
 }
 async function sendFb(kind){
   const txt=$('#cm').value.trim(),err=$('#perr');err.hidden=true;
   if(kind!=='aprovado'&&!txt){err.textContent=kind==='ajuste'?'Conte o que precisa mudar.':'Escreva o comentário.';err.hidden=false;return}
   document.querySelectorAll('[data-fb]').forEach(b=>b.disabled=true);
   try{
-    if(MODE==='token'){const au=$('#au').value.trim();ls.set('stond-nome',au);D=await rpc('portal_feedback',{p_token:TOKEN,p_post:OPEN,p_kind:kind,p_text:txt,p_author:au});}
+    if(MODE==='token'){const au=(D.client&&D.client.name)||'Cliente';D=await rpc('portal_feedback',{p_token:TOKEN,p_post:OPEN,p_kind:kind,p_text:txt,p_author:au});}
     else D=await rpc('portal_feedback_me',{p_post:OPEN,p_kind:kind,p_text:txt});
     toast(kind==='aprovado'?'Aprovado. Obrigado!':kind==='ajuste'?'Pedido de ajuste enviado para a Stond.':'Comentário enviado.');
     if(kind==='comentario')render();else{OPEN=null;render()}

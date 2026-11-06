@@ -109,3 +109,37 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-conten
 .spc.red{border-color:var(--red)}.spc b{font-weight:500;color:var(--warn)}.spc.red b{color:var(--red)}.spc span{flex:1;min-width:200px;color:var(--muted);font-size:13px}
 .kv .prog{align-self:center}
 .side .stop{display:flex;align-items:center;justify-content:space-between;gap:10px}.side .stop .logo{margin:0}
+/* cor: status preenchidos, faixa do cliente, menu bordô no claro */
+.chip{background:var(--glass)}
+.chip.ok{background:rgba(63,191,127,.12)}.chip.pend{background:rgba(229,168,59,.12)}
+html.light .chip{background:#eef0f2}html.light .chip.ok{background:rgba(31,138,87,.1)}html.light .chip.pend{background:rgba(183,121,31,.12)}
+.kd{border-left:3px solid var(--cc,var(--line))}
+.pgl .row{flex-wrap:wrap;row-gap:10px}.pgl .row .t{flex:1 1 200px}.pgl .row .ra{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}.pgl .row .noimg{font-size:8.5px;display:grid;place-items:center;overflow:hidden}
+html.light .side{background:#8f0a19;border-right:0;color:#fff}
+html.light .side .logo{content:url(/assets/logo-branco.png)}
+html.light .side .nav button{color:rgba(255,255,255,.78)}
+html.light .side .nav button:hover{color:#fff;background:rgba(255,255,255,.08)}
+html.light .side .nav button[aria-current="page"]{background:rgba(255,255,255,.16);color:#fff}
+html.light .side .nav .sec{color:rgba(255,255,255,.55)}html.light .side .nav .sec:hover{color:#fff;background:none}
+html.light .side .who{border-color:rgba(255,255,255,.22)}html.light .side .who small{color:rgba(255,255,255,.7)}html.light .side .who .av{background:#fff;color:#8f0a19}
+html.light .side .bdg{background:#fff;color:#8f0a19}
+html.light .side .tt{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.08)}html.light .side .tt span{color:rgba(255,255,255,.65)}html.light .side .tt span.on{background:#fff;color:#8f0a19;box-shadow:none}
+html.light .side .out{color:rgba(255,255,255,.7)}
+html.light .side::-webkit-scrollbar{width:8px}html.light .side::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:8px}
+/* referências Trello/Notion: etiquetas de tipo coloridas e colunas com cor */
+.pill[data-ty]{border:0;font-weight:500}
+.pill[data-ty="reels"]{background:rgba(236,72,153,.16);color:#f472b6}
+.pill[data-ty="carrossel"]{background:rgba(59,130,246,.16);color:#60a5fa}
+.pill[data-ty="story"]{background:rgba(139,92,246,.18);color:#a78bfa}
+.pill[data-ty="post"],.pill[data-ty="foto"]{background:rgba(20,184,166,.16);color:#2dd4bf}
+html.light .pill[data-ty="reels"]{background:#fce7f3;color:#be185d}
+html.light .pill[data-ty="carrossel"]{background:#dbeafe;color:#1d4ed8}
+html.light .pill[data-ty="story"]{background:#ede9fe;color:#6d28d9}
+html.light .pill[data-ty="post"],html.light .pill[data-ty="foto"]{background:#ccfbf1;color:#0f766e}
+.kc{background:color-mix(in srgb,var(--cc,transparent) 7%,var(--glass))}
+html.light .kc{background:color-mix(in srgb,var(--cc,#fff) 7%,#f7f8f9);border-color:transparent}
+.kc header{border-bottom:0;padding:4px 6px 6px}
+.kc header b{display:flex;align-items:center;gap:8px}.kc header b::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--cc)}
+html.light .kd{box-shadow:0 1px 2px rgba(43,35,37,.08);border-color:rgba(43,35,37,.08)}
+html.light .kd:hover{box-shadow:0 6px 18px rgba(43,35,37,.12)}
+html .kd,html.light .kd{border-left:3px solid var(--cc,var(--line))}
