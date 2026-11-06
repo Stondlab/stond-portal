@@ -350,3 +350,5 @@ html.light .nota{background:#fff}
 .nsc button:hover{border-color:var(--red)}.nsc button.on{background:var(--red);border-color:var(--red);color:#fff}
 .nota textarea{background:none;border:1px solid var(--line);border-radius:12px;color:var(--ink);font:13.5px var(--body);padding:10px 12px;resize:vertical}
 .nota .btn{align-self:flex-start}
+/* números sempre em Montserrat (pedido da Helo) */
+.bx .num,.sum b,.day .d,.tl b,.cs b,.rk b,.mt>div>b,.kwn b,.ftot b,.acc .num,.trio b,.tb .val,.nsc{font-family:var(--body)!important;font-weight:500;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
