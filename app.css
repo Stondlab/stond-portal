@@ -329,3 +329,16 @@ html.light .bx,html.light .bx.hero{background:#fff}
 @media (max-width:720px){.app{grid-template-rows:minmax(0,1fr) auto}}
 .tact{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .btn.iab{display:inline-flex;align-items:center;gap:7px}.btn.iab svg{color:var(--red)}
+
+/* menu bordô no tema claro (portal e gestão) */
+html.light .side{background:#8f0a19;border-right:0;color:#fff}
+html.light .side .logo{content:url(/assets/logo-branco.png)}
+html.light .side .nav button{color:rgba(255,255,255,.78)}
+html.light .side .nav button:hover{color:#fff;background:rgba(255,255,255,.08)}
+html.light .side .nav button[aria-current="page"]{background:rgba(255,255,255,.16);color:#fff}
+html.light .side .nav .sec{color:rgba(255,255,255,.55)}html.light .side .nav .sec:hover{color:#fff;background:none}
+html.light .side .who{border-color:rgba(255,255,255,.22)}html.light .side .who small{color:rgba(255,255,255,.7)}html.light .side .who .av{background:#fff;color:#8f0a19}
+html.light .side .bdg{background:#fff;color:#8f0a19}
+html.light .side .tt{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.08)}html.light .side .tt span{color:rgba(255,255,255,.65)}html.light .side .tt span.on{background:#fff;color:#8f0a19;box-shadow:none}
+html.light .side .out{color:rgba(255,255,255,.7)}
+html.light .side::-webkit-scrollbar{width:8px}html.light .side::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:8px}

@@ -22,7 +22,7 @@ const mediaUrl=u=>!u?'':/^https?:/.test(u)?u:MEDIA+(D&&D.client?D.client.id+'/':
 function toast(msg){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t)}t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3200)}
 
 /* ---------- tema ---------- */
-function applyTheme(){document.documentElement.classList.toggle('light',ls.get('stond-tema')==='light')}
+function applyTheme(){document.documentElement.classList.toggle('light',ls.get('stond-tema')!=='dark')}
 applyTheme();
 function tt(){const l=document.documentElement.classList.contains('light');
   return `<button class="tt" data-theme-toggle aria-label="${l?'Usar versão escura':'Usar versão clara'}"><span class="${l?'on':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg></span><span class="${l?'':'on'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></span></button>`}

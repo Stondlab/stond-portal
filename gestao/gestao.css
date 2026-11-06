@@ -115,17 +115,6 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-conten
 html.light .chip{background:#eef0f2}html.light .chip.ok{background:rgba(31,138,87,.1)}html.light .chip.pend{background:rgba(183,121,31,.12)}
 .kd{border-left:3px solid var(--cc,var(--line))}
 .pgl .row{flex-wrap:wrap;row-gap:10px}.pgl .row .t{flex:1 1 200px}.pgl .row .ra{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto}.pgl .row .noimg{font-size:8.5px;display:grid;place-items:center;overflow:hidden}
-html.light .side{background:#8f0a19;border-right:0;color:#fff}
-html.light .side .logo{content:url(/assets/logo-branco.png)}
-html.light .side .nav button{color:rgba(255,255,255,.78)}
-html.light .side .nav button:hover{color:#fff;background:rgba(255,255,255,.08)}
-html.light .side .nav button[aria-current="page"]{background:rgba(255,255,255,.16);color:#fff}
-html.light .side .nav .sec{color:rgba(255,255,255,.55)}html.light .side .nav .sec:hover{color:#fff;background:none}
-html.light .side .who{border-color:rgba(255,255,255,.22)}html.light .side .who small{color:rgba(255,255,255,.7)}html.light .side .who .av{background:#fff;color:#8f0a19}
-html.light .side .bdg{background:#fff;color:#8f0a19}
-html.light .side .tt{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.08)}html.light .side .tt span{color:rgba(255,255,255,.65)}html.light .side .tt span.on{background:#fff;color:#8f0a19;box-shadow:none}
-html.light .side .out{color:rgba(255,255,255,.7)}
-html.light .side::-webkit-scrollbar{width:8px}html.light .side::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:8px}
 /* referências Trello/Notion: etiquetas de tipo coloridas e colunas com cor */
 .pill[data-ty]{border:0;font-weight:500}
 .pill[data-ty="reels"]{background:rgba(236,72,153,.16);color:#f472b6}
