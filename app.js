@@ -178,7 +178,8 @@ const chip=p=>p.status==='pendente'?'<span class="chip pend">Aprovar</span>':p.s
 const first=()=>((D.client&&D.client.name)||'').split(' ')[0];
 const photo=()=>D.profile&&D.profile.photo?mediaUrl(D.profile.photo):'';
 
-function start(){CALM=null;const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','arq'].includes(h)?h:'inicio';render()}
+function start(){CALM=null;const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','arq'].includes(h)?h:'inicio';render();
+  if(window.StondIA)StondIA.mount({sb,mode:'cliente',title:'IA da Stond',sub:'Tira dúvidas sobre os seus conteúdos e números',hello:'Oi, '+(first()||'tudo bem')+'! Posso explicar suas métricas, dizer o que falta aprovar ou ajudar a pedir um ajuste.',hints:['O que falta eu aprovar?','Como foi meu Instagram este mês?','O que vai ao ar esta semana?','Me ajude a pedir um ajuste num post']})}
 function go(s){S=s;OPEN=null;if(location.hash.slice(1)!==s)history.replaceState(null,'','#'+s);render();const m=$('.main');if(m)m.scrollTop=0}
 
 function shell(inner){

@@ -92,6 +92,7 @@ async function boot(){
   if(location.hash.length>1)S=location.hash.slice(1).split('?')[0];
   if(!V[S])S='inicio';
   render();
+  if(window.StondIA)StondIA.mount({sb,mode:'gestao',title:'IA da Stond',sub:'Enxerga clientes, posts, métricas e finanças',hello:'Oi, '+((ME.name||'').split(' ')[0]||'Helo')+'! Pergunte sobre a agência, um cliente ou peça um texto.',hints:['O que está atrasado ou parado esta semana?','Como está o Gabriel este mês?','Sugira 5 pautas para a Crys em dezembro','Como está o caixa da Stond?']});
 }
 function msgScreen(t,m,out=true){document.getElementById('app').innerHTML=`<div class="login one"><div class="form"><h2>${esc(t)}</h2><p class="sub">${esc(m)}</p>${out?'<button class="btn" id="sair">Sair</button>':''}</div></div>`;const b=$('#sair');if(b)b.onclick=async()=>{await sb.auth.signOut();login()}}
 function denied(em){msgScreen('Acesso restrito',`A conta ${em} não tem acesso.`)}
