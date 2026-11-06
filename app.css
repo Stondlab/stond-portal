@@ -322,3 +322,8 @@ html.light .bx,html.light .bx.hero{background:#fff}
 .ia-nudge{position:fixed;right:20px;bottom:70px;z-index:60;background:var(--bg-2);color:var(--ink);border:1px solid var(--line);border-radius:14px 14px 4px 14px;padding:8px 13px;font:13px var(--body);box-shadow:0 8px 24px rgba(0,0,0,.25);cursor:pointer}
 .ia-nudge:hover{border-color:var(--red)}.ia-nudge[hidden]{display:none}
 @media (max-width:720px){.ia-nudge{right:14px;bottom:calc(126px + env(safe-area-inset-bottom,0px))}}
+/* rolagem: a linha da grade não cresce além da tela, cada coluna rola sozinha */
+.app{grid-template-rows:minmax(0,1fr)}
+.side{overflow-y:auto;min-height:0;overscroll-behavior:contain}
+.main{min-height:0}
+@media (max-width:720px){.app{grid-template-rows:minmax(0,1fr) auto}}
