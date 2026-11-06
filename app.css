@@ -342,3 +342,11 @@ html.light .side .bdg{background:#fff;color:#8f0a19}
 html.light .side .tt{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.08)}html.light .side .tt span{color:rgba(255,255,255,.65)}html.light .side .tt span.on{background:#fff;color:#8f0a19;box-shadow:none}
 html.light .side .out{color:rgba(255,255,255,.7)}
 html.light .side::-webkit-scrollbar{width:8px}html.light .side::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:8px}
+.nota{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-left:4px solid var(--red);border-radius:16px;padding:16px 18px;margin:0 0 16px;background:var(--glass)}
+html.light .nota{background:#fff}
+.nota b{font-weight:500;font-size:15px}.nota>span{color:var(--muted);font-size:12.5px}
+.nsc{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.nsc button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:none;color:var(--ink);font:500 14px var(--body);cursor:pointer}
+.nsc button:hover{border-color:var(--red)}.nsc button.on{background:var(--red);border-color:var(--red);color:#fff}
+.nota textarea{background:none;border:1px solid var(--line);border-radius:12px;color:var(--ink);font:13.5px var(--body);padding:10px 12px;resize:vertical}
+.nota .btn{align-self:flex-start}
