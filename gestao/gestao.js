@@ -291,7 +291,7 @@ function openKw(id){
 /* Métricas */
 V.met=()=>{
   const c=fv('mc',CL()[0]?.id),M=D.metrics.filter(x=>x.client_id===c),L=M.slice(-1)[0]||{},F=M[0]||{};
-  return shell(topb('Métricas','Os números que o cliente vê no portal',`<span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-sync-met>Puxar do Meta</button><button class="btn red" data-new="metric">Lançar números</button></span>`)+`<div class="filters">${segF('mc',CL().map(k=>[k.id,k.name]))}</div>
+  return shell(topb('Métricas','Os números que o cliente vê no portal',`<span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-ig-connect>Reconectar Instagram</button><button class="btn" data-sync-met>Puxar do Meta</button><button class="btn red" data-new="metric">Lançar números</button></span>`)+`<div class="filters">${segF('mc',CL().map(k=>[k.id,k.name]))}</div>
   <div class="bento"><div class="bx hero w2 w2m"><span class="lb">Seguidores</span><div class="num">${nf(L.followers)}${M.length>1?`<small>${L.followers-F.followers>=0?'+':''}${nf(L.followers-F.followers)} desde ${fmtD(F.date)}</small>`:''}</div><span class="ft">${L.date?'Última medição '+fmtD(L.date):'Sem medição ainda'}</span></div>
   <div class="bx"><span class="lb">Alcance</span><div class="num">${nf(L.reach)}</div></div><div class="bx"><span class="lb">Engajamento</span><div class="num">${L.engagement!=null?Number(L.engagement).toLocaleString('pt-BR')+'%':'—'}</div></div></div>
   <p class="eyebrow" style="margin-top:20px">Medições</p>${M.length?`<div class="list">${M.slice().reverse().map(r=>`<div class="row"><div class="t"><b>${fmtD(r.date)}</b><small>${nf(r.followers)} seguidores · ${nf(r.following)} seguindo · ${nf(r.posts)} posts${r.reach!=null?' · alcance '+nf(r.reach):''}${r.views!=null?' · visualizações '+nf(r.views):''}</small></div></div>`).join('')}</div>`:empty('Nenhuma medição.')}`);
@@ -553,6 +553,19 @@ function openInvite(id){
     return data.kind==='link'?'Link de acesso enviado para '+data.email:'Convite enviado para '+data.email;
   },null,extra,'Enviar convite');
 }
+function openConnect(){
+  const c=fv('mc',CL()[0]?.id);
+  const SC='pages_show_list,pages_read_engagement,pages_manage_metadata,business_management,instagram_basic,instagram_manage_comments,instagram_manage_messages,instagram_content_publish,instagram_manage_insights';
+  const extra=`<ol class="sub" style="margin:0 20px 8px;padding-left:18px;font-size:12.5px;line-height:1.6"><li>Abra o <a href="https://developers.facebook.com/tools/explorer/1350565907033729/?method=GET&path=me%2Faccounts&version=v23.0" target="_blank" rel="noopener">Explorador da Graph API</a> (app Stond já selecionado)</li><li>Em Permissões, adicione: <code style="font-size:11px;word-break:break-all">${SC.replaceAll(',',', ')}</code></li><li>Clique em <b>Generate Access Token</b>, confirme com o seu Facebook e marque a Página do ${esc(cli(c).name)}</li><li>Copie o token e cole aqui. Ele vai direto para o banco, ninguém mais vê</li></ol>`;
+  formModal('Reconectar Instagram · '+cli(c).name,[['token','Token do Facebook','password']],{},async v=>{
+    if(!v.token)throw new Error('Cole o token');
+    const {data,error}=await sb.functions.invoke('ig-connect',{body:{client_id:c,token:v.token}});
+    let e=data&&data.error;if(!data?.ok&&!e&&error){try{e=(await error.context.json()).error}catch(_){e=error.message}}
+    if(!data?.ok)throw new Error(e||'Não deu para conectar');
+    const miss=SC.split(',').filter(x=>!(data.scopes||[]).includes(x));
+    return '@'+data.username+' conectado'+(miss.length?'. Faltou: '+miss.join(', '):'. Todas as permissões ok');
+  },null,extra,'Conectar');
+}
 function openMetric(){
   const c=fv('mc',CL()[0]?.id);
   formModal('Lançar números · '+cli(c).name,[['date','Data','date'],['followers','Seguidores','num'],['following','Seguindo','num'],['posts','Posts','num'],['reach','Alcance','num'],['views','Visualizações','num'],['engagement','Engajamento (%)','num']],{date:today()},async v=>{
@@ -582,6 +595,7 @@ document.addEventListener('click',async e=>{
   const t=e.target;
   if(t.closest('[data-theme-toggle]')){ls.set('stond-tema',document.documentElement.classList.contains('light')?'dark':'light');applyTheme();render();return}
   if(t.closest('[data-out]')){await sb.auth.signOut();location.reload();return}
+  if(t.closest('[data-ig-connect]')){openConnect();return}
   const sy=t.closest('[data-sync-met]');if(sy){const c=fv('mc',CL()[0]?.id);sy.disabled=true;sy.textContent='Puxando…';
     try{const {data,error}=await sb.functions.invoke('ig-metrics',{body:{action:'now',client_id:c}});if(error)throw new Error((await error.context.json().catch(()=>({}))).error||error.message);
       const r=(data.res||[])[0]||{};if(r.error)throw new Error(r.error);await load();render();toast(r.errors&&r.errors.length?'Seguidores atualizados. Alcance e visualizações precisam da permissão de métricas no Meta.':'Números atualizados do Meta')}

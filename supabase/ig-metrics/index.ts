@@ -126,6 +126,28 @@ Deno.serve(async (req) => {
     const { data } = await db.from("dm_accounts").select("client_id,api,ig_user_id,access_token").eq("client_id", body.client_id).maybeSingle();
     if (!data?.access_token) return out({ error: "A conta do Instagram deste cliente não está conectada" }, 400);
     accs = [data as Acc];
+  } else if (body.action === "media") {
+    // lista os últimos posts/reels com números por post (para análise)
+    const { data: k } = await db.from("dm_config").select("value").eq("key", "cron_key").maybeSingle();
+    const okCron = !!k?.value && req.headers.get("x-cron-key") === k.value;
+    if (!okCron && !(await isTeam(req))) return out({ error: "Acesso restrito" }, 401);
+    const { data } = await db.from("dm_accounts").select("client_id,api,ig_user_id,access_token").eq("client_id", body.client_id).maybeSingle();
+    if (!data?.access_token) return out({ error: "A conta do Instagram deste cliente não está conectada" }, 400);
+    const a = data as Acc;
+    const list = await graph(a, `/${a.ig_user_id}/media`, { fields: "id,caption,media_type,media_product_type,timestamp,permalink,like_count,comments_count", limit: String(body.limit ?? 25) });
+    const items = [];
+    for (const m of list.data ?? []) {
+      const ins: Record<string, unknown> = {};
+      const metrics = m.media_product_type === "REELS"
+        ? ["views", "reach", "saved", "shares", "total_interactions", "ig_reels_avg_watch_time", "ig_reels_video_view_total_time"]
+        : ["views", "reach", "saved", "shares", "total_interactions"];
+      for (const mt of metrics) {
+        try { const r = await graph(a, `/${m.id}/insights`, { metric: mt }); ins[mt] = r.data?.[0]?.values?.[0]?.value ?? r.data?.[0]?.total_value?.value ?? null; }
+        catch (e) { ins[mt] = "erro: " + (e as Error).message; }
+      }
+      items.push({ ...m, insights: ins });
+    }
+    return out({ ok: true, items });
   } else return out({ error: "ação desconhecida" }, 400);
 
   const res = [];
