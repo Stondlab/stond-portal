@@ -16,7 +16,7 @@ const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${Str
 const fmtD=s=>{if(!s)return '';const d=pd(s);return `${WD[d.getDay()]}, ${d.getDate()} ${MES[d.getMonth()].slice(0,3)}`};
 const nf=n=>n==null||n===''?'—':Number(n).toLocaleString('pt-BR');
 const brl=n=>'R$ '+Number(n||0).toLocaleString('pt-BR',{maximumFractionDigits:0});
-const num=v=>Number(String(v??'').replace(/\./g,'').replace(',','.'))||0;
+const num=v=>{if(typeof v==='number')return isFinite(v)?v:0;const t=String(v??'').trim();if(/^-?\d+\.\d{1,2}$/.test(t))return Number(t);return Number(t.replace(/\./g,'').replace(',','.'))||0};
 const today=()=>iso(new Date());
 const mediaUrl=(u,c)=>!u?'':/^https?:/.test(u)?u:MEDIA+(c?c+'/':'')+u;
 function toast(msg){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t)}t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3200)}
