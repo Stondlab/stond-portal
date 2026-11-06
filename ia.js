@@ -37,6 +37,7 @@
       q=q.trim();if(!q||busy)return;
       H.push({role:'user',content:q});busy=true;ta.value='';fit();draw();
       try{
+        if(o.local){await new Promise(r=>setTimeout(r,350));H.push({role:'assistant',content:o.local(q)});busy=false;save();draw();return}
         const {data,error}=await o.sb.functions.invoke('ia',{body:{mode:o.mode,messages:H.filter(m=>!m.err).map(({role,content})=>({role,content}))}});
         let msg=data&&data.text;
         if(!msg){let e=data&&data.error;if(!e&&error){try{e=(await error.context.json()).error}catch(_){e=null}}throw new Error(e||'A IA não respondeu agora. Tente de novo.')}

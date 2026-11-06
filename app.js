@@ -178,8 +178,47 @@ const chip=p=>p.status==='pendente'?'<span class="chip pend">Aprovar</span>':p.s
 const first=()=>((D.client&&D.client.name)||'').split(' ')[0];
 const photo=()=>D.profile&&D.profile.photo?mediaUrl(D.profile.photo):'';
 
+/* ---------- assistente do portal (roda só no app, nada sai daqui) ---------- */
+function iaLocal(q){
+  const t=q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const has=(...w)=>w.some(x=>t.includes(x));
+  const line=p=>`- ${fmtD(p.date)}: ${ty(p.type)}${p.title?' "'+p.title+'"':''}`;
+  const today=iso(new Date());
+  if(has('contrato','pagamento','pagar','valor','boleto','nota fiscal','preco','escopo','cancel'))
+    return 'Esse assunto é direto com a Stond. Escreva para contato@stond.com.br que a gente responde rapidinho.';
+  if(has('ajuste','alterar','mudar','corrigir','trocar','editar')){
+    const a=adj();
+    return 'Para pedir um ajuste, abra o post em **Aprovações** e toque em **Pedir ajuste**. Diga o que mudar e onde, por exemplo: "Na 2ª imagem, troque o título por ..."'+(a.length?`\n\nVocê já pediu ajuste em ${a.length} ${a.length>1?'posts':'post'}:\n`+a.map(line).join('\n'):'');
+  }
+  if(has('aprov','pendente','falta','revisar','olhar')){
+    const p=pend().slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    if(!p.length)return `Está tudo em dia! Nada esperando a sua aprovação. Você já aprovou ${okP().length} ${okP().length===1?'post':'posts'}.`;
+    return `${p.length>1?"Faltam":"Falta"} **${p.length}** ${p.length>1?'posts':'post'} para você aprovar:\n`+p.slice(0,12).map(line).join('\n')+(p.length>12?`\n- e mais ${p.length-12}`:'')+'\n\nÉ só abrir **Aprovações** e tocar em cada um.';
+  }
+  if(has('semana','hoje','amanha','ar ','calendario','agenda','proxim','quando','publica')){
+    const end=new Date();end.setDate(end.getDate()+7);
+    const p=posts().filter(x=>x.date&&x.date.slice(0,10)>=today&&x.date.slice(0,10)<=iso(end)).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    if(!p.length)return 'Não tem nada marcado para os próximos 7 dias. O mês completo está em **Calendário**.';
+    return `Nos próximos 7 dias ${p.length>1?'vão':'vai'} ao ar:\n`+p.map(x=>line(x)+(x.status==='pendente'?' (ainda falta aprovar)':'')).join('\n');
+  }
+  if(has('metric','seguidor','alcance','visualiza','instagram','numero','cresc','resultado','mes','engaj')){
+    const M=D.metrics||[],L=M[M.length-1],F=M[0];
+    if(!L)return 'Os números do seu Instagram ainda não foram lançados. Assim que a Stond fechar o mês, eles aparecem em **Métricas**.';
+    const out=[];
+    if(L.followers!=null)out.push(`Você tem **${nf(L.followers)} seguidores**`+(F&&F!==L&&F.followers!=null?`, ${L.followers-F.followers>=0?'+':''}${nf(L.followers-F.followers)} desde ${fmtD(F.date)}.`:'.'));
+    if(L.reach!=null)out.push(`No mês, ${kf(L.reach)} contas viram o seu conteúdo (alcance).`);
+    if(L.views!=null)out.push(`Foram ${kf(L.views)} visualizações.`);
+    out.push('Alcance é quantas pessoas diferentes viram. Visualizações contam todas as vezes, inclusive repetidas. O detalhe completo está em **Métricas**.');
+    return out.join('\n\n');
+  }
+  if(has('arquivo','link','enviar','mandar foto','upload','drive'))
+    return 'Em **Arquivos e links** você encontra os links da Stond e pode enviar fotos, vídeos e documentos para a gente. É só arrastar ou tocar em enviar.';
+  if(/^(oi|ola|bom dia|boa tarde|boa noite|e ai)\b/.test(t))
+    return `Oi, ${first()||'tudo bem'}! Me pergunte o que falta aprovar, o que vai ao ar esta semana ou como está o seu Instagram.`;
+  return 'Ainda não sei responder isso. Eu ajudo com:\n- o que falta aprovar\n- o que vai ao ar esta semana\n- como está o seu Instagram\n- como pedir um ajuste\n\nPara outras dúvidas, fale com a Stond em contato@stond.com.br.';
+}
 function start(){CALM=null;const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','arq'].includes(h)?h:'inicio';render();
-  if(window.StondIA)StondIA.mount({sb,mode:'cliente',title:'IA da Stond',sub:'Tira dúvidas sobre os seus conteúdos e números',hello:'Oi, '+(first()||'tudo bem')+'! Posso explicar suas métricas, dizer o que falta aprovar ou ajudar a pedir um ajuste.',hints:['O que falta eu aprovar?','Como foi meu Instagram este mês?','O que vai ao ar esta semana?','Me ajude a pedir um ajuste num post']})}
+  if(window.StondIA)StondIA.mount({sb,mode:'cliente',local:iaLocal,title:'Assistente Stond',sub:'Responde com os dados do seu portal',hello:'Oi, '+(first()||'tudo bem')+'! Posso dizer o que falta aprovar, o que vai ao ar e como está o seu Instagram.',hints:['O que falta eu aprovar?','O que vai ao ar esta semana?','Como está meu Instagram?','Como peço um ajuste?']})}
 function go(s){S=s;OPEN=null;if(location.hash.slice(1)!==s)history.replaceState(null,'','#'+s);render();const m=$('.main');if(m)m.scrollTop=0}
 
 function shell(inner){
