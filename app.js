@@ -104,6 +104,7 @@ function login(kind){
     ${F.body}
     <p class="err" id="lerr" role="alert" hidden></p>
     <button class="btn red full in" type="submit" id="lbtn">${F.btn}</button>
+    ${kind==='entrar'||kind==='criar'?`<div class="or in">ou</div><button class="btn goog full in" type="button" data-google><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.6 12.3c0-.8-.1-1.5-.2-2.3H12v4.3h5.9a5 5 0 0 1-2.2 3.3v2.8h3.6c2.1-1.9 3.3-4.8 3.3-8.1z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.6-2.8c-1 .7-2.2 1.1-3.7 1.1-2.9 0-5.3-1.9-6.2-4.5H2.1v2.9A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.8 14.1a6.6 6.6 0 0 1 0-4.2V7H2.1a11 11 0 0 0 0 10z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.2-3.2A11 11 0 0 0 2.1 7l3.7 2.9C6.7 7.3 9.1 5.4 12 5.4z"/></svg>Continuar com Google</button>`:''}
     ${F.foot}
    </form>
    <div class="stage"><canvas id="ldots" aria-hidden="true"></canvas><span class="tag">Da decisão ao crescimento</span>
@@ -114,7 +115,7 @@ function login(kind){
   document.querySelectorAll('.in').forEach((e,i)=>e.style.animationDelay=(i*.06)+'s');
   dots();
   const f=$('#lf'),err=$('#lerr'),btn=$('#lbtn');
-  f.addEventListener('click',e=>{const t=e.target.closest('[data-to]');if(t)login(t.dataset.to);const y=e.target.closest('[data-eye]');if(y){const i=document.getElementById(y.dataset.eye);i.type=i.type==='password'?'text':'password'}});
+  f.addEventListener('click',async e=>{if(e.target.closest('[data-google]')){err.hidden=true;const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});if(error)fail(/not enabled|provider/i.test(error.message)?'O acesso com Google ainda não está ligado. Use e-mail e senha.':error.message);return}const t=e.target.closest('[data-to]');if(t)login(t.dataset.to);const y=e.target.closest('[data-eye]');if(y){const i=document.getElementById(y.dataset.eye);i.type=i.type==='password'?'text':'password'}});
   const fail=m=>{err.textContent=m;err.hidden=false;btn.disabled=false;btn.textContent=F.btn};
   f.onsubmit=async e=>{e.preventDefault();err.hidden=true;
     const em=$('#em')?.value.trim(),pw=$('#pw')?.value,nm=$('#nm')?.value.trim();
