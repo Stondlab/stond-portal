@@ -1,0 +1,5 @@
+convite: Seu portal Stond está pronto
+confirmacao: Confirme seu e-mail na Stond
+senha: Sua nova senha da Stond
+link: Seu link de acesso à Stond
+troca-email: Confirme seu novo e-mail
