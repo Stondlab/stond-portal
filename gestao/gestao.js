@@ -433,6 +433,8 @@ V.prop=()=>{
 };
 
 /* Financeiro */
+const untilOpts=()=>{const d=new Date(),o=[['','Sem data para acabar']];for(let i=0;i<36;i++){const x=new Date(d.getFullYear(),d.getMonth()+i,1);o.push([iso(x).slice(0,7),MES[x.getMonth()]+' de '+x.getFullYear()])}return o};
+const fixOn=(f,mk)=>f.kind==='fixa'&&(!f.until||mk<=f.until);
 const CAT0={receita:['Mensalidades','Projetos avulsos','Outras receitas'],despesa:['Pró-labore','Folha da equipe','Freelancers','Impostos sobre vendas','Impostos','Contabilidade','Mídia paga','Ferramentas e software','Aluguel','Marketing','Tarifas e juros','Outras despesas']};
 const cats=t=>{const s=doc1('settings','categorias');return (s[t]&&s[t].length?s[t]:CAT0[t])};
 const catOpts=()=>[['',''],...['receita','despesa'].flatMap(t=>cats(t).map(c=>[c,c]))];
@@ -444,7 +446,7 @@ const isPessoa=f=>/pró-labore|folha|freela/i.test(f.category||'');
 const isImposto=f=>/imposto|contabil/i.test(f.category||'');
 const finSt=f=>f.paid?(f.type==='receita'?'Recebido':'Pago'):f.date&&f.date<today()?'Atrasado':'Em aberto';
 const FT=[['visao','Visão geral'],['lanc','Lançamentos'],['pr','A pagar e receber'],['contas','Contas'],['cat','Categorias']];
-function finRow(f){return `<tr><td>${f.date?fmtD(f.date):'—'}</td><td><button class="lnk" data-edit-doc="fin:${esc(f.id)}"><b>${esc(f.desc||'Sem descrição')}</b></button>${f.client?`<small>${cdot(f.client)}${esc(cli(f.client).name)}</small>`:''}</td><td><span class="cat ${f.type}">${esc(f.category||'Sem categoria')}</span></td><td class="mut">${esc(contaNome(f.account)||'—')}</td><td><button class="pg ${f.paid?'on':f.date&&f.date<today()?'late':''}" data-paid="${esc(f.id)}" aria-pressed="${!!f.paid}" title="${finSt(f)}">${f.paid?'✓':''}</button></td><td class="val ${f.type}">${f.type==='receita'?'+':'−'} ${brl(f.amount)}</td></tr>`}
+function finRow(f){return `<tr><td>${f.date?fmtD(f.date):'—'}</td><td><button class="lnk" data-edit-doc="fin:${esc(f.id)}"><b>${esc(f.desc||'Sem descrição')}</b></button>${f.client?`<small>${cdot(f.client)}${esc(cli(f.client).name)}</small>`:''}${f.kind==='fixa'?`<small>Fixa${f.until?' até '+MES[+f.until.slice(5,7)-1].slice(0,3)+'/'+f.until.slice(2,4):', sem data para acabar'}</small>`:''}</td><td><span class="cat ${f.type}">${esc(f.category||'Sem categoria')}</span></td><td class="mut">${esc(contaNome(f.account)||'—')}</td><td><button class="pg ${f.paid?'on':f.date&&f.date<today()?'late':''}" data-paid="${esc(f.id)}" aria-pressed="${!!f.paid}" title="${finSt(f)}">${f.paid?'✓':''}</button></td><td class="val ${f.type}">${f.type==='receita'?'+':'−'} ${brl(f.amount)}</td></tr>`}
 V.fin=()=>{
   const tab=fv('ft','visao'),mk=fv('fm',month()),[y,m]=mk.split('-').map(Number),R=finMonth(mk,'receita'),Dp=finMonth(mk,'despesa');
   const prev=iso(new Date(y,m-2,1)).slice(0,7),next=iso(new Date(y,m,1)).slice(0,7);
@@ -481,7 +483,7 @@ V.fin=()=>{
     const all=[...R,...Dp].filter(f=>!q||[f.desc,f.category,cli(f.client).name,contaNome(f.account)].join(' ').toLowerCase().includes(q));
     const L=all.filter(SUBS.find(s=>s[0]===sub)[2]).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
     const r=sum(L.filter(f=>f.type==='receita')),d=sum(L.filter(f=>f.type==='despesa'));
-    const prevFix=fin().filter(f=>String(f.date||'').startsWith(prev)&&f.kind==='fixa'),hasFix=Dp.some(f=>f.kind==='fixa')||R.some(f=>f.kind==='fixa');
+    const prevFix=fin().filter(f=>String(f.date||'').startsWith(prev)&&fixOn(f,mk)),hasFix=Dp.some(f=>f.kind==='fixa')||R.some(f=>f.kind==='fixa');
     body=`<div class="fbar">${nav}<input class="fsearch" id="fq" type="search" placeholder="Buscar lançamento" value="${esc(fv('fq',''))}" aria-label="Buscar lançamento">${prevFix.length&&!hasFix?`<button class="btn sm ghost" data-fincopy>Trazer ${prevFix.length} fixa${prevFix.length>1?'s':''} de ${MES[(m+10)%12]}</button>`:''}</div>
     <div class="fsub">${SUBS.map(([k,l,fn])=>`<button data-f="fs" data-v="${k}" aria-pressed="${sub===k}" class="s-${k}">${l} <i>${all.filter(fn).length}</i></button>`).join('')}</div>
     <div class="ftot"><div><small>Receitas</small><b style="color:var(--ok)">${brl(r)}</b></div><div><small>Despesas</small><b style="color:var(--red)">${brl(d)}</b></div><div><small>Saldo</small><b>${brl(r-d)}</b></div></div>
@@ -529,7 +531,7 @@ const FORMS={
  events:{t:'Evento',f:[['title','Título'],['date','Data','date'],['start','Início','time'],['end','Fim','time'],['client','Cliente','sel',clientOpts],['kind','Tipo','sel',[['reuniao','Reunião'],['gravacao','Gravação'],['entrega','Entrega'],['outro','Outro']]],['note','Anotação','area']]},
  leads:{t:'Lead',f:[['name','Nome'],['company','Empresa ou serviço'],['value','Valor por mês','num'],['source','Origem','sel',[['Indicação','Indicação'],['Instagram','Instagram'],['Site','Site'],['LinkedIn','LinkedIn'],['Outro','Outro']]],['stage','Etapa','sel',[...STG.map(s=>[s[0],s[1]]),['perdido','Perdido']]],['nextStep','Próximo passo'],['nextDate','Data do próximo passo','date'],['note','Anotação','area']]},
  contracts:{t:'Proposta ou contrato',f:[['kind','Tipo','sel',[['proposta','Proposta'],['contrato','Contrato']]],['client','Cliente','sel',clientOpts],['contact','Contato (se ainda não é cliente)'],['number','Número'],['title','Serviço'],['value','Valor por mês','num'],['start','Início','date'],['renewAt','Renova em','date'],['status','Situação','sel',[['rascunho','Rascunho'],['enviado','Enviado'],['assinado','Assinado'],['recusado','Recusado']]],['obs','Observações','area']]},
- fin:{t:'Lançamento',f:[['type','Tipo','sel',[['receita','Recebimento'],['despesa','Despesa']]],['desc','Descrição'],['amount','Valor','num'],['date','Vencimento','date'],['category','Categoria','sel',catOpts],['account','Conta','sel',contaOpts],['kind','Fixa ou variável','sel',[['variavel','Variável'],['fixa','Fixa (todo mês)']]],['client','Cliente','sel',clientOpts],['paid','Pago ou recebido','chk'],['nf','Nota fiscal (número)'],['note','Anotação','area']]},
+ fin:{t:'Lançamento',f:[['type','Tipo','sel',[['receita','Recebimento'],['despesa','Despesa']]],['desc','Descrição'],['amount','Valor','num'],['date','Vencimento','date'],['category','Categoria','sel',catOpts],['account','Conta','sel',contaOpts],['kind','Fixa ou variável','sel',[['variavel','Variável'],['fixa','Fixa (todo mês)']]],['until','Se fixa, até quando','sel',untilOpts],['client','Cliente','sel',clientOpts],['paid','Pago ou recebido','chk'],['nf','Nota fiscal (número)'],['note','Anotação','area']]},
  contas:{t:'Conta',f:[['name','Nome (ex.: Nubank PJ)'],['kind','Tipo','sel',[['banco','Conta bancária'],['digital','Conta digital'],['cartao','Cartão de crédito'],['caixa','Dinheiro']]],['inicial','Saldo inicial','num'],['color','Cor','color']]},
  obrig:{t:'Obrigação',f:[['title','O que é'],['due','Vence em','date'],['amount','Valor','num'],['done','Feito','chk'],['note','Anotação','area']]},
  tools:{t:'Ferramenta',f:[['name','Nome'],['amount','Valor por mês','num'],['note','Anotação','area']]},
@@ -673,7 +675,7 @@ document.addEventListener('click',async e=>{
   const pd_=t.closest('[data-paid]');if(pd_){const f=fin().find(x=>x.id===pd_.dataset.paid);if(!f)return;pd_.disabled=true;
     try{await saveDoc('fin',f.id,{...doc1('fin',f.id),paid:!f.paid,paidAt:f.paid?null:today()});toast(f.paid?'Voltou para em aberto':f.type==='receita'?'Marcado como recebido':'Marcado como pago');render()}catch(x){toast(x.message);pd_.disabled=false}return}
   const fc=t.closest('[data-fincopy]');if(fc){fc.disabled=true;const mk=fv('fm',month()),[y,m]=mk.split('-').map(Number),prev=iso(new Date(y,m-2,1)).slice(0,7);
-    const xs=fin().filter(f=>String(f.date||'').startsWith(prev)&&f.kind==='fixa');const last=new Date(y,m,0).getDate();
+    const xs=fin().filter(f=>String(f.date||'').startsWith(prev)&&fixOn(f,mk));const last=new Date(y,m,0).getDate();
     try{for(const f of xs){const rest=doc1('fin',f.id);const day=Math.min(+String(f.date).slice(8,10)||1,last);await saveDoc('fin',null,{...rest,client:f.client||'',date:`${mk}-${String(day).padStart(2,'0')}`,paid:false,paidAt:null,createdAt:new Date().toISOString()})}
       toast(xs.length+' despesas fixas trazidas');render()}catch(x){toast(x.message);fc.disabled=false}return}
   if(t.closest('[data-editcats]')){const c=doc1('settings','categorias');formModal('Categorias',[['receita','Receitas (uma por linha)','area'],['despesa','Despesas (uma por linha)','area']],{receita:cats('receita').join('\n'),despesa:cats('despesa').join('\n')},async v=>{
