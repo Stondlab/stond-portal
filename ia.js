@@ -26,6 +26,9 @@
       <div class="ia-log" aria-live="polite"></div>
       <form class="ia-f"><textarea rows="1" placeholder="Pergunte o que quiser" aria-label="Sua pergunta"></textarea><button class="ia-send" aria-label="Enviar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></form>`;
     document.body.append(fab,pn);
+    let nd=null;
+    if(o.nudge){nd=document.createElement('button');nd.type='button';nd.className='ia-nudge';nd.textContent=o.nudge.text;document.body.append(nd);
+      nd.onclick=()=>{open(true);ask(o.nudge.ask||o.nudge.text)}}
     const log=pn.querySelector('.ia-log'),ta=pn.querySelector('textarea'),f=pn.querySelector('form');
     let busy=false;
     function draw(){
@@ -46,7 +49,7 @@
       busy=false;save();draw();
     }
     function fit(){ta.style.height='auto';ta.style.height=Math.min(ta.scrollHeight,140)+'px'}
-    const open=v=>{pn.hidden=!v;fab.hidden=v;if(v){draw();setTimeout(()=>ta.focus(),30)}};
+    const open=v=>{pn.hidden=!v;fab.hidden=v;if(nd)nd.hidden=v;if(v){draw();setTimeout(()=>ta.focus(),30)}};
     fab.onclick=()=>open(true);
     pn.querySelector('.ia-x').onclick=()=>open(false);
     pn.querySelector('.ia-new').onclick=()=>{if(busy)return;H=[];save();draw()};

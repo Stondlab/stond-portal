@@ -218,7 +218,7 @@ function iaLocal(q){
   return 'Ainda não sei responder isso. Eu ajudo com:\n- o que falta aprovar\n- o que vai ao ar esta semana\n- como está o seu Instagram\n- como pedir um ajuste\n\nPara outras dúvidas, fale com a Stond em contato@stond.com.br.';
 }
 function start(){CALM=null;const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','arq'].includes(h)?h:'inicio';render();
-  if(window.StondIA)StondIA.mount({sb,mode:'cliente',local:iaLocal,title:'Assistente Stond',sub:'Responde com os dados do seu portal',hello:'Oi, '+(first()||'tudo bem')+'! Posso dizer o que falta aprovar, o que vai ao ar e como está o seu Instagram.',hints:['O que falta eu aprovar?','O que vai ao ar esta semana?','Como está meu Instagram?','Como peço um ajuste?']})}
+  if(window.StondIA)StondIA.mount({sb,mode:'cliente',local:iaLocal,nudge:{text:'Ver o que aprovar',ask:'O que falta eu aprovar?'},title:'Assistente Stond',sub:'Responde com os dados do seu portal',hello:'Oi, '+(first()||'tudo bem')+'! Posso dizer o que falta aprovar, o que vai ao ar e como está o seu Instagram.',hints:['O que falta eu aprovar?','O que vai ao ar esta semana?','Como está meu Instagram?','Como peço um ajuste?']})}
 function go(s){S=s;OPEN=null;if(location.hash.slice(1)!==s)history.replaceState(null,'','#'+s);render();const m=$('.main');if(m)m.scrollTop=0}
 
 function shell(inner){
