@@ -134,19 +134,19 @@ Deno.serve(async (req) => {
     const { data } = await db.from("dm_accounts").select("client_id,api,ig_user_id,access_token").eq("client_id", body.client_id).maybeSingle();
     if (!data?.access_token) return out({ error: "A conta do Instagram deste cliente não está conectada" }, 400);
     const a = data as Acc;
-    const list = await graph(a, `/${a.ig_user_id}/media`, { fields: "id,caption,media_type,media_product_type,timestamp,permalink,like_count,comments_count", limit: String(body.limit ?? 25) });
-    const items = [];
-    for (const m of list.data ?? []) {
-      const ins: Record<string, unknown> = {};
+    const list = await graph(a, `/${a.ig_user_id}/media`, { fields: "id,caption,media_type,media_product_type,timestamp,permalink,like_count,comments_count,media_url,thumbnail_url", limit: String(body.limit ?? 25) });
+    const one = async (m: any) => {
       const metrics = m.media_product_type === "REELS"
-        ? ["views", "reach", "saved", "shares", "total_interactions", "ig_reels_avg_watch_time", "ig_reels_video_view_total_time"]
-        : ["views", "reach", "saved", "shares", "total_interactions"];
-      for (const mt of metrics) {
-        try { const r = await graph(a, `/${m.id}/insights`, { metric: mt }); ins[mt] = r.data?.[0]?.values?.[0]?.value ?? r.data?.[0]?.total_value?.value ?? null; }
-        catch (e) { ins[mt] = "erro: " + (e as Error).message; }
-      }
-      items.push({ ...m, insights: ins });
-    }
+        ? ["views", "reach", "saved", "shares", "total_interactions", "ig_reels_avg_watch_time", "ig_reels_video_view_total_time", "follows", "profile_visits"]
+        : ["views", "reach", "saved", "shares", "total_interactions", "follows", "profile_visits"];
+      const vals = await Promise.all(metrics.map(async (mt) => {
+        try { const r = await graph(a, `/${m.id}/insights`, { metric: mt }); return [mt, r.data?.[0]?.values?.[0]?.value ?? r.data?.[0]?.total_value?.value ?? null]; }
+        catch (e) { return [mt, "erro: " + (e as Error).message]; }
+      }));
+      return { ...m, insights: Object.fromEntries(vals) };
+    };
+    const all = list.data ?? [], items: any[] = [];
+    for (let i = 0; i < all.length; i += 6) items.push(...(await Promise.all(all.slice(i, i + 6).map(one))));
     return out({ ok: true, items });
   } else return out({ error: "ação desconhecida" }, 400);
 
