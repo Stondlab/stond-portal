@@ -108,3 +108,4 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-conten
 .spc{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--warn);border-radius:16px;padding:12px 16px;margin:0 0 14px}
 .spc.red{border-color:var(--red)}.spc b{font-weight:500;color:var(--warn)}.spc.red b{color:var(--red)}.spc span{flex:1;min-width:200px;color:var(--muted);font-size:13px}
 .kv .prog{align-self:center}
+.side .stop{display:flex;align-items:center;justify-content:space-between;gap:10px}.side .stop .logo{margin:0}

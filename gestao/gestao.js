@@ -121,10 +121,10 @@ function badge(k){if(k==='aprov')return pend().length;if(k==='dem')return late()
 function shell(inner){
   const tabs=[['inicio','Início'],['dem','Demandas'],['aprov','Aprovar'],['pub','Publicar'],['gest','Gestão']];
   const b=k=>{const n=badge(k);return n?`<span class="bdg">${n}</span>`:''};
-  return `<div class="app"><aside class="side"><img class="logo" src="${LOGO}" alt="">
+  return `<div class="app"><aside class="side"><div class="stop"><img class="logo" src="${LOGO}" alt="">${tt()}</div>
    <div class="who"><span class="av">${esc((ME.name||'?')[0])}</span><div><b>${esc(ME.name)}</b><small>${esc(ME.role==='dona'?'Stond · dona':'Stond · equipe')}</small></div></div>
    <nav class="nav">${GROUPS.map(([t,it])=>(t?`<p class="sec">${t}</p>`:'')+it.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${ic[k]}${l}${b(k)}</button>`).join('')).join('')}</nav>
-   ${tt()}<button class="out" style="margin-top:0;padding-left:4px" data-out>Sair</button></aside>
+   <button class="out" style="margin-top:0;padding-left:4px" data-out>Sair</button></aside>
    <main class="main"><div class="mhead"><img class="l" src="${LOGO}" alt=""><span style="display:flex;gap:10px;align-items:center">${tt()}<button class="out" data-out style="padding:0">Sair</button></span></div>${inner}</main>
    <nav class="tabbar">${tabs.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${ic[k]}${l}${b(k)}</button>`).join('')}</nav></div>${MODAL?MODAL.html():''}`;
 }
