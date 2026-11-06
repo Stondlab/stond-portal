@@ -1,4 +1,4 @@
-.nav .sec{margin:14px 12px 4px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.nav .sec{display:flex;align-items:center;gap:8px;width:calc(100% - 12px);margin:12px 6px 2px;padding:6px 6px;background:none;border:0;border-radius:8px;font:500 10.5px var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);cursor:pointer}.nav .sec span:first-child{flex:1;text-align:left}.nav .sec svg{transition:transform .2s;transform:rotate(-90deg)}.nav .sec[aria-expanded="true"] svg{transform:none}.nav .sec:hover{color:var(--ink)}.nav .sec .bdg{margin:0}
 .av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--red),var(--wine));color:#fff;font-weight:600;flex:none}
 .av.sm{width:30px;height:30px;font-size:12px}.av.xs{width:22px;height:22px;font-size:10px;margin-left:auto}
 .cd{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:7px;flex:none}

@@ -118,12 +118,14 @@ const GROUPS=[['',[['inicio','Início'],['dem','Demandas'],['aprov','Aprovação
  ['Clientes',[['cli','Clientes'],['met','Métricas'],['rel','Relatórios'],['msg','Mensagens']]],
  ['Negócio',[['gest','Gestão da Stond'],['cres','Crescimento'],['com','Comercial'],['prop','Propostas e contratos'],['fin','Financeiro'],['adm','Administrativo']]]];
 function badge(k){if(k==='aprov')return pend().length;if(k==='dem')return late().length;if(k==='pub')return queue().filter(p=>p.publish_status==='agendado').length;if(k==='msg')return docs('messages').filter(m=>m.who==='Cliente'&&!m.readStond).length;return 0}
+function menuClosed(){const v=ls.get('sg-menu');return v==null?['Negócio']:v.split('|').filter(Boolean)}
 function shell(inner){
   const tabs=[['inicio','Início'],['dem','Demandas'],['aprov','Aprovar'],['pub','Publicar'],['gest','Gestão']];
   const b=k=>{const n=badge(k);return n?`<span class="bdg">${n}</span>`:''};
   return `<div class="app"><aside class="side"><div class="stop"><img class="logo" src="${LOGO}" alt="">${tt()}</div>
    <div class="who"><span class="av">${esc((ME.name||'?')[0])}</span><div><b>${esc(ME.name)}</b><small>${esc(ME.role==='dona'?'Stond · dona':'Stond · equipe')}</small></div></div>
-   <nav class="nav">${GROUPS.map(([t,it])=>(t?`<p class="sec">${t}</p>`:'')+it.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${ic[k]}${l}${b(k)}</button>`).join('')).join('')}</nav>
+   <nav class="nav">${GROUPS.map(([t,it])=>{const here=it.some(([k])=>k===S),open=!t||here||!menuClosed().includes(t),n=it.reduce((a,[k])=>a+badge(k),0);
+     return (t?`<button class="sec" data-sec="${t}" aria-expanded="${open}"><span>${t}</span>${!open&&n?`<span class="bdg">${n}</span>`:''}<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>`:'')+(open?it.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${ic[k]}${l}${b(k)}</button>`).join(''):'')}).join('')}</nav>
    <button class="out" style="margin-top:0;padding-left:4px" data-out>Sair</button></aside>
    <main class="main"><div class="mhead"><img class="l" src="${LOGO}" alt=""><span style="display:flex;gap:10px;align-items:center">${tt()}<button class="out" data-out style="padding:0">Sair</button></span></div>${inner}</main>
    <nav class="tabbar">${tabs.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${ic[k]}${l}${b(k)}</button>`).join('')}</nav></div>${MODAL?MODAL.html():''}`;
@@ -483,6 +485,7 @@ document.addEventListener('click',async e=>{
   const t=e.target;
   if(t.closest('[data-theme-toggle]')){ls.set('stond-tema',document.documentElement.classList.contains('light')?'dark':'light');applyTheme();render();return}
   if(t.closest('[data-out]')){await sb.auth.signOut();location.reload();return}
+  const sm=t.closest('[data-sec]');if(sm){const k=sm.dataset.sec,c=menuClosed();ls.set('sg-menu',(c.includes(k)?c.filter(x=>x!==k):[...c,k]).join('|'));render();return}
   if(MODAL){
     if(t.closest('[data-x]')||(t.matches('[data-close]'))){MODAL=null;render();return}
     const rm=t.closest('[data-rmmedia]');if(rm){POST_EDIT.media.splice(+rm.dataset.rmmedia,1);rm.parentElement.remove();return}
