@@ -380,24 +380,77 @@ V.prop=()=>{
 };
 
 /* Financeiro */
+const CAT0={receita:['Mensalidades','Projetos avulsos','Outras receitas'],despesa:['Pró-labore','Folha da equipe','Freelancers','Impostos sobre vendas','Impostos','Contabilidade','Mídia paga','Ferramentas e software','Aluguel','Marketing','Tarifas e juros','Outras despesas']};
+const cats=t=>{const s=doc1('settings','categorias');return (s[t]&&s[t].length?s[t]:CAT0[t])};
+const catOpts=()=>[['',''],...['receita','despesa'].flatMap(t=>cats(t).map(c=>[c,c]))];
+const contas=()=>docs('contas');
+const contaOpts=()=>[['','Sem conta'],...contas().map(c=>[c.id,c.name])];
+const contaNome=id=>(contas().find(c=>c.id===id)||{}).name||'';
+const saldoConta=id=>{const c=contas().find(x=>x.id===id)||{};return num(c.inicial)+sum(fin().filter(f=>f.account===id&&f.paid&&f.type==='receita'))-sum(fin().filter(f=>f.account===id&&f.paid&&f.type==='despesa'))};
+const isPessoa=f=>/pró-labore|folha|freela/i.test(f.category||'');
+const isImposto=f=>/imposto|contabil/i.test(f.category||'');
+const finSt=f=>f.paid?(f.type==='receita'?'Recebido':'Pago'):f.date&&f.date<today()?'Atrasado':'Em aberto';
+const FT=[['visao','Visão geral'],['lanc','Lançamentos'],['pr','A pagar e receber'],['contas','Contas'],['cat','Categorias']];
+function finRow(f){return `<tr><td>${f.date?fmtD(f.date):'—'}</td><td><button class="lnk" data-edit-doc="fin:${esc(f.id)}"><b>${esc(f.desc||'Sem descrição')}</b></button>${f.client?`<small>${cdot(f.client)}${esc(cli(f.client).name)}</small>`:''}</td><td><span class="cat ${f.type}">${esc(f.category||'Sem categoria')}</span></td><td class="mut">${esc(contaNome(f.account)||'—')}</td><td><button class="pg ${f.paid?'on':f.date&&f.date<today()?'late':''}" data-paid="${esc(f.id)}" aria-pressed="${!!f.paid}" title="${finSt(f)}">${f.paid?'✓':''}</button></td><td class="val ${f.type}">${f.type==='receita'?'+':'−'} ${brl(f.amount)}</td></tr>`}
 V.fin=()=>{
-  const mk=fv('fm',month()),[y,m]=mk.split('-').map(Number),R=finMonth(mk,'receita'),Dp=finMonth(mk,'despesa');
-  const months=[...Array(6)].map((_,i)=>{const d=new Date(y,m-6+i,1),k=iso(d).slice(0,7);return [MES[d.getMonth()].slice(0,3),sum(finMonth(k,'receita')),sum(finMonth(k,'despesa'))]});
-  const mx=Math.max(1,...months.flatMap(x=>[x[1],x[2]]));
-  const L=[...R,...Dp].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const tab=fv('ft','visao'),mk=fv('fm',month()),[y,m]=mk.split('-').map(Number),R=finMonth(mk,'receita'),Dp=finMonth(mk,'despesa');
   const prev=iso(new Date(y,m-2,1)).slice(0,7),next=iso(new Date(y,m,1)).slice(0,7);
-  const pc={};const per={};active().forEach(c=>{const r=sum(fin().filter(f=>f.client===c.id&&f.type==='receita'&&String(f.date).startsWith(mk)))||fee(c);const d=sum(fin().filter(f=>f.client===c.id&&f.type==='despesa'&&String(f.date).startsWith(mk)));per[c.id]=[r,d]});
-  Dp.forEach(f=>{pc[f.category||'Outros']=(pc[f.category||'Outros']||0)+num(f.amount)});const dt=sum(Dp)||1;
-  return shell(topb('Financeiro',`${Mes(m-1)} ${y}`,`<div style="display:flex;gap:8px;flex-wrap:wrap"><div class="seg"><button data-f="fm" data-v="${prev}">‹</button><button data-f="fm" data-v="${next}">›</button></div><button class="btn red" data-new="fin">Novo lançamento</button></div>`)+`
-  <div class="bento">
-   <div class="bx"><span class="lb">Entrou</span><div class="num">${brl(sum(R.filter(f=>f.paid)))}</div><span class="ft">de ${brl(sum(R))} previstos</span></div>
-   <div class="bx"><span class="lb">Saiu</span><div class="num">${brl(sum(Dp.filter(f=>f.paid)))}</div><span class="ft">de ${brl(sum(Dp))} previstos</span></div>
-   <div class="bx hero w2 w2m"><span class="lb">Saldo do mês</span><div class="num">${brl(sum(R.filter(f=>f.paid))-sum(Dp.filter(f=>f.paid)))}<small>previsto ${brl(sum(R)-sum(Dp))}</small></div><span class="ft">${R.filter(f=>!f.paid&&f.date<today()).length} recebimentos atrasados</span></div>
-   <div class="bx w2 h2 w2m"><span class="lb">Últimos 6 meses</span><svg class="ch" viewBox="0 0 300 140" aria-label="Receitas e despesas">${months.map((x,i)=>`<rect x="${i*50+8}" y="${120-x[1]/mx*110}" width="16" height="${x[1]/mx*110}" rx="3" fill="#f80b1d"/><rect x="${i*50+26}" y="${120-x[2]/mx*110}" width="16" height="${x[2]/mx*110}" rx="3" fill="currentColor" fill-opacity=".22"/><text x="${i*50+25}" y="136" font-size="9" text-anchor="middle" fill="currentColor" fill-opacity=".55">${x[0]}</text>`).join('')}</svg><span class="ft"><i class="dot" style="background:#f80b1d;display:inline-block"></i> receitas &nbsp; <i class="dot" style="background:var(--muted);display:inline-block"></i> despesas</span></div>
-   <div class="bx w2 w2m"><span class="lb">Para onde vai o dinheiro</span>${Object.keys(pc).length?`<div class="obar">${Object.entries(pc).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<div><small>${esc(n)}</small>${bar(v/dt*100,'var(--red)')}<small>${Math.round(v/dt*100)}%</small></div>`).join('')}</div>`:'<p class="wait">Sem despesas no mês.</p>'}</div>
-   <div class="bx w2 w2m"><span class="lb">Lucro por cliente</span><div class="obar">${active().map(c=>{const [r,d]=per[c.id];const p=r?(r-d)/r*100:0;return `<div><small>${esc(c.name)}</small>${bar(p,c.color)}<small>${r?Math.round(p)+'%':'—'}</small></div>`}).join('')}</div><span class="ft">Mensalidade menos despesas ligadas ao cliente</span></div>
-  </div>
-  <p class="eyebrow" style="margin-top:20px">Lançamentos</p>${L.length?`<div class="list">${L.map(f=>`<button class="row" data-edit-doc="fin:${esc(f.id)}">${f.client?cdot(f.client):'<i class="cd" style="background:var(--line)"></i>'}<div class="t"><b>${esc(f.desc||'Sem descrição')}</b><small>${fmtD(f.date)} · ${esc(f.category||'')}${f.client?' · '+esc(cli(f.client).name):''}</small></div><b style="font-weight:500;color:${f.type==='receita'?'var(--ok)':'var(--ink)'}">${f.type==='receita'?'+':'−'}${brl(f.amount)}</b><span class="chip ${f.paid?'ok':f.date<today()?'':'pend'}">${f.paid?(f.type==='receita'?'Recebido':'Pago'):f.date<today()?'Atrasado':'Aberto'}</span></button>`).join('')}</div>`:empty('Nenhum lançamento neste mês.')}`);
+  const nav=`<div class="mnav"><button data-f="fm" data-v="${prev}" aria-label="Mês anterior">‹</button><b>${Mes(m-1)} ${y}</b><button data-f="fm" data-v="${next}" aria-label="Próximo mês">›</button></div>`;
+  const act=`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm fx rd" data-newfin="despesa">+ Despesa</button><button class="btn sm fx gr" data-newfin="receita">+ Recebimento</button></div>`;
+  const tabs=`<div class="ftabs">${FT.map(([k,l])=>`<button data-f="ft" data-v="${k}" aria-pressed="${tab===k}">${l}</button>`).join('')}</div>`;
+  let body='';
+  if(tab==='visao'){
+    const months=[...Array(6)].map((_,i)=>{const d=new Date(y,m-6+i,1),k=iso(d).slice(0,7);return [MES[d.getMonth()].slice(0,3),sum(finMonth(k,'receita')),sum(finMonth(k,'despesa'))]});
+    const mx=Math.max(1,...months.flatMap(x=>[x[1],x[2]]));
+    const pc={},rc={};Dp.forEach(f=>{pc[f.category||'Outros']=(pc[f.category||'Outros']||0)+num(f.amount)});R.forEach(f=>{const k=f.client?cli(f.client).name:(f.category||'Outras');rc[k]=(rc[k]||0)+num(f.amount)});
+    const dt=sum(Dp)||1,rt=sum(R)||1,per={};active().forEach(c=>{const r=sum(R.filter(f=>f.client===c.id))||fee(c);const d=sum(Dp.filter(f=>f.client===c.id));per[c.id]=[r,d]});
+    const prm=iso(new Date(y,m-2,1)).slice(0,7),rPrev=sum(finMonth(prm,'receita')),dPrev=sum(finMonth(prm,'despesa'));
+    const dlt=(a,b)=>b?`${a>=b?'+':''}${Math.round((a-b)/b*100)}% vs mês anterior`:'sem mês anterior';
+    const up=fin().filter(f=>!f.paid&&f.date&&f.date<=iso(new Date(Date.now()+15*864e5))).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6);
+    const saldo=contas().reduce((s,c)=>s+saldoConta(c.id),0);
+    body=`<div class="bento">
+     <div class="bx hero w2 w2m"><span class="lb">Saldo geral</span><div class="num">${contas().length?brl(saldo):'—'}</div><span class="ft">${contas().length?contas().length+' conta'+(contas().length>1?'s':''):'Cadastre suas contas para ver o saldo'}</span></div>
+     <div class="bx"><span class="lb">Receitas do mês</span><div class="num" style="color:var(--ok)">${brl(sum(R))}</div><span class="ft">${dlt(sum(R),rPrev)}</span></div>
+     <div class="bx"><span class="lb">Despesas do mês</span><div class="num" style="color:var(--red)">${brl(sum(Dp))}</div><span class="ft">${dlt(sum(Dp),dPrev)}</span></div>
+     <div class="bx w2 w2m"><span class="lb">Recebimentos</span><div class="trio"><div><small>Recebido</small><b>${brl(sum(R.filter(f=>f.paid)))}</b></div><div><small>Falta</small><b>${brl(sum(R.filter(f=>!f.paid)))}</b></div><div><small>Previsto</small><b>${brl(sum(R))}</b></div></div>${bar(sum(R.filter(f=>f.paid))/rt*100,'var(--ok)')}</div>
+     <div class="bx w2 w2m"><span class="lb">Despesas</span><div class="trio"><div><small>Pago</small><b>${brl(sum(Dp.filter(f=>f.paid)))}</b></div><div><small>Falta</small><b>${brl(sum(Dp.filter(f=>!f.paid)))}</b></div><div><small>Previsto</small><b>${brl(sum(Dp))}</b></div></div>${bar(sum(Dp.filter(f=>f.paid))/dt*100,'var(--red)')}</div>
+     <div class="bx w2 w2m"><span class="lb">Resultado do mês</span><div class="num">${brl(sum(R.filter(f=>f.paid))-sum(Dp.filter(f=>f.paid)))}<small>previsto ${brl(sum(R)-sum(Dp))}</small></div><span class="ft">${(n=>n?n+(n>1?' recebimentos atrasados':' recebimento atrasado'):'Nenhum recebimento atrasado')(R.filter(f=>!f.paid&&f.date<today()).length)}</span></div>
+     <div class="bx w2 w2m"><span class="lb">Próximas contas</span>${up.length?`<div class="mini">${up.map(f=>`<button class="mrow" data-edit-doc="fin:${esc(f.id)}"><span class="cat ${f.type}">${f.type==='receita'?'Receber':'Pagar'}</span><b>${esc(f.desc||'')}</b><small class="${f.date<today()?'late':''}">${f.date<today()?'atrasado · ':''}${fmtD(f.date)}</small><em>${brl(f.amount)}</em></button>`).join('')}</div>`:'<p class="wait">Nada vencendo nos próximos 15 dias.</p>'}</div>
+     <div class="bx w2 h2 w2m"><span class="lb">Últimos 6 meses</span><svg class="ch" viewBox="0 0 300 140" aria-label="Receitas e despesas">${months.map((x,i)=>`<rect x="${i*50+8}" y="${120-x[1]/mx*110}" width="16" height="${x[1]/mx*110}" rx="3" fill="var(--ok)"/><rect x="${i*50+26}" y="${120-x[2]/mx*110}" width="16" height="${x[2]/mx*110}" rx="3" fill="var(--red)" fill-opacity=".75"/><text x="${i*50+25}" y="136" font-size="9" text-anchor="middle" fill="currentColor" fill-opacity=".55">${x[0]}</text>`).join('')}</svg><span class="ft"><i class="dot" style="background:var(--ok);display:inline-block"></i> receitas &nbsp; <i class="dot" style="background:var(--red);display:inline-block"></i> despesas</span></div>
+     <div class="bx w2 w2m"><span class="lb">De onde veio a receita</span>${Object.keys(rc).length?`<div class="obar">${Object.entries(rc).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<div><small>${esc(n)}</small>${bar(v/rt*100,'var(--ok)')}<small>${Math.round(v/rt*100)}%</small></div>`).join('')}</div>`:'<p class="wait">Sem receitas no mês.</p>'}</div>
+     <div class="bx w2 w2m"><span class="lb">Para onde vai o dinheiro</span>${Object.keys(pc).length?`<div class="obar">${Object.entries(pc).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<div><small>${esc(n)}</small>${bar(v/dt*100,'var(--red)')}<small>${Math.round(v/dt*100)}%</small></div>`).join('')}</div>`:'<p class="wait">Sem despesas no mês.</p>'}</div>
+     <div class="bx w2 w2m"><span class="lb">Lucro por cliente</span><div class="obar">${active().map(c=>{const [r,d]=per[c.id];const p=r?(r-d)/r*100:0;return `<div><small>${esc(c.name)}</small>${bar(p,c.color)}<small>${r?Math.round(p)+'%':'—'}</small></div>`}).join('')}</div><span class="ft">Mensalidade menos despesas ligadas ao cliente</span></div>
+    </div>`;
+  }
+  if(tab==='lanc'){
+    const sub=fv('fs','todas'),q=(fv('fq','')||'').toLowerCase();
+    const SUBS=[['todas','Todas',()=>true],['rec','Recebimentos',f=>f.type==='receita'],['fixa','Despesas fixas',f=>f.type==='despesa'&&f.kind==='fixa'],['var','Despesas variáveis',f=>f.type==='despesa'&&f.kind!=='fixa'],['imp','Impostos',isImposto],['pes','Pessoas',isPessoa]];
+    const all=[...R,...Dp].filter(f=>!q||[f.desc,f.category,cli(f.client).name,contaNome(f.account)].join(' ').toLowerCase().includes(q));
+    const L=all.filter(SUBS.find(s=>s[0]===sub)[2]).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const r=sum(L.filter(f=>f.type==='receita')),d=sum(L.filter(f=>f.type==='despesa'));
+    const prevFix=fin().filter(f=>String(f.date||'').startsWith(prev)&&f.kind==='fixa'),hasFix=Dp.some(f=>f.kind==='fixa')||R.some(f=>f.kind==='fixa');
+    body=`<div class="fbar">${nav}<input class="fsearch" id="fq" type="search" placeholder="Buscar lançamento" value="${esc(fv('fq',''))}" aria-label="Buscar lançamento">${prevFix.length&&!hasFix?`<button class="btn sm ghost" data-fincopy>Trazer ${prevFix.length} fixa${prevFix.length>1?'s':''} de ${MES[(m+10)%12]}</button>`:''}</div>
+    <div class="fsub">${SUBS.map(([k,l,fn])=>`<button data-f="fs" data-v="${k}" aria-pressed="${sub===k}" class="s-${k}">${l} <i>${all.filter(fn).length}</i></button>`).join('')}</div>
+    <div class="ftot"><div><small>Receitas</small><b style="color:var(--ok)">${brl(r)}</b></div><div><small>Despesas</small><b style="color:var(--red)">${brl(d)}</b></div><div><small>Saldo</small><b>${brl(r-d)}</b></div></div>
+    <div class="ftable"><form class="qf" id="qf"><span class="lb">Lançamento rápido</span><select name="type" aria-label="Tipo"><option value="despesa">Despesa</option><option value="receita">Recebimento</option></select><input name="desc" placeholder="Descrição" required aria-label="Descrição"><input name="amount" inputmode="decimal" placeholder="Valor" required aria-label="Valor" style="width:96px"><input name="date" type="date" value="${mk===month()?today():mk+'-01'}" aria-label="Data"><select name="category" aria-label="Categoria">${catOpts().map(([a,b])=>`<option value="${esc(a)}">${esc(b||'Categoria')}</option>`).join('')}</select><select name="account" aria-label="Conta">${contaOpts().map(([a,b])=>`<option value="${esc(a)}">${esc(b)}</option>`).join('')}</select><button class="btn sm red">Lançar</button></form>
+    ${L.length?`<div class="tw"><table class="tb"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Conta</th><th>Pago?</th><th style="text-align:right">Valor</th></tr></thead><tbody>${L.map(finRow).join('')}</tbody></table></div>`:empty(q?'Nada encontrado com essa busca.':'Nenhum lançamento aqui neste mês.')}</div>`;
+  }
+  if(tab==='pr'){
+    const t=today(),w=iso(new Date(Date.now()+7*864e5)),mo=iso(new Date(Date.now()+30*864e5));
+    const open=fin().filter(f=>!f.paid&&f.date);
+    const G=[['Atrasados',f=>f.date<t,'late'],['Hoje e próximos 7 dias',f=>f.date>=t&&f.date<=w,''],['Próximos 30 dias',f=>f.date>w&&f.date<=mo,'']];
+    const col=type=>{const a=open.filter(f=>f.type===type);return G.map(([l,fn,c])=>{const xs=a.filter(fn).sort((p,q)=>p.date.localeCompare(q.date));return xs.length?`<p class="eyebrow ${c}" style="margin:14px 0 6px">${l} · ${brl(sum(xs))}</p><div class="list">${xs.map(f=>`<div class="row"><div class="t"><b>${esc(f.desc||'')}</b><small>${fmtD(f.date)}${f.client?' · '+esc(cli(f.client).name):''}${f.category?' · '+esc(f.category):''}</small></div><b style="font-weight:500">${brl(f.amount)}</b><button class="btn sm ${type==='receita'?'fx gr':'ghost'}" data-paid="${esc(f.id)}">${type==='receita'?'Recebi':'Paguei'}</button></div>`).join('')}</div>`:''}).join('')||'<p class="wait" style="margin-top:12px">Nada em aberto.</p>'};
+    body=`<div class="g2"><section><h3 class="h3">A receber <small>${brl(sum(open.filter(f=>f.type==='receita')))}</small></h3>${col('receita')}</section><section><h3 class="h3">A pagar <small>${brl(sum(open.filter(f=>f.type==='despesa')))}</small></h3>${col('despesa')}</section></div>`;
+  }
+  if(tab==='contas'){
+    const sc=fin().filter(f=>!f.account&&f.paid);
+    body=`<div class="cgrid">${contas().map(c=>`<button class="acc" data-edit-doc="contas:${esc(c.id)}" style="--cc:${esc(c.color||'#8f0a19')}"><span class="lb">${esc({banco:'Conta bancária',caixa:'Dinheiro',cartao:'Cartão de crédito',digital:'Conta digital'}[c.kind]||'Conta')}</span><b>${esc(c.name)}</b><div class="num">${brl(saldoConta(c.id))}</div><small>${(n=>n+(n===1?' lançamento':' lançamentos'))(fin().filter(f=>f.account===c.id).length)}</small></button>`).join('')}<button class="acc add" data-new="contas"><b>+ Nova conta</b><small>Banco, conta digital, cartão ou dinheiro</small></button></div>
+    ${sc.length?`<p class="wait" style="margin-top:14px">${sc.length} lançamentos pagos estão sem conta. Abra e escolha a conta para o saldo ficar certo.</p>`:''}`;
+  }
+  if(tab==='cat'){
+    body=`<div class="g2">${['receita','despesa'].map(t=>`<section><h3 class="h3">${t==='receita'?'Receitas':'Despesas'}</h3><div class="list">${cats(t).map(c=>{const xs=(t==='receita'?R:Dp).filter(f=>f.category===c);return `<div class="row"><span class="cat ${t}">${esc(c)}</span><small style="margin-left:auto;color:var(--muted)">${xs.length} no mês</small><b style="font-weight:500;min-width:90px;text-align:right">${brl(sum(xs))}</b></div>`}).join('')}</div></section>`).join('')}</div><button class="btn sm ghost" style="margin-top:14px" data-editcats>Editar categorias</button>`;
+  }
+  return shell(topb('Financeiro',tab==='visao'||tab==='cat'?`${Mes(m-1)} ${y}`:'',act)+tabs+(tab==='visao'||tab==='cat'?`<div style="margin:0 0 14px">${nav}</div>`:'')+body);
 };
 
 /* Administrativo */
@@ -423,7 +476,8 @@ const FORMS={
  events:{t:'Evento',f:[['title','Título'],['date','Data','date'],['start','Início','time'],['end','Fim','time'],['client','Cliente','sel',clientOpts],['kind','Tipo','sel',[['reuniao','Reunião'],['gravacao','Gravação'],['entrega','Entrega'],['outro','Outro']]],['note','Anotação','area']]},
  leads:{t:'Lead',f:[['name','Nome'],['company','Empresa ou serviço'],['value','Valor por mês','num'],['source','Origem','sel',[['Indicação','Indicação'],['Instagram','Instagram'],['Site','Site'],['LinkedIn','LinkedIn'],['Outro','Outro']]],['stage','Etapa','sel',[...STG.map(s=>[s[0],s[1]]),['perdido','Perdido']]],['nextStep','Próximo passo'],['nextDate','Data do próximo passo','date'],['note','Anotação','area']]},
  contracts:{t:'Proposta ou contrato',f:[['kind','Tipo','sel',[['proposta','Proposta'],['contrato','Contrato']]],['client','Cliente','sel',clientOpts],['contact','Contato (se ainda não é cliente)'],['number','Número'],['title','Serviço'],['value','Valor por mês','num'],['start','Início','date'],['renewAt','Renova em','date'],['status','Situação','sel',[['rascunho','Rascunho'],['enviado','Enviado'],['assinado','Assinado'],['recusado','Recusado']]],['obs','Observações','area']]},
- fin:{t:'Lançamento',f:[['type','Tipo','sel',[['receita','Receita'],['despesa','Despesa']]],['desc','Descrição'],['amount','Valor','num'],['date','Data','date'],['category','Categoria'],['kind','Fixa ou variável','sel',[['variavel','Variável'],['fixa','Fixa']]],['client','Cliente','sel',clientOpts],['paid','Pago ou recebido','chk'],['nf','Nota fiscal (número)'],['note','Anotação','area']]},
+ fin:{t:'Lançamento',f:[['type','Tipo','sel',[['receita','Recebimento'],['despesa','Despesa']]],['desc','Descrição'],['amount','Valor','num'],['date','Vencimento','date'],['category','Categoria','sel',catOpts],['account','Conta','sel',contaOpts],['kind','Fixa ou variável','sel',[['variavel','Variável'],['fixa','Fixa (todo mês)']]],['client','Cliente','sel',clientOpts],['paid','Pago ou recebido','chk'],['nf','Nota fiscal (número)'],['note','Anotação','area']]},
+ contas:{t:'Conta',f:[['name','Nome (ex.: Nubank PJ)'],['kind','Tipo','sel',[['banco','Conta bancária'],['digital','Conta digital'],['cartao','Cartão de crédito'],['caixa','Dinheiro']]],['inicial','Saldo inicial','num'],['color','Cor','color']]},
  obrig:{t:'Obrigação',f:[['title','O que é'],['due','Vence em','date'],['amount','Valor','num'],['done','Feito','chk'],['note','Anotação','area']]},
  tools:{t:'Ferramenta',f:[['name','Nome'],['amount','Valor por mês','num'],['note','Anotação','area']]},
  team:{t:'Pessoa',f:[['name','Nome'],['role','Função'],['amount','Valor por mês','num'],['contact','Contato']]},
@@ -548,6 +602,15 @@ document.addEventListener('click',async e=>{
   const ec=t.closest('[data-edit-client]');if(ec){openClient(ec.dataset.editClient);return}
   const iv=t.closest('[data-invite]');if(iv){openInvite(iv.dataset.invite);return}
   const sc=t.closest('[data-sched]');if(sc){openSchedule(sc.dataset.sched);return}
+  const nf_=t.closest('[data-newfin]');if(nf_){const ty_=nf_.dataset.newfin;openDoc('fin',null,{type:ty_,date:today(),category:ty_==='receita'?'Mensalidades':''});return}
+  const pd_=t.closest('[data-paid]');if(pd_){const f=fin().find(x=>x.id===pd_.dataset.paid);if(!f)return;pd_.disabled=true;
+    try{await saveDoc('fin',f.id,{...doc1('fin',f.id),paid:!f.paid,paidAt:f.paid?null:today()});toast(f.paid?'Voltou para em aberto':f.type==='receita'?'Marcado como recebido':'Marcado como pago');render()}catch(x){toast(x.message);pd_.disabled=false}return}
+  const fc=t.closest('[data-fincopy]');if(fc){fc.disabled=true;const mk=fv('fm',month()),[y,m]=mk.split('-').map(Number),prev=iso(new Date(y,m-2,1)).slice(0,7);
+    const xs=fin().filter(f=>String(f.date||'').startsWith(prev)&&f.kind==='fixa');const last=new Date(y,m,0).getDate();
+    try{for(const f of xs){const rest=doc1('fin',f.id);const day=Math.min(+String(f.date).slice(8,10)||1,last);await saveDoc('fin',null,{...rest,client:f.client||'',date:`${mk}-${String(day).padStart(2,'0')}`,paid:false,paidAt:null,createdAt:new Date().toISOString()})}
+      toast(xs.length+' despesas fixas trazidas');render()}catch(x){toast(x.message);fc.disabled=false}return}
+  if(t.closest('[data-editcats]')){const c=doc1('settings','categorias');formModal('Categorias',[['receita','Receitas (uma por linha)','area'],['despesa','Despesas (uma por linha)','area']],{receita:cats('receita').join('\n'),despesa:cats('despesa').join('\n')},async v=>{
+      const sp=x=>String(x||'').split('\n').map(z=>z.trim()).filter(Boolean);await saveDoc('settings','categorias',{...c,receita:sp(v.receita),despesa:sp(v.despesa)})});return}
   const nw=t.closest('[data-new]');if(nw){const k=nw.dataset.new;if(k==='post')openPost();else if(k==='kw')openKw();else if(k==='client')openClient();else if(k==='metric')openMetric();else openDoc(k,null,k==='events'?{date:today(),kind:'reuniao'}:k==='fin'?{type:'despesa',date:today()}:k==='leads'?{stage:'novo'}:k==='contracts'?{kind:'proposta',status:'rascunho'}:{});return}
   const nd=t.closest('[data-newday]');if(nd&&t===nd||t.classList?.contains('n')){const c=t.closest('[data-newday]');if(c){openDoc('events',null,{date:c.dataset.newday,kind:'reuniao'});return}}
   const cp=t.closest('[data-copy]');if(cp){try{await navigator.clipboard.writeText(cp.dataset.copy);toast('Link copiado')}catch(x){toast(cp.dataset.copy)}return}
@@ -563,9 +626,12 @@ function confirmDel(b,msg='Toque de novo para excluir'){if(b.dataset.sure)return
 document.addEventListener('submit',async e=>{
   if(e.target.id==='fm'){e.preventDefault();const b=$('#fsave'),bl=b.textContent;b.disabled=true;b.textContent=bl==='Salvar'?'Salvando…':'Enviando…';
     try{const m=await MODAL.onSave(readForm(MODAL.fields));MODAL=null;toast(typeof m==='string'?m:'Salvo');render()}catch(x){toast(x.message);b.disabled=false;b.textContent=bl}return}
+  if(e.target.id==='qf'){e.preventDefault();const f=e.target,v=Object.fromEntries(new FormData(f));if(!v.desc||!num(v.amount))return toast('Preencha descrição e valor');
+    const b=f.querySelector('button');b.disabled=true;try{await saveDoc('fin',null,{...v,amount:num(v.amount),kind:'variavel',paid:false,client:'',createdAt:new Date().toISOString()});toast('Lançado');render();const d=$('#qf input[name=desc]');if(d)d.focus()}catch(x){toast(x.message);b.disabled=false}return}
   if(e.target.id==='mf'){e.preventDefault();const v=$('#mt').value.trim();if(!v)return;const c=fv('gc',CL()[0]?.id);
     try{await saveDoc('messages',null,{client:c,text:v,who:'Stond',by:ME.name,at:new Date().toISOString(),readStond:true});render();const i=$('#mt');if(i)i.focus()}catch(x){toast(x.message)}}
 });
+document.addEventListener('input',e=>{if(e.target.id==='fq'){FILT.fq=e.target.value;const p=e.target.selectionStart;render();const i=$('#fq');if(i){i.focus();try{i.setSelectionRange(p,p)}catch(_){}}}});
 document.addEventListener('change',async e=>{
   if(e.target.id==='fmup'){const files=[...e.target.files];const c=$('#fm').elements.client_id.value;
     const sp=space();if(sp&&sp.f>=.98){toast('O espaço de arquivos está cheio. Apague vídeos antigos antes de enviar.');e.target.value='';return}
