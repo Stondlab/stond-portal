@@ -66,6 +66,7 @@ async function load(){
   const [c,p,f,m,d,a,l,k]=await Promise.all([q('clients','id,name,handle,color,status,data,access_token').order('created_at'),q('posts').order('date'),q('post_feedback').order('created_at'),q('ig_metrics').order('date'),q('agency_docs'),q('ig_accounts'),q('client_links'),q('dm_keywords','keyword,aliases,client_id')]);
   for(const r of [c,p,f,m,d])if(r.error)throw new Error(r.error.message);
   D={clients:c.data,posts:p.data,feedback:f.data,metrics:m.data,docs:d.data,accounts:a.data||[],links:l.data||[]};
+  try{const {data:u}=await sb.rpc('storage_usage');D.usage=u||null}catch(_){D.usage=null}
   D.kw=new Set((k.data||[]).flatMap(x=>[x.keyword,...(x.aliases||[])]).map(w=>String(w).toLowerCase()));
 }
 async function saveDoc(col,id,data){
@@ -157,6 +158,12 @@ const settings=k=>doc1('settings',k);
 
 /* ---------- telas ---------- */
 const V={};
+/* espaço do Supabase (plano grátis: 1 GB de arquivos, 500 MB de banco) */
+const LIM={files:1024**3,db:500*1024**2};
+const mb=b=>b>=1024**3?(b/1024**3).toLocaleString('pt-BR',{maximumFractionDigits:2})+' GB':Math.round(b/1048576).toLocaleString('pt-BR')+' MB';
+function space(){const u=D.usage;if(!u)return null;const f=u.files_bytes/LIM.files,d=u.db_bytes/LIM.db,pct=Math.round(Math.max(f,d)*100);return {u,f,d,pct,lvl:pct>=90?'red':pct>=70?'warn':'ok'}}
+function spaceBanner(){const s=space();if(!s||s.lvl==='ok')return '';
+  return `<div class="spc ${s.lvl}"><b>${s.lvl==='red'?'Espaço quase cheio':'Espaço passando de 70%'}</b><span>Arquivos ${mb(s.u.files_bytes)} de 1 GB (${Math.round(s.f*100)}%). ${s.lvl==='red'?'Apague vídeos antigos ou suba o plano do Supabase antes de enviar mais.':'Dá para continuar, mas já vale apagar vídeos antigos que foram publicados.'}</span><button class="btn sm ghost" data-go="adm">Ver espaço</button></div>`}
 V.inicio=()=>{
   const now=new Date(),t0=today(),ev=docs('events').filter(e=>e.date===t0).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
   const ptoday=posts().filter(p=>p.date===t0);
@@ -168,7 +175,7 @@ V.inicio=()=>{
   docs('contracts').filter(k=>k.status==='assinado'&&k.renewAt&&k.renewAt>=t0&&(pd(k.renewAt)-now)/864e5<=30).forEach(k=>alerts.push([k.client,'Contrato vence '+fmtD(k.renewAt),'prop','Renovar']));
   pend().filter(p=>p.date&&p.date<=iso(new Date(now.getTime()+2*864e5))).forEach(p=>alerts.push([p.client_id,`"${p.title}" vai ao ar ${fmtD(p.date)} sem aprovação`,'aprov','Ver']));
   const leads=docs('leads').filter(l=>!['fechado','perdido'].includes(l.stage));
-  return shell(topb(`Bom dia, ${esc(ME.name.split(' ')[0])}`,`${items.length} ${items.length===1?'coisa':'coisas'} para hoje, ${pend().length} posts com os clientes${alerts.length?' e '+alerts.length+' alertas':''}`,'<button class="btn red" data-new="post">Nova demanda</button>').replace('<h2>',`<p class="eyebrow">${WDL[now.getDay()]}, ${now.getDate()} de ${MES[now.getMonth()]}</p><h2>`)+`
+  return shell(topb(`Bom dia, ${esc(ME.name.split(' ')[0])}`,`${items.length} ${items.length===1?'coisa':'coisas'} para hoje, ${pend().length} posts com os clientes${alerts.length?' e '+alerts.length+' alertas':''}`,'<button class="btn red" data-new="post">Nova demanda</button>').replace('<h2>',`<p class="eyebrow">${WDL[now.getDay()]}, ${now.getDate()} de ${MES[now.getMonth()]}</p><h2>`)+spaceBanner()+`
   <div class="bento">
    <div class="bx hero w2 w2m"><span class="lb">Receita recorrente</span><div class="num">${brl(M)}${goal?`<small>meta ${brl(goal)}</small>`:''}</div>${goal?`<div class="prog"><b style="width:${Math.min(100,M/goal*100)}%"></b></div><span class="ft">${M>=goal?'Meta batida':'Faltam '+brl(goal-M)}</span>`:'<span class="ft">Defina a meta em Gestão da Stond</span>'}</div>
    <div class="bx"><span class="lb">Ticket médio</span><div class="num">${brl(A.length?M/A.length:0)}</div><span class="ft">${A.length} clientes ativos</span></div>
@@ -371,6 +378,8 @@ V.adm=()=>{
    <div class="bx w2 w2m"><span class="lb">Notas fiscais · ${MES[new Date().getMonth()]}</span>${nfm.length?`<div class="al">${nfm.map(f=>`<div data-edit-doc="fin:${esc(f.id)}" style="cursor:pointer">${cdot(f.client)}<b>${esc(cli(f.client).name)}</b><small>${esc(f.nf||f.desc||'')}</small><span class="chip ${f.nf?'ok':'pend'}">${f.nf?'Emitida':'Emitir'}</span></div>`).join('')}</div>`:'<p class="wait">As receitas do mês aparecem aqui para emitir a nota.</p>'}</div>
    <div class="bx w2 w2m"><span class="lb">Ferramentas e assinaturas</span>${T.length?`<div class="al">${T.map(t=>`<div data-edit-doc="tools:${esc(t.id)}" style="cursor:pointer"><small style="color:var(--ink)">${esc(t.name)}</small><b style="font-weight:500">${num(t.amount)?brl(t.amount):'Grátis'}</b></div>`).join('')}</div><span class="ft">${brl(sum(T))}/mês</span>`:'<p class="wait">Nenhuma ferramenta cadastrada.</p>'}<button class="btn sm ghost" style="align-self:flex-start" data-new="tools">Adicionar</button></div>
    <div class="bx w2 w2m"><span class="lb">Equipe e freelas</span>${Tm.length?`<div class="al">${Tm.map(t=>`<div data-edit-doc="team:${esc(t.id)}" style="cursor:pointer"><span class="av xs" style="margin:0">${esc((t.name||'?')[0])}</span><b>${esc(t.name)}</b><small>${esc(t.role||'')}</small><b style="font-weight:500">${num(t.amount)?brl(t.amount):''}</b></div>`).join('')}</div>`:'<p class="wait">Cadastre quem trabalha com a Stond.</p>'}<button class="btn sm ghost" style="align-self:flex-start" data-new="team">Adicionar</button></div>
+   ${(()=>{const sp=space();if(!sp)return '';const c=v=>v>=.9?'var(--red)':v>=.7?'var(--warn)':'var(--ok)';
+     return `<div class="bx w4 w2m"><span class="lb">Espaço do sistema · Supabase grátis</span><div class="kv"><div><small>Fotos e vídeos</small><b>${mb(sp.u.files_bytes)} de 1 GB · ${sp.u.files_count} arquivos</b></div><div class="prog"><b style="width:${Math.min(100,sp.f*100)}%;background:${c(sp.f)}"></b></div><div><small>Banco de dados</small><b>${mb(sp.u.db_bytes)} de 500 MB</b></div><div class="prog"><b style="width:${Math.min(100,sp.d*100)}%;background:${c(sp.d)}"></b></div></div>${(sp.u.largest||[]).length?`<span class="ft">Maiores arquivos: ${sp.u.largest.slice(0,3).map(x=>esc(String(x.name).split('/').pop())+' ('+mb(x.bytes)+')').join(', ')}</span>`:''}<span class="ft">Aviso em amarelo a partir de 70% e vermelho a partir de 90%. Cada arquivo pode ter até 50 MB.</span></div>`})()}
    <div class="bx w4 w2m"><span class="lb">Documentos da empresa</span>${Dc.length?`<div class="docs">${Dc.map(d=>`<a class="doc" href="${esc(d.url)}" target="_blank" rel="noopener"><span>${esc(d.kind||'LINK')}</span>${esc(d.name)}</a>`).join('')}</div>`:'<p class="wait">Contrato social, cartão CNPJ, modelos.</p>'}<button class="btn sm ghost" style="align-self:flex-start" data-new="cdocs">Adicionar link</button></div>
   </div>`);
 };
@@ -507,8 +516,11 @@ document.addEventListener('submit',async e=>{
 });
 document.addEventListener('change',async e=>{
   if(e.target.id==='fmup'){const files=[...e.target.files];const c=$('#fm').elements.client_id.value;
-    for(const f of files){const path=`${c}/${Date.now()}-${f.name.normalize('NFD').replace(/[^\w.-]+/g,'-')}`;toast('Enviando '+f.name);
+    const sp=space();if(sp&&sp.f>=.98){toast('O espaço de arquivos está cheio. Apague vídeos antigos antes de enviar.');e.target.value='';return}
+    for(const f of files){if(f.size>50*1048576){toast(f.name+' tem mais de 50 MB. Comprima o vídeo antes de enviar.');continue}
+      const path=`${c}/${Date.now()}-${f.name.normalize('NFD').replace(/[^\w.-]+/g,'-')}`;toast('Enviando '+f.name);
       const {error}=await sb.storage.from('media').upload(path,f,{contentType:f.type,upsert:false});if(error){toast(error.message);continue}
+      if(D.usage){D.usage.files_bytes+=f.size;D.usage.files_count++}
       POST_EDIT.media.push({url:MEDIA+path,kind:f.type.startsWith('video')?'video':'image'});
       const add=e.target.closest('.add');add.insertAdjacentHTML('beforebegin',`<span class="mth">${f.type.startsWith('video')?'<span class="noimg">vídeo</span>':`<img src="${MEDIA+path}" alt="">`}</span>`)}
     toast('Mídia enviada');}
