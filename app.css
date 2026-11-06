@@ -287,3 +287,4 @@ a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 
 .lgl{display:inline-block;align-self:flex-start;line-height:0}.lgl:hover .lg{opacity:.85}
 @media (max-width:720px){.lgl{display:none}}
+html.light .bx,html.light .bx.hero{background:#fff}
