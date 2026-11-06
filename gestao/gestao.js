@@ -70,6 +70,7 @@ async function load(){
   D={clients:c.data,posts:p.data,feedback:f.data,metrics:m.data,docs:d.data,accounts:a.data||[],links:l.data||[]};
   try{const {data:u}=await sb.rpc('storage_usage');D.usage=u||null}catch(_){D.usage=null}
   try{const {data:pr}=await sb.from('ig_profiles').select('client_id,data');D.profiles=Object.fromEntries((pr||[]).map(x=>[x.client_id,x.data||{}]))}catch(_){D.profiles={}}
+  try{const {data:md}=await sb.from('ig_media').select('*').order('ts');D.media=md||[]}catch(_){D.media=[]}
   D.kwRows=k.data||[];D.dmlog=g.data||[];
   D.kw=new Set((k.data||[]).flatMap(x=>[x.keyword,...(x.aliases||[])]).map(w=>String(w).toLowerCase()));
 }
@@ -288,12 +289,64 @@ function openKw(id){
   },cur?async()=>{const {error}=await sb.from('dm_keywords').delete().eq('id',cur.id);if(error)throw new Error(error.message);D.kwRows=D.kwRows.filter(k=>k.id!==cur.id)}:null,
   `<p class="wait" style="margin:0">Use {nome} para colocar o nome da pessoa. Teste comentando a palavra num post do cliente.</p>`);
 }
+
+/* Diagnóstico por post (ig_media, atualizado todo dia pelo ig-metrics) */
+const med=a=>{const v=a.filter(x=>x!=null&&!isNaN(x)).sort((x,y)=>x-y);if(!v.length)return null;const h=v.length>>1;return v.length%2?v[h]:(v[h-1]+v[h])/2};const mi=a=>{const m=med(a);return m==null?null:Math.round(m)};
+const pc=(x,d=0)=>x==null?'—':(x*100).toLocaleString('pt-BR',{maximumFractionDigits:d,minimumFractionDigits:d})+'%';
+const capKey=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim().slice(0,45);
+function diag(c){
+  const all=(D.media||[]).filter(m=>m.client_id===c).sort((a,b)=>a.ts<b.ts?-1:1);
+  if(!all.length)return `<p class="eyebrow" style="margin-top:20px">Diagnóstico</p>${empty('Clique em Puxar do Meta para trazer os números de cada post.')}`;
+  const day=864e5,now=Date.now(),age=m=>(now-new Date(m.ts))/day;
+  const eng=m=>m.reach?(m.interactions??0)/m.reach:null,ret=m=>m.duration_s&&m.avg_watch_s!=null?m.avg_watch_s/m.duration_s:null;
+  // repetidos: mesmo começo de legenda até 30 dias, ou mesma duração no mesmo dia
+  const R=all.filter(m=>m.format==='reels'),dup=new Set();
+  R.forEach((a,i)=>R.slice(i+1).forEach(b=>{const dd=Math.abs(new Date(b.ts)-new Date(a.ts))/day;
+    if((capKey(a.caption)&&capKey(a.caption)===capKey(b.caption)&&dd<=30)||(a.duration_s&&a.duration_s===b.duration_s&&dd<=2)){dup.add(a.ig_media_id);dup.add(b.ig_media_id)}}));
+  const kind=m=>m.format!=='reels'?'feed':dup.has(m.ig_media_id)?'rep':'orig';
+  const recent=x=>age(x)<=30,before=x=>age(x)>30&&age(x)<=150;
+  const Rr=R.filter(recent),Rb=R.filter(before),Fd=all.filter(m=>m.format!=='reels');
+  const rr=mi(Rr.map(m=>m.reach)),rb=mi(Rb.map(m=>m.reach)),fr=mi(Fd.filter(recent).map(m=>m.reach)),fb=mi(Fd.filter(before).map(m=>m.reach));
+  const drop=rr!=null&&rb?1-rr/rb:null,nd=Rr.filter(m=>dup.has(m.ig_media_id)).length;
+  const engR=med(all.filter(recent).map(eng)),watch=med(Rr.map(m=>m.avg_watch_s));
+  let g;
+  if(drop!=null&&drop>=.5&&Rb.length>=3)g=['Distribuição',`O alcance dos reels caiu ${pc(drop)} em relação aos meses anteriores.`+(nd?` ${nd} de ${Rr.length} reels dos últimos 30 dias são repetidos: o Instagram trata como conteúdo não original e para de recomendar. Publique um vídeo por vez e faça A/B pelo recurso Reels de teste.`:' Confira Configurações › Status da conta no app do cliente.')];
+  else if(nd>=2)g=['Repetição',`${nd} reels dos últimos 30 dias são o mesmo vídeo postado mais de uma vez. Isso derruba a distribuição. Publique um por vez.`];
+  else if(engR!=null&&engR<.03)g=['Engajamento',`Engajamento mediano de ${pc(engR,1)} nos últimos 30 dias. O conteúdo alcança mas não gera conversa: termine com pergunta ou palavra para comentar.`];
+  else if(watch!=null&&watch<5)g=['Gancho',`Os reels seguram em média ${watch.toLocaleString('pt-BR',{maximumFractionDigits:1})} s. As pessoas saem antes de entender o assunto: mostre o resultado no primeiro segundo.`];
+  else g=['Sem gargalo forte','Os números dos últimos 30 dias estão no ritmo dos meses anteriores.'];
+  // gráfico de alcance por post
+  const L=all.slice(-50),W=760,H=180,pl=38,pb=18,mx=Math.max(100,...L.map(m=>m.reach||0)),top=Math.ceil(mx/250)*250,bw=(W-pl-4)/L.length,y=v=>H-pb-(H-pb-6)*v/top;
+  const COL={orig:'#8f0a19',rep:'#e8a11c',feed:'#cfc8c3'};let lastM='';
+  const bars=L.map((m,i)=>{const x=pl+i*bw,v=m.reach||0,mo=m.ts.slice(5,7),lab=mo!==lastM?(lastM=mo,`<text x="${x.toFixed(1)}" y="${H-4}" class="ax">${MES[+mo-1].slice(0,3).toLowerCase()}</text>`):'';
+    return `${lab}<a href="${esc(m.permalink||'#')}" target="_blank" rel="noopener"><rect x="${(x+bw*.12).toFixed(1)}" width="${(bw*.76).toFixed(1)}" y="${y(v).toFixed(1)}" height="${Math.max(1,y(0)-y(v)).toFixed(1)}" rx="2" fill="${COL[kind(m)]}"><title>${fmtD(m.ts.slice(0,10))} · alcance ${nf(v)} · ${esc(String(m.caption||'').slice(0,60))}</title></rect></a>`}).join('');
+  const grid=[0,.25,.5,.75,1].map(f=>`<line x1="${pl}" x2="${W-4}" y1="${y(top*f)}" y2="${y(top*f)}" class="gl"/><text x="${pl-5}" y="${y(top*f)+3}" text-anchor="end" class="ax">${nf(top*f)}</text>`).join('');
+  // reels recentes
+  const rows=R.filter(m=>age(m)<=60).reverse().map(m=>`<tr><td>${fmtD(m.ts.slice(0,10))}</td><td class="cap"><a class="lnk" href="${esc(m.permalink)}" target="_blank" rel="noopener">${esc(String(m.caption||'Sem legenda').split('\n')[0].slice(0,48))}</a>${dup.has(m.ig_media_id)?' <span class="dtag">repetido</span>':''}</td><td class="n">${nf(m.reach)}</td><td class="n">${nf(m.views)}</td><td class="n">${m.avg_watch_s!=null?m.avg_watch_s.toLocaleString('pt-BR',{maximumFractionDigits:1})+' s':'—'}</td><td class="n">${pc(ret(m))}</td><td class="n">${pc(eng(m),1)}</td></tr>`).join('');
+  // longo x curto e melhores
+  const pool=R.filter(m=>!dup.has(m.ig_media_id)&&age(m)<=200),lg=pool.filter(m=>m.duration_s>=60),sh=pool.filter(m=>m.duration_s&&m.duration_s<=20);
+  const cmp=(n,a)=>a.length?`<tr><td>${n}</td><td class="n">${a.length}</td><td class="n">${nf(mi(a.map(m=>m.views)))}</td><td class="n">${pc(med(a.map(eng)),1)}</td><td class="n">${nf(mi(a.map(m=>m.shares)))}</td></tr>`:'';
+  const best=all.filter(m=>age(m)<=150&&(m.reach||0)>=100).sort((a,b)=>eng(b)-eng(a)).slice(0,3);
+  return `<p class="eyebrow" style="margin-top:20px">Diagnóstico</p>
+  <div class="dg">
+    <div class="dg-g ${g[0]==='Sem gargalo forte'?'okk':''}"><span class="lb">Gargalo</span><b>${g[0]}</b><p>${g[1]}</p></div>
+    <div class="dg-k"><div><span class="lb">Reels, 30 dias</span><b class="${drop!=null&&drop>=.3?'neg':''}">${nf(rr)}</b><small>alcance mediano</small></div><div><span class="lb">Reels, meses antes</span><b>${nf(rb)}</b><small>alcance mediano</small></div><div><span class="lb">Feed, 30 dias</span><b>${nf(fr)}</b><small>alcance mediano</small></div><div><span class="lb">Feed, meses antes</span><b>${nf(fb)}</b><small>alcance mediano</small></div></div>
+    <div class="dg-c"><div class="dg-h"><b>Alcance de cada post</b><span class="leg"><i style="background:${COL.orig}"></i>Reels <i style="background:${COL.rep}"></i>Reels repetido <i style="background:${COL.feed}"></i>Feed</span></div><svg viewBox="0 0 ${W} ${H}" width="100%">${grid}${bars}</svg></div>
+    ${rows?`<div class="dg-c"><div class="dg-h"><b>Reels dos últimos 60 dias</b><small>Retenção = tempo assistido ÷ duração</small></div><div class="dg-t"><table><tr><th>Data</th><th>Reels</th><th class="n">Alcance</th><th class="n">Views</th><th class="n">Assistido</th><th class="n">Retenção</th><th class="n">Engaj.</th></tr>${rows}</table></div></div>`:''}
+    <div class="dg-2">
+      ${lg.length&&sh.length?`<div class="dg-c"><div class="dg-h"><b>Vídeo longo x curto</b><small>Reels originais, medianas</small></div><div class="dg-t"><table><tr><th>Tipo</th><th class="n">Reels</th><th class="n">Views</th><th class="n">Engaj.</th><th class="n">Compart.</th></tr>${cmp('Longo (60 s ou mais)',lg)}${cmp('Curto (até 20 s)',sh)}</table></div></div>`:''}
+      ${best.length?`<div class="dg-c"><div class="dg-h"><b>O que mais engajou</b><small>Últimos 5 meses, por engajamento</small></div>${best.map(m=>`<a class="dg-b" href="${esc(m.permalink)}" target="_blank" rel="noopener"><span>${esc(String(m.caption||'').split('\n')[0].slice(0,60))}</span><small>${m.format} · ${fmtD(m.ts.slice(0,10))} · ${pc(eng(m),1)} · alcance ${nf(m.reach)}</small></a>`).join('')}</div>`:''}
+    </div>
+  </div>`;
+}
+
 /* Métricas */
 V.met=()=>{
   const c=fv('mc',CL()[0]?.id),M=D.metrics.filter(x=>x.client_id===c),L=M.slice(-1)[0]||{},F=M[0]||{};
   return shell(topb('Métricas','Os números que o cliente vê no portal',`<span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-ig-connect>Reconectar Instagram</button><button class="btn" data-sync-met>Puxar do Meta</button><button class="btn red" data-new="metric">Lançar números</button></span>`)+`<div class="filters">${segF('mc',CL().map(k=>[k.id,k.name]))}</div>
   <div class="bento"><div class="bx hero w2 w2m"><span class="lb">Seguidores</span><div class="num">${nf(L.followers)}${M.length>1?`<small>${L.followers-F.followers>=0?'+':''}${nf(L.followers-F.followers)} desde ${fmtD(F.date)}</small>`:''}</div><span class="ft">${L.date?'Última medição '+fmtD(L.date):'Sem medição ainda'}</span></div>
   <div class="bx"><span class="lb">Alcance</span><div class="num">${nf(L.reach)}</div></div><div class="bx"><span class="lb">Engajamento</span><div class="num">${L.engagement!=null?Number(L.engagement).toLocaleString('pt-BR')+'%':'—'}</div></div></div>
+  ${diag(c)}
   <p class="eyebrow" style="margin-top:20px">Medições</p>${M.length?`<div class="list">${M.slice().reverse().map(r=>`<div class="row"><div class="t"><b>${fmtD(r.date)}</b><small>${nf(r.followers)} seguidores · ${nf(r.following)} seguindo · ${nf(r.posts)} posts${r.reach!=null?' · alcance '+nf(r.reach):''}${r.views!=null?' · visualizações '+nf(r.views):''}</small></div></div>`).join('')}</div>`:empty('Nenhuma medição.')}`);
 };
 

@@ -32,6 +32,55 @@ function spDate(d = new Date()) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(d); // YYYY-MM-DD
 }
 
+
+// duração do vídeo: vem codificada no parâmetro efg da URL do arquivo
+function durationOf(url?: string): number | null {
+  try {
+    const e = new URL(url!).searchParams.get("efg");
+    if (!e) return null;
+    const j = JSON.parse(atob(e.replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof j.duration_s === "number" ? j.duration_s : null;
+  } catch (_) { return null; }
+}
+
+async function mediaInsights(a: Acc, limit: number) {
+  const list = await graph(a, `/${a.ig_user_id}/media`, { fields: "id,caption,media_type,media_product_type,timestamp,permalink,like_count,comments_count,media_url,thumbnail_url", limit: String(limit) });
+  const one = async (m: any) => {
+    const metrics = m.media_product_type === "REELS"
+      ? ["views", "reach", "saved", "shares", "total_interactions", "ig_reels_avg_watch_time"]
+      : ["views", "reach", "saved", "shares", "total_interactions", "follows", "profile_visits"];
+    const vals = await Promise.all(metrics.map(async (mt) => {
+      try { const r = await graph(a, `/${m.id}/insights`, { metric: mt }); return [mt, r.data?.[0]?.values?.[0]?.value ?? r.data?.[0]?.total_value?.value ?? null]; }
+      catch (e) { return [mt, "erro: " + (e as Error).message]; }
+    }));
+    return { ...m, insights: Object.fromEntries(vals) };
+  };
+  const all = list.data ?? [], items: any[] = [];
+  for (let i = 0; i < all.length; i += 6) items.push(...(await Promise.all(all.slice(i, i + 6).map(one))));
+  return items;
+}
+
+// guarda os números de cada post em ig_media (para o diagnóstico da gestão)
+async function saveMedia(a: Acc, items: any[]) {
+  const n = (v: unknown) => (typeof v === "number" ? v : null);
+  const rows = items.map((m) => {
+    const I = m.insights ?? {};
+    const fmt = m.media_product_type === "REELS" ? "reels" : m.media_type === "CAROUSEL_ALBUM" ? "carrossel" : m.media_type === "VIDEO" ? "video" : "foto";
+    return {
+      ig_media_id: m.id, client_id: a.client_id, ts: m.timestamp, format: fmt,
+      caption: (m.caption ?? "").slice(0, 500), permalink: m.permalink, thumb: m.thumbnail_url || (m.media_type === "IMAGE" ? m.media_url : null) || null,
+      duration_s: m.media_type === "VIDEO" ? durationOf(m.media_url) : null,
+      views: n(I.views), reach: n(I.reach), likes: n(m.like_count), comments: n(m.comments_count), saved: n(I.saved), shares: n(I.shares),
+      interactions: n(I.total_interactions), avg_watch_s: typeof I.ig_reels_avg_watch_time === "number" ? I.ig_reels_avg_watch_time / 1000 : null,
+      profile_visits: n(I.profile_visits), follows: n(I.follows), updated_at: new Date().toISOString(),
+    };
+  });
+  if (!rows.length) return 0;
+  const { error } = await db.from("ig_media").upsert(rows, { onConflict: "ig_media_id" });
+  if (error) throw new Error(error.message);
+  return rows.length;
+}
+
 async function collect(a: Acc) {
   const ig = a.ig_user_id, today = spDate(), month = today.slice(0, 7);
   const since = Math.floor(new Date(month + "-01T03:00:00Z").getTime() / 1000);
@@ -93,6 +142,10 @@ async function collect(a: Acc) {
     extra.keywords = c;
   }
 
+  // números por post (últimos 50)
+  try { extra.media_saved = await saveMedia(a, await mediaInsights(a, 50)); }
+  catch (e) { errors.push(`media: ${(e as Error).message}`); }
+
   if (errors.length) extra.errors = errors;
   row.extra = extra;
   const { error } = await db.from("ig_metrics").upsert(row, { onConflict: "client_id,date" });
@@ -134,19 +187,8 @@ Deno.serve(async (req) => {
     const { data } = await db.from("dm_accounts").select("client_id,api,ig_user_id,access_token").eq("client_id", body.client_id).maybeSingle();
     if (!data?.access_token) return out({ error: "A conta do Instagram deste cliente não está conectada" }, 400);
     const a = data as Acc;
-    const list = await graph(a, `/${a.ig_user_id}/media`, { fields: "id,caption,media_type,media_product_type,timestamp,permalink,like_count,comments_count,media_url,thumbnail_url", limit: String(body.limit ?? 25) });
-    const one = async (m: any) => {
-      const metrics = m.media_product_type === "REELS"
-        ? ["views", "reach", "saved", "shares", "total_interactions", "ig_reels_avg_watch_time", "ig_reels_video_view_total_time", "follows", "profile_visits"]
-        : ["views", "reach", "saved", "shares", "total_interactions", "follows", "profile_visits"];
-      const vals = await Promise.all(metrics.map(async (mt) => {
-        try { const r = await graph(a, `/${m.id}/insights`, { metric: mt }); return [mt, r.data?.[0]?.values?.[0]?.value ?? r.data?.[0]?.total_value?.value ?? null]; }
-        catch (e) { return [mt, "erro: " + (e as Error).message]; }
-      }));
-      return { ...m, insights: Object.fromEntries(vals) };
-    };
-    const all = list.data ?? [], items: any[] = [];
-    for (let i = 0; i < all.length; i += 6) items.push(...(await Promise.all(all.slice(i, i + 6).map(one))));
+    const items = await mediaInsights(a, Number(body.limit ?? 25));
+    await saveMedia(a, items).catch(() => {});
     return out({ ok: true, items });
   } else return out({ error: "ação desconhecida" }, 400);
 
