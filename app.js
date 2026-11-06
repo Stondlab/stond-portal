@@ -219,7 +219,7 @@ function iaLocal(q){
   return 'Ainda não sei responder isso. Eu ajudo com:\n- o que falta aprovar\n- o que vai ao ar esta semana\n- como está o seu Instagram\n- como pedir um ajuste\n\nPara outras dúvidas, fale com a Stond em contato@stond.com.br.';
 }
 function start(){CALM=null;const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','arq'].includes(h)?h:'inicio';render();
-  if(window.StondIA)StondIA.mount({sb,mode:'cliente',local:iaLocal,nudge:{text:'Ver o que aprovar',ask:'O que falta eu aprovar?'},title:'Assistente Stond',sub:'Responde com os dados do seu portal',hello:'Oi, '+(first()||'tudo bem')+'! Posso dizer o que falta aprovar, o que vai ao ar e como está o seu Instagram.',hints:['O que falta eu aprovar?','O que vai ao ar esta semana?','Como está meu Instagram?','Como peço um ajuste?']})}
+  if(window.StondIA)StondIA.mount({sb,mode:'cliente',local:iaLocal,fab:false,title:'Assistente Stond',sub:'Responde com os dados do seu portal',hello:'Oi, '+(first()||'tudo bem')+'! Posso dizer o que falta aprovar, o que vai ao ar e como está o seu Instagram.',hints:['O que falta eu aprovar?','O que vai ao ar esta semana?','Como está meu Instagram?','Como peço um ajuste?']})}
 function go(s){S=s;OPEN=null;if(location.hash.slice(1)!==s)history.replaceState(null,'','#'+s);render();const m=$('.main');if(m)m.scrollTop=0}
 
 function shell(inner){
@@ -241,7 +241,7 @@ const V={
   const nx=posts().filter(p=>p.date>=t0&&p.date<=t7),days=[...new Set(nx.map(p=>p.date))];
   const mk=iso(today).slice(0,7),mp=posts().filter(p=>String(p.date).startsWith(mk));
   const P=pend();
-  return `<div class="top"><div><p class="eyebrow">${WDL[today.getDay()]}, ${today.getDate()} de ${MES[today.getMonth()]}</p><h2>Olá, ${esc(first())}</h2><p>${P.length?`${P.length} ${P.length>1?'conteúdos esperam':'conteúdo espera'} sua aprovação.`:'Nada esperando você agora.'}</p></div>${P.length?'<button class="btn red" data-go="aprov">Ver o que aprovar</button>':''}</div>
+  return `<div class="top"><div><p class="eyebrow">${WDL[today.getDay()]}, ${today.getDate()} de ${MES[today.getMonth()]}</p><h2>Olá, ${esc(first())}</h2><p>${P.length?`${P.length} ${P.length>1?'conteúdos esperam':'conteúdo espera'} sua aprovação.`:'Nada esperando você agora.'}</p></div><div class="tact"><button class="btn iab" data-ia-open><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>IA</button>${P.length?'<button class="btn red" data-go="aprov">Ver o que aprovar</button>':''}</div></div>
   <div class="sum"><div><b>${P.length}</b><span>Para aprovar</span></div><div><b>${okP().length}</b><span>Aprovados</span></div><div><b>${mp.length}</b><span>Posts em ${MES[today.getMonth()]}</span></div></div>
   <div class="two"><section><p class="eyebrow">Precisa da sua atenção</p>${P.length?`<div class="list">${P.map(row).join('')}</div>`:'<div class="empty">Tudo aprovado por aqui. Quando a Stond mandar algo novo, aparece neste lugar.</div>'}</section>
   <section><p class="eyebrow">Próximos 7 dias</p>${days.length?`<div class="week">${days.map(d=>{const dd=pd(d);return `<div class="day"><div class="d">${dd.getDate()}<small>${WD[dd.getDay()]}</small></div><ul>${nx.filter(p=>p.date===d).map(p=>`<li><i class="dot t-${esc(p.type)}"></i><span>${esc(p.time||'')} · ${esc(p.title)}</span></li>`).join('')}</ul></div>`}).join('')}</div>`:'<div class="empty">Nada programado para esta semana.</div>'}</section></div>`;
