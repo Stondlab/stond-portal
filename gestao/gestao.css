@@ -132,3 +132,12 @@ html.light .kc{background:color-mix(in srgb,var(--cc,#fff) 7%,#f7f8f9);border-co
 html.light .kd{box-shadow:0 1px 2px rgba(43,35,37,.08);border-color:rgba(43,35,37,.08)}
 html.light .kd:hover{box-shadow:0 6px 18px rgba(43,35,37,.12)}
 html .kd,html.light .kd{border-left:3px solid var(--cc,var(--line))}
+/* card de cliente enxuto */
+.cc{border-top:4px solid var(--cc)}
+.cc .cb{margin-top:0;padding:16px 16px 0}.cc .cav{width:42px;height:42px;font-size:16px;border:0}
+.cc .cb b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cc .cb small{color:var(--muted);font-size:12px}
+.hpill{margin-left:auto;flex:none;font-size:12px;font-weight:600;border-radius:99px;padding:3px 9px;background:rgba(63,191,127,.14);color:var(--ok)}
+.cc .cs{padding:14px 16px 8px}
+.cc .cx{padding:2px 16px;font-size:12.5px;color:var(--muted)}.cc .cx.up{color:var(--red)}
+.cc .ca{margin-top:auto;padding:12px 16px 14px;gap:6px 14px;border-top:1px solid var(--line);margin-top:12px}
+.lk{background:none;border:0;padding:0;font:500 12.5px var(--body);color:var(--muted);text-decoration:none;cursor:pointer;white-space:nowrap}.lk:hover{color:var(--red)}

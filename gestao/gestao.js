@@ -54,6 +54,7 @@ let ME=null,D={clients:[],posts:[],feedback:[],metrics:[],docs:[],accounts:[],li
 const CL=()=>D.clients;
 const cli=id=>D.clients.find(c=>c.id===id)||{id,name:id||'Stond',color:'#8a5560'};
 const ccol=id=>cli(id).color||'#8a5560';
+const cphoto=id=>{const ph=((D.profiles||{})[id]||{}).photo;return !ph?'':/^https?:/.test(ph)?ph:MEDIA+id+'/'+ph};
 const cdot=id=>`<i class="cd" style="background:${esc(ccol(id))}"></i>`;
 const docs=col=>D.docs.filter(d=>d.collection===col).map(d=>({...d.data,id:d.id,client:d.client_id??d.data.client}));
 const doc1=(col,id)=>{const d=D.docs.find(x=>x.collection===col&&x.id===id);return d?{...d.data}:{}};
@@ -67,6 +68,7 @@ async function load(){
   for(const r of [c,p,f,m,d])if(r.error)throw new Error(r.error.message);
   D={clients:c.data,posts:p.data,feedback:f.data,metrics:m.data,docs:d.data,accounts:a.data||[],links:l.data||[]};
   try{const {data:u}=await sb.rpc('storage_usage');D.usage=u||null}catch(_){D.usage=null}
+  try{const {data:pr}=await sb.from('ig_profiles').select('client_id,data');D.profiles=Object.fromEntries((pr||[]).map(x=>[x.client_id,x.data||{}]))}catch(_){D.profiles={}}
   D.kw=new Set((k.data||[]).flatMap(x=>[x.keyword,...(x.aliases||[])]).map(w=>String(w).toLowerCase()));
 }
 async function saveDoc(col,id,data){
@@ -249,12 +251,12 @@ V.cli=()=>{
    <div class="bx"><span class="lb">Em risco</span><div class="num" style="${risk.length?'color:var(--red)':''}">${risk.length}</div><span class="ft">${risk.map(c=>esc(c.name)).join(', ')||'Ninguém'}</span></div>
    <div class="bx"><span class="lb">Renovam em 30 dias</span><div class="num">${ren.length}</div><span class="ft">${ren.map(k=>esc(cli(k.client).name)).join(', ')||'Nenhum'}</span></div>
    <div class="bx"><span class="lb">Receita recorrente</span><div class="num">${brl(mrr())}</div><span class="ft">Soma das mensalidades</span></div></div>
-  <div class="cgrid">${A.map(c=>{const ps=posts().filter(p=>p.client_id===c.id),h=health(c),d=c.data||{},has=d.services||[],m=D.metrics.filter(x=>x.client_id===c.id).slice(-1)[0];return `<article class="cc"><div class="cv" style="background:linear-gradient(135deg,${esc(c.color)},color-mix(in srgb,${esc(c.color)} 30%,#0d0a0b))"></div><div class="cb"><span class="cav" style="background:${esc(c.color)}">${esc(c.name[0])}</span><div><b>${esc(c.name)}</b><small>@${esc(c.handle||'')}</small></div><span class="chip ${c.status==='ativo'?'ok':''}" style="margin-left:auto">${esc(c.status||'ativo')}</span></div>
+  <div class="cgrid">${A.map(c=>{const ps=posts().filter(p=>p.client_id===c.id),h=health(c),d=c.data||{},has=d.services||[],m=D.metrics.filter(x=>x.client_id===c.id).slice(-1)[0],up=SV.filter(s=>!has.includes(s)).slice(0,2);
+   const info=[fee(c)?brl(fee(c))+'/mês':'',d.renewAt?'renova '+fmtD(d.renewAt).replace(/^\w+, /,''):'',d.nota?'nota '+d.nota:''].filter(Boolean).join(' · ');
+   return `<article class="cc" style="--cc:${esc(c.color)}"><div class="cb">${cphoto(c.id)?`<img class="cav" src="${esc(cphoto(c.id))}" alt="">`:`<span class="cav" style="background:${esc(c.color)}">${esc(c.name[0])}</span>`}<div style="min-width:0"><b>${esc(c.name)}</b><small>${c.handle?'@'+esc(c.handle):'Sem Instagram'}</small></div><span class="hpill" title="Saúde do cliente">${h}</span></div>
    <div class="cs"><div><b>${ps.filter(p=>p.status==='pendente').length}</b><small>para aprovar</small></div><div><b>${ps.filter(p=>String(p.date).startsWith(month())).length}</b><small>posts no mês</small></div><div><b>${m?nf(m.followers):'—'}</b><small>seguidores</small></div></div>
-   <div class="hl"><div><small style="flex:none">Saúde</small>${bar(h)}<small style="flex:none">${h}</small></div></div>
-   <div class="cx"><span>Mensalidade <b>${fee(c)?brl(fee(c)):'—'}</b></span><span>Nota <b>${d.nota||'—'}</b></span>${d.renewAt?`<span>Renova <b>${fmtD(d.renewAt)}</b></span>`:''}</div>
-   <div class="svc">${has.map(s=>`<span class="on">${esc(s)}</span>`).join('')}${SV.filter(s=>!has.includes(s)).slice(0,2).map(s=>`<span class="up">+ ${s}</span>`).join('')}</div>
-   <div class="ca"><button class="btn sm ghost" data-edit-client="${esc(c.id)}">Editar</button><a class="btn sm ghost" href="https://portal.stond.com.br/?c=${esc(c.access_token)}&ver=1" target="_blank" rel="noopener">Ver como cliente</a><button class="btn sm ghost" data-copy="https://portal.stond.com.br/?convite=${esc(c.access_token)}">Copiar convite</button></div></article>`}).join('')}</div>`);
+   <div class="cx">${info||'Sem mensalidade cadastrada'}</div>${up.length?`<div class="cx up">Oferecer: ${up.join(', ')}</div>`:''}
+   <div class="ca"><button class="lk" data-edit-client="${esc(c.id)}">Editar</button><a class="lk" href="https://portal.stond.com.br/?c=${esc(c.access_token)}&ver=1" target="_blank" rel="noopener">Ver como cliente</a><button class="lk" data-copy="https://portal.stond.com.br/?convite=${esc(c.access_token)}">Copiar convite</button></div></article>`}).join('')}</div>`);
 };
 
 /* Métricas */
