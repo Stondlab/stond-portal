@@ -105,7 +105,7 @@ function login(){
    <p class="err" id="lerr" role="alert" hidden></p>
    <button class="btn full" type="submit" id="lbtn">Entrar</button></form></div>`;
   const err=$('#lerr'),fail=m=>{err.textContent=m;err.hidden=false;$('#lbtn').disabled=false};
-  $('[data-google]').onclick=async()=>{const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/'}});if(error)fail(error.message)};
+  $('[data-google]').onclick=async()=>{const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/gestao/'}});if(error)fail(error.message)};
   $('#lf').onsubmit=async e=>{e.preventDefault();err.hidden=true;$('#lbtn').disabled=true;
     const {error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});
     if(error)return fail(/invalid/i.test(error.message)?'E-mail ou senha incorretos.':error.message);boot()};

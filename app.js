@@ -57,7 +57,7 @@ async function loadMe(){
     if(!D&&conv){D=await rpc('portal_claim',{p_token:conv});}
     if(D)ls.set('stond-convite',null);
   }catch(e){return screenMsg('Não foi possível entrar',e.message,true)}
-  if(!D){try{if(await rpc('team_me')){location.href='https://gestao.stond.com.br/';return}}catch(_){}}
+  if(!D){try{if(await rpc('team_me')){location.href='https://gestao.stond.com.br/gestao/';return}}catch(_){}}
   if(!D)return screenMsg('Sua conta ainda não está ligada a um cliente','Abra o convite que a Stond mandou para você. Se já abriu, fale com a gente.',true);
   if(CONVITE||location.hash)history.replaceState(null,'',location.pathname);
   start();
