@@ -32,6 +32,7 @@ const sb=window.supabase.createClient(SB,KEY,{auth:{persistSession:true,autoRefr
 /* ---------- ícones ---------- */
 const sv=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">${p}</svg>`;
 const ic={
+ auto:sv('<path d="M4 5h16v10H9l-5 4z"/><path d="M13 7l-3 4h4l-3 4"/>'),
  inicio:sv('<path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>'),
  dem:sv('<rect x="3.5" y="4" width="5" height="16" rx="1.5"/><rect x="9.5" y="4" width="5" height="11" rx="1.5"/><rect x="15.5" y="4" width="5" height="7" rx="1.5"/>'),
  aprov:sv('<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.2l2.4 2.4 4.6-5"/>'),
@@ -64,11 +65,12 @@ const isDone=p=>p.publish_status==='publicado'||p.status==='publicado';
 
 async function load(){
   const q=(t,s='*')=>sb.from(t).select(s);
-  const [c,p,f,m,d,a,l,k]=await Promise.all([q('clients','id,name,handle,color,status,data,access_token').order('created_at'),q('posts').order('date'),q('post_feedback').order('created_at'),q('ig_metrics').order('date'),q('agency_docs'),q('ig_accounts'),q('client_links'),q('dm_keywords','keyword,aliases,client_id')]);
+  const [c,p,f,m,d,a,l,k,g]=await Promise.all([q('clients','id,name,handle,color,status,data,access_token').order('created_at'),q('posts').order('date'),q('post_feedback').order('created_at'),q('ig_metrics').order('date'),q('agency_docs'),q('ig_accounts'),q('client_links'),q('dm_keywords').order('created_at'),q('dm_log','client_id,keyword,from_username,status,error,created_at').order('created_at',{ascending:false}).limit(150)]);
   for(const r of [c,p,f,m,d])if(r.error)throw new Error(r.error.message);
   D={clients:c.data,posts:p.data,feedback:f.data,metrics:m.data,docs:d.data,accounts:a.data||[],links:l.data||[]};
   try{const {data:u}=await sb.rpc('storage_usage');D.usage=u||null}catch(_){D.usage=null}
   try{const {data:pr}=await sb.from('ig_profiles').select('client_id,data');D.profiles=Object.fromEntries((pr||[]).map(x=>[x.client_id,x.data||{}]))}catch(_){D.profiles={}}
+  D.kwRows=k.data||[];D.dmlog=g.data||[];
   D.kw=new Set((k.data||[]).flatMap(x=>[x.keyword,...(x.aliases||[])]).map(w=>String(w).toLowerCase()));
 }
 async function saveDoc(col,id,data){
@@ -116,7 +118,7 @@ function login(){
 }
 
 /* ---------- casca ---------- */
-const GROUPS=[['',[['inicio','Início'],['dem','Demandas'],['aprov','Aprovação'],['agenda','Agenda'],['pub','Publicação']]],
+const GROUPS=[['',[['inicio','Início'],['dem','Demandas'],['aprov','Aprovação'],['agenda','Agenda'],['pub','Publicação'],['auto','Automação']]],
  ['Clientes',[['cli','Clientes'],['met','Métricas'],['rel','Relatórios'],['msg','Mensagens']]],
  ['Negócio',[['gest','Gestão da Stond'],['cres','Crescimento'],['com','Comercial'],['prop','Propostas e contratos'],['fin','Financeiro'],['adm','Administrativo']]]];
 function badge(k){if(k==='aprov')return pend().length;if(k==='dem')return late().length;if(k==='pub')return queue().filter(p=>p.publish_status==='agendado').length;if(k==='msg')return docs('messages').filter(m=>m.who==='Cliente'&&!m.readStond).length;return 0}
@@ -259,6 +261,33 @@ V.cli=()=>{
    <div class="ca"><button class="lk" data-edit-client="${esc(c.id)}">Editar</button><a class="lk" href="https://portal.stond.com.br/?c=${esc(c.access_token)}&ver=1" target="_blank" rel="noopener">Ver como cliente</a><button class="lk" data-copy="https://portal.stond.com.br/?convite=${esc(c.access_token)}">Copiar convite</button></div></article>`}).join('')}</div>`);
 };
 
+/* Automação de direct (tipo ManyChat) */
+V.auto=()=>{
+  const ids=CL().map(c=>c.id),c=fv('ac',ids[0]),K=D.kwRows.filter(k=>k.client_id===c),acc=D.accounts.find(a=>a.client_id===c);
+  const mo=month(),L=D.dmlog.filter(x=>x.client_id===c),cnt=(w,m)=>L.filter(x=>x.keyword===w&&(!m||String(x.created_at).startsWith(m))).length;
+  const stl=s=>s==='link_enviado'?['Link enviado','ok']:s==='sent'?['Direct enviado','pend']:s==='aguardando_seguir'?['Esperando seguir','pend']:s==='aguardando_clique'?['Esperando clique','pend']:/err/.test(s||'')?['Erro','']:[s||'—',''];
+  return shell(topb('Automação de direct','Quem comenta a palavra recebe o link no direct, sozinho','<button class="btn red" data-new="kw">Nova palavra</button>')+`
+  <div class="flow">${[['Comenta a palavra','no post ou Reels'],['Resposta pública','no comentário'],['Direct com botão','"Me envie o link"'],['Confere se segue','e manda o link']].map(([a,b],i)=>`<div><span>${i+1}</span><b>${a}</b><small>${b}</small></div>`).join('')}</div>
+  <div class="filters">${segF('ac',CL().map(k=>[k.id,k.name]))}</div>
+  ${acc?'':`<div class="spc warn"><b>Conta não conectada</b><span>A automação só funciona depois de conectar o Instagram de ${esc(cli(c).name)} pelo app Stond no Meta.</span></div>`}
+  <div class="pgl"><div>${K.length?`<div class="kwg">${K.map(k=>`<article class="kwc ${k.active?'':'off'}" data-edit-kw="${esc(k.id)}"><div class="kwh"><b>${esc(String(k.keyword).toUpperCase())}</b><span class="chip ${k.active?'ok':''}">${k.active?'Ligada':'Desligada'}</span></div>
+     <p>${esc(k.opening_text||k.message||'')}</p><small>${(k.aliases||[]).length?`Aceita ${(k.aliases||[]).length} jeitos de escrever · `:''}${k.require_follow?'Só para quem segue':'Para todos'}</small>
+     <div class="kwn"><div><b>${cnt(k.keyword,mo)}</b><small>no mês</small></div><div><b>${cnt(k.keyword)}</b><small>no total</small></div><a class="lk" href="${esc(k.link||'#')}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Abrir link</a></div></article>`).join('')}</div>`:empty('Nenhuma palavra ainda. Crie a primeira em Nova palavra.')}</div>
+  <div class="bx"><span class="lb">Últimos disparos</span>${L.length?`<div class="al">${L.slice(0,12).map(x=>{const [t,cl]=stl(x.status);return `<div><b>@${esc(x.from_username||'?')}</b><small>${esc(String(x.keyword||'').toUpperCase())} · ${new Date(x.created_at).toLocaleDateString('pt-BR',{day:'numeric',month:'short'})}</small><span class="chip ${cl}" title="${esc(x.error||'')}">${esc(t)}</span></div>`}).join('')}</div>`:'<p class="wait">Quando alguém comentar uma palavra, aparece aqui.</p>'}</div></div>`);
+};
+const KWF=[['keyword','Palavra (o que a pessoa comenta)'],['aliases','Outros jeitos de escrever (separe por vírgula)'],['active','Ligada','chk'],['public_reply','Resposta pública no comentário'],['opening_text','1ª mensagem no direct','area'],['opening_button','Botão da 1ª mensagem'],['require_follow','Só manda o link para quem segue','chk'],['follow_text','Mensagem pedindo para seguir','area'],['follow_button','Botão "já sigo"'],['not_following_text','Se ainda não seguir','area'],['link_title','Mensagem junto com o link','area'],['link_button','Texto do botão do link'],['link','Link']];
+function openKw(id){
+  const c=fv('ac',CL()[0]?.id),cur=id?D.kwRows.find(k=>k.id===id):null,base=D.kwRows.find(k=>k.client_id===c)||{};
+  const v0=cur?{...cur,aliases:(cur.aliases||[]).join(', ')}:{active:true,require_follow:true,opening_button:'Me envie o link',follow_text:base.follow_text||'Quase lá! Esse link é só pra quem me segue ✨ Assim que você me seguir, clica aqui embaixo.',follow_button:base.follow_button||'Estou seguindo',not_following_text:base.not_following_text||'Hmm, ainda não te achei nos seguidores 👀 Me segue e clica de novo aqui embaixo!',public_reply:'Te mandei no direct!',link_button:'Abrir o link'};
+  formModal(cur?'Palavra '+String(cur.keyword).toUpperCase():'Nova palavra · '+cli(c).name,KWF,v0,async v=>{
+    if(!v.keyword)throw new Error('Escreva a palavra.');if(!v.link)throw new Error('Coloque o link.');
+    const row={...(cur||{client_id:c,message:'Oi, {nome}! Aqui está o link que você pediu: {link}'}),...v,keyword:v.keyword.toLowerCase(),aliases:v.aliases.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean)};
+    const {data,error}=await sb.from('dm_keywords').upsert(row).select().single();if(error)throw new Error(error.message);
+    const i=D.kwRows.findIndex(k=>k.id===data.id);i>=0?D.kwRows[i]=data:D.kwRows.push(data);
+    D.kw=new Set(D.kwRows.flatMap(x=>[x.keyword,...(x.aliases||[])]).map(w=>String(w).toLowerCase()));
+  },cur?async()=>{const {error}=await sb.from('dm_keywords').delete().eq('id',cur.id);if(error)throw new Error(error.message);D.kwRows=D.kwRows.filter(k=>k.id!==cur.id)}:null,
+  `<p class="wait" style="margin:0">Use {nome} para colocar o nome da pessoa. Teste comentando a palavra num post do cliente.</p>`);
+}
 /* Métricas */
 V.met=()=>{
   const c=fv('mc',CL()[0]?.id),M=D.metrics.filter(x=>x.client_id===c),L=M.slice(-1)[0]||{},F=M[0]||{};
@@ -491,6 +520,7 @@ document.addEventListener('click',async e=>{
     try{const {data,error}=await sb.functions.invoke('ig-metrics',{body:{action:'now',client_id:c}});if(error)throw new Error((await error.context.json().catch(()=>({}))).error||error.message);
       const r=(data.res||[])[0]||{};if(r.error)throw new Error(r.error);await load();render();toast(r.errors&&r.errors.length?'Seguidores atualizados. Alcance e visualizações precisam da permissão de métricas no Meta.':'Números atualizados do Meta')}
     catch(x){toast(x.message);sy.disabled=false;sy.textContent='Puxar do Meta'}return}
+  const ek=t.closest('[data-edit-kw]');if(ek){openKw(ek.dataset.editKw);return}
   const sm=t.closest('[data-sec]');if(sm){const k=sm.dataset.sec,c=menuClosed();ls.set('sg-menu',(c.includes(k)?c.filter(x=>x!==k):[...c,k]).join('|'));render();return}
   if(MODAL){
     if(t.closest('[data-x]')||(t.matches('[data-close]'))){MODAL=null;render();return}
@@ -505,7 +535,7 @@ document.addEventListener('click',async e=>{
   const ed=t.closest('[data-edit-doc]');if(ed){const [c,i]=ed.dataset.editDoc.split(':');openDoc(c,i);return}
   const ec=t.closest('[data-edit-client]');if(ec){openClient(ec.dataset.editClient);return}
   const sc=t.closest('[data-sched]');if(sc){openSchedule(sc.dataset.sched);return}
-  const nw=t.closest('[data-new]');if(nw){const k=nw.dataset.new;if(k==='post')openPost();else if(k==='client')openClient();else if(k==='metric')openMetric();else openDoc(k,null,k==='events'?{date:today(),kind:'reuniao'}:k==='fin'?{type:'despesa',date:today()}:k==='leads'?{stage:'novo'}:k==='contracts'?{kind:'proposta',status:'rascunho'}:{});return}
+  const nw=t.closest('[data-new]');if(nw){const k=nw.dataset.new;if(k==='post')openPost();else if(k==='kw')openKw();else if(k==='client')openClient();else if(k==='metric')openMetric();else openDoc(k,null,k==='events'?{date:today(),kind:'reuniao'}:k==='fin'?{type:'despesa',date:today()}:k==='leads'?{stage:'novo'}:k==='contracts'?{kind:'proposta',status:'rascunho'}:{});return}
   const nd=t.closest('[data-newday]');if(nd&&t===nd||t.classList?.contains('n')){const c=t.closest('[data-newday]');if(c){openDoc('events',null,{date:c.dataset.newday,kind:'reuniao'});return}}
   const cp=t.closest('[data-copy]');if(cp){try{await navigator.clipboard.writeText(cp.dataset.copy);toast('Link copiado')}catch(x){toast(cp.dataset.copy)}return}
   const of=t.closest('[data-offer]');if(of){const [c,s]=of.dataset.offer.split('|');openDoc('leads',null,{name:cli(c).name,company:s,source:'Cliente atual',stage:'novo'});return}
