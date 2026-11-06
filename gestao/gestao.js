@@ -245,7 +245,7 @@ V.cli=()=>{
    <div class="hl"><div><small style="flex:none">Saúde</small>${bar(h)}<small style="flex:none">${h}</small></div></div>
    <div class="cx"><span>Mensalidade <b>${fee(c)?brl(fee(c)):'—'}</b></span><span>Nota <b>${d.nota||'—'}</b></span>${d.renewAt?`<span>Renova <b>${fmtD(d.renewAt)}</b></span>`:''}</div>
    <div class="svc">${has.map(s=>`<span class="on">${esc(s)}</span>`).join('')}${SV.filter(s=>!has.includes(s)).slice(0,2).map(s=>`<span class="up">+ ${s}</span>`).join('')}</div>
-   <div class="ca"><button class="btn sm ghost" data-edit-client="${esc(c.id)}">Editar</button><button class="btn sm ghost" data-copy="https://portal.stond.com.br/?convite=${esc(c.access_token)}">Copiar convite</button></div></article>`}).join('')}</div>`);
+   <div class="ca"><button class="btn sm ghost" data-edit-client="${esc(c.id)}">Editar</button><a class="btn sm ghost" href="https://portal.stond.com.br/?c=${esc(c.access_token)}" target="_blank" rel="noopener">Ver como cliente</a><button class="btn sm ghost" data-copy="https://portal.stond.com.br/?convite=${esc(c.access_token)}">Copiar convite</button></div></article>`}).join('')}</div>`);
 };
 
 /* Métricas */
