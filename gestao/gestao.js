@@ -469,6 +469,18 @@ const fatAll=who=>contasAll().filter(c=>who==='all'||(c.owner||'pj')===who).flat
 const cruzados=()=>fin().filter(f=>f.account&&contaOwn(f.account)!==ownF(f)&&!f.reemb);
 const sinal=f=>(ownF(f)==='pj'?1:-1)*(f.type==='despesa'?1:-1);
 const deve=()=>cruzados().reduce((s,f)=>s+sinal(f)*num(f.amount),0);
+/* Caixa único: o que entrou no mês, quanto a Stond e a Helo gastaram, onde o dinheiro está e quanto limite sobra */
+function ondeBox(mk){
+  const Ra=finMonth(mk,'receita','all'),gj=sum(finMonth(mk,'despesa','pj')),gf=sum(finMonth(mk,'despesa','pf'));
+  const C=contasAll(),ban=C.filter(c=>c.kind!=='cartao').map(c=>[c,saldoConta(c.id)]).filter(x=>Math.abs(x[1])>0.004).sort((a,b)=>b[1]-a[1]);
+  const car=C.filter(c=>c.kind==='cartao').map(c=>[c,Math.max(0,-saldoConta(c.id))]);
+  const tem=ban.reduce((s,x)=>s+x[1],0),deve=car.reduce((s,x)=>s+x[1],0);
+  const ln=(n,v,cor,sub)=>`<div class="ow"><span><i style="background:${esc(cor||'var(--muted)')}"></i>${esc(n)}${sub?`<small>${sub}</small>`:''}</span><b>${brl(v)}</b></div>`;
+  return `<div class="bx w2 h2 w2m onde"><span class="lb">Onde está o dinheiro</span>
+   <div class="trio"><div><small>Entrou no mês</small><b style="color:var(--ok)">${brl(sum(Ra))}</b></div><div><small>Stond gastou</small><b>${brl(gj)}</b></div><div><small>Você gastou</small><b>${brl(gf)}</b></div></div>
+   <p class="eyebrow" style="margin:12px 0 4px">Nas contas · ${brl(tem)}</p>${ban.map(([c,v])=>ln(c.name,v,c.color)).join('')||'<p class="wait">Nenhuma conta com saldo.</p>'}
+   ${car.length?`<p class="eyebrow" style="margin:12px 0 4px">Cartões</p>${car.map(([c,v])=>ln(c.name,num(c.limite)?Math.max(0,num(c.limite)-v):v,c.color,num(c.limite)?`livre de ${brl(num(c.limite))} · fatura ${brl(v)}`:`fatura · abra a conta e informe o limite`)).join('')}`:''}
+   <span class="ft">Nas contas menos o que os cartões devem: <b>${brl(tem-deve)}</b></span></div>`}
 /* A Helo não separa o dinheiro: o que é de um lado e foi pago pelo outro só aparece como informação, sem dívida */
 function mistoBox(mk){const xs=fin().filter(f=>f.type==='despesa'&&f.account&&contaOwn(f.account)!==ownF(f)&&String(f.date||'').startsWith(mk));if(!xs.length)return '';
   const pf=sum(xs.filter(f=>ownF(f)==='pf')),pj=sum(xs.filter(f=>ownF(f)==='pj'));
@@ -500,6 +512,7 @@ V.fin=()=>{
     const saldo=contas().reduce((s,c)=>s+saldoConta(c.id),0);
     body=`<div class="bento">
      <div class="bx hero w2 w2m"><span class="lb">${who==='pj'?'Saldo da Stond':who==='pf'?'Seu saldo pessoal':'Saldo geral'}</span><div class="num">${contas().length?brl(saldo):'—'}</div><span class="ft">${contas().length?contas().length+' conta'+(contas().length>1?'s':''):'Cadastre suas contas para ver o saldo'}</span></div>
+     ${ondeBox(mk)}
      <div class="bx"><span class="lb">Receitas do mês</span><div class="num" style="color:var(--ok)">${brl(sum(R))}</div><span class="ft">${dlt(sum(R),rPrev)}</span></div>
      <div class="bx"><span class="lb">Despesas do mês</span><div class="num" style="color:var(--red)">${brl(sum(Dp))}</div><span class="ft">${dlt(sum(Dp),dPrev)}</span></div>
      <div class="bx w2 w2m"><span class="lb">Recebimentos</span><div class="trio"><div><small>Recebido</small><b>${brl(sum(R.filter(f=>f.paid)))}</b></div><div><small>Falta</small><b>${brl(sum(R.filter(f=>!f.paid)))}</b></div><div><small>Previsto</small><b>${brl(sum(R))}</b></div></div>${bar(sum(R.filter(f=>f.paid))/rt*100,'var(--ok)')}</div>
@@ -592,7 +605,7 @@ const FORMS={
  leads:{t:'Lead',f:[['name','Nome'],['company','Empresa ou serviço'],['value','Valor por mês','num'],['source','Origem','sel',[['Indicação','Indicação'],['Instagram','Instagram'],['Site','Site'],['LinkedIn','LinkedIn'],['Outro','Outro']]],['stage','Etapa','sel',[...STG.map(s=>[s[0],s[1]]),['perdido','Perdido']]],['nextStep','Próximo passo'],['nextDate','Data do próximo passo','date'],['note','Anotação','area']]},
  contracts:{t:'Proposta ou contrato',f:[['kind','Tipo','sel',[['proposta','Proposta'],['contrato','Contrato']]],['client','Cliente','sel',clientOpts],['contact','Contato (se ainda não é cliente)'],['number','Número'],['title','Serviço'],['value','Valor por mês','num'],['start','Início','date'],['renewAt','Renova em','date'],['status','Situação','sel',[['rascunho','Rascunho'],['enviado','Enviado'],['assinado','Assinado'],['recusado','Recusado']]],['obs','Observações','area']]},
  fin:{t:'Lançamento',f:[['type','Tipo','sel',[['receita','Recebimento'],['despesa','Despesa']]],['owner','De quem é','sel',OWN],['desc','Descrição'],['amount','Valor','num'],['date','Vencimento','date'],['category','Categoria','sel',catOpts],['account','Conta','sel',contaOpts],['kind','Fixa ou variável','sel',[['variavel','Variável'],['fixa','Fixa (todo mês)']]],['until','Se fixa, até quando','sel',untilOpts],['client','Cliente','sel',clientOpts],['paid','Pago ou recebido','chk'],['nf','Nota fiscal (número)'],['note','Anotação','area']]},
- contas:{t:'Conta',f:[['name','Nome (ex.: Nubank PJ)'],['owner','De quem é','sel',OWN],['kind','Tipo','sel',[['banco','Conta bancária'],['digital','Conta digital'],['cartao','Cartão de crédito'],['caixa','Dinheiro']]],['inicial','Saldo inicial','num'],['fecha','Cartão: dia em que a fatura fecha','num'],['vence','Cartão: dia em que a fatura vence','num'],['color','Cor','color']]},
+ contas:{t:'Conta',f:[['name','Nome (ex.: Nubank PJ)'],['owner','De quem é','sel',OWN],['kind','Tipo','sel',[['banco','Conta bancária'],['digital','Conta digital'],['cartao','Cartão de crédito'],['caixa','Dinheiro']]],['inicial','Saldo inicial','num'],['limite','Cartão: limite total','num'],['fecha','Cartão: dia em que a fatura fecha','num'],['vence','Cartão: dia em que a fatura vence','num'],['color','Cor','color']]},
  obrig:{t:'Obrigação',f:[['title','O que é'],['due','Vence em','date'],['amount','Valor','num'],['done','Feito','chk'],['note','Anotação','area']]},
  tools:{t:'Ferramenta',f:[['name','Nome'],['amount','Valor por mês','num'],['note','Anotação','area']]},
  team:{t:'Pessoa',f:[['name','Nome'],['role','Função'],['amount','Valor por mês','num'],['contact','Contato']]},
