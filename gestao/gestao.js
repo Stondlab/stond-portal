@@ -471,16 +471,25 @@ const sinal=f=>(ownF(f)==='pj'?1:-1)*(f.type==='despesa'?1:-1);
 const deve=()=>cruzados().reduce((s,f)=>s+sinal(f)*num(f.amount),0);
 /* Caixa único: o que entrou no mês, quanto a Stond e a Helo gastaram, onde o dinheiro está e quanto limite sobra */
 function ondeBox(mk){
-  const Ra=finMonth(mk,'receita','all'),gj=sum(finMonth(mk,'despesa','pj')),gf=sum(finMonth(mk,'despesa','pf'));
-  const C=contasAll(),ban=C.filter(c=>c.kind!=='cartao').map(c=>[c,saldoConta(c.id)]).filter(x=>Math.abs(x[1])>0.004).sort((a,b)=>b[1]-a[1]);
+  const Ra=sum(finMonth(mk,'receita','all')),gj=sum(finMonth(mk,'despesa','pj')),gf=sum(finMonth(mk,'despesa','pf'));
+  const C=contasAll(),ban=C.filter(c=>c.kind!=='cartao').map(c=>[c,saldoConta(c.id)]).filter(x=>x[1]>0.004).sort((a,b)=>b[1]-a[1]);
   const car=C.filter(c=>c.kind==='cartao').map(c=>[c,Math.max(0,-saldoConta(c.id))]);
   const tem=ban.reduce((s,x)=>s+x[1],0),deve=car.reduce((s,x)=>s+x[1],0);
-  const ln=(n,v,cor,sub)=>`<div class="ow"><span><i style="background:${esc(cor||'var(--muted)')}"></i>${esc(n)}${sub?`<small>${sub}</small>`:''}</span><b>${brl(v)}</b></div>`;
+  const sob=Math.max(0,Ra-gj-gf),base=Math.max(Ra,gj+gf)||1;
+  /* cor da conta, clareada se for escura demais e com tom mais claro quando duas contas têm a mesma cor */
+  let usadas={};const cor=c=>{let h=String(c.color||'#888888').toLowerCase();const m=h.match(/^#([0-9a-f]{6})$/);if(m){const n=parseInt(m[1],16),l=(0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))/255;if(l<0.2)h=`color-mix(in srgb, ${h} 45%, #9aa3ad)`}const k=usadas[h]=(usadas[h]||0)+1;return k>1?`color-mix(in srgb, ${h} ${100-k*25}%, #ffffff)`:h};
+  const CC={};ban.forEach(([c])=>CC[c.id]=cor(c));usadas={};car.forEach(([c])=>CC[c.id]=cor(c));
+  const seg=(v,t,cor,tt)=>v>0?`<i style="flex:${(v/t*1000).toFixed(0)} 1 0;background:${esc(cor)}" title="${esc(tt)}: ${brl(v)}"></i>`:'';
+  const lg=(cor,n,v,p)=>`<div><i style="background:${esc(cor)}"></i><small>${esc(n)}</small><b>${brl(v)}</b>${p!=null?`<em>${p}%</em>`:''}</div>`;
+  const ent=[['Stond gastou',gj,'var(--red)'],['Você gastou',gf,'var(--warn)'],['Sobrou',sob,'var(--ok)']];
   return `<div class="bx w2 h2 w2m onde"><span class="lb">Onde está o dinheiro</span>
-   <div class="trio"><div><small>Entrou no mês</small><b style="color:var(--ok)">${brl(sum(Ra))}</b></div><div><small>Stond gastou</small><b>${brl(gj)}</b></div><div><small>Você gastou</small><b>${brl(gf)}</b></div></div>
-   <p class="eyebrow" style="margin:12px 0 4px">Nas contas · ${brl(tem)}</p>${ban.map(([c,v])=>ln(c.name,v,c.color)).join('')||'<p class="wait">Nenhuma conta com saldo.</p>'}
-   ${car.length?`<p class="eyebrow" style="margin:12px 0 4px">Cartões</p>${car.map(([c,v])=>ln(c.name,num(c.limite)?Math.max(0,num(c.limite)-v):v,c.color,num(c.limite)?`livre de ${brl(num(c.limite))} · fatura ${brl(v)}`:`fatura · abra a conta e informe o limite`)).join('')}`:''}
-   <span class="ft">Nas contas menos o que os cartões devem: <b>${brl(tem-deve)}</b></span></div>`}
+   <div class="osec"><div class="oh"><small>Entrou no mês</small><b style="color:var(--ok)">${brl(Ra)}</b></div>
+    <div class="sbar">${ent.map(([n,v,c])=>seg(v,base,c,n)).join('')}</div>
+    <div class="olg">${ent.map(([n,v,c])=>lg(c,n,v,Ra?Math.round(v/Ra*100):null)).join('')}</div></div>
+   <div class="osec"><div class="oh"><small>Guardado nas contas</small><b>${brl(tem)}</b></div>
+    ${ban.length?`<div class="sbar">${ban.map(([c,v])=>seg(v,tem,CC[c.id],c.name)).join('')}</div><div class="olg g2c">${ban.map(([c,v])=>lg(CC[c.id],c.name,v)).join('')}</div>`:'<p class="wait">Nenhuma conta com saldo.</p>'}</div>
+   ${car.length?`<div class="osec"><div class="oh"><small>Cartões</small><b>${brl(deve)} <span style="font-size:12px;color:var(--muted);font-weight:400">em faturas</span></b></div>${car.map(([c,v])=>{const L=num(c.limite);return `<div class="ocard"><div><span><i style="background:${esc(CC[c.id])}"></i>${esc(c.name)}</span><b>${L?brl(Math.max(0,L-v))+' livre':brl(v)}</b></div>${L?`<div class="sbar thin"><i style="flex:${(Math.min(v,L)/L*1000).toFixed(0)} 1 0;background:${esc(CC[c.id])}"></i><i style="flex:${(Math.max(0,L-v)/L*1000).toFixed(0)} 1 0;background:var(--line)"></i></div><small>Fatura ${brl(v)} de ${brl(L)} de limite</small>`:`<small>Abra a conta e informe o limite</small>`}</div>`}).join('')}</div>`:''}
+   <div class="ofoot"><small>Sobra de verdade (contas menos faturas)</small><b>${brl(tem-deve)}</b></div></div>`}
 /* A Helo não separa o dinheiro: o que é de um lado e foi pago pelo outro só aparece como informação, sem dívida */
 function mistoBox(mk){const xs=fin().filter(f=>f.type==='despesa'&&f.account&&contaOwn(f.account)!==ownF(f)&&String(f.date||'').startsWith(mk));if(!xs.length)return '';
   const pf=sum(xs.filter(f=>ownF(f)==='pf')),pj=sum(xs.filter(f=>ownF(f)==='pj'));
@@ -507,7 +516,7 @@ V.fin=()=>{
     const pc={},rc={};Dp.forEach(f=>{pc[f.category||'Outros']=(pc[f.category||'Outros']||0)+num(f.amount)});R.forEach(f=>{const k=f.client?cli(f.client).name:(f.category||'Outras');rc[k]=(rc[k]||0)+num(f.amount)});
     const dt=sum(Dp)||1,rt=sum(R)||1,per={};active().forEach(c=>{const r=sum(R.filter(f=>f.client===c.id))||fee(c);const d=sum(Dp.filter(f=>f.client===c.id));per[c.id]=[r,d]});
     const prm=iso(new Date(y,m-2,1)).slice(0,7),rPrev=sum(fm_(prm,'receita')),dPrev=sum(fm_(prm,'despesa'));
-    const dlt=(a,b)=>b?`${a>=b?'+':''}${Math.round((a-b)/b*100)}% vs mês anterior`:'sem mês anterior';
+    const dlt=(a,b)=>b&&b>=a*0.1?`${a>=b?'+':''}${Math.round((a-b)/b*100)}% vs mês anterior`:b?`${brl(b)} no mês anterior`:'sem mês anterior';
     const up=fall().filter(f=>!f.paid&&f.date&&f.date<=iso(new Date(Date.now()+15*864e5))).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6);
     const saldo=contas().reduce((s,c)=>s+saldoConta(c.id),0);
     body=`<div class="bento">
