@@ -225,3 +225,6 @@ html.light .kwc{background:#fff}.kwc:hover{border-color:var(--red)}.kwc.off{opac
 .dg-b:last-child{border-bottom:0}
 .dg-b small{color:var(--muted);font-size:12px}
 @media(max-width:700px){.dg-k{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* números grandes encolhem para caber na caixa */
+.bento .bx{container-type:inline-size}.bento .bx .num{font-size:clamp(18px,13.5cqi,40px)}
