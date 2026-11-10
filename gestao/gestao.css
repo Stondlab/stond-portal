@@ -239,7 +239,7 @@ html.light .kwc{background:#fff}.kwc:hover{border-color:var(--red)}.kwc.off{opac
 @media (max-width:520px){.olg.g2c{grid-template-columns:1fr}}
 
 /* Visão geral do Financeiro: tons de rosa, mais leve */
-.fdash{--ok:#4cb990;--red:#e0577f;--warn:#f4a3c4}
-html.light .fdash{--ok:#2e9c74;--red:#d6336c;--warn:#f08fb6}
+.fdash{--ok:#4cb990;--warn:#f4a3c4}
+html.light .fdash{--ok:#2e9c74;--warn:#f08fb6}
 .fdash .bx{border-radius:22px}.fdash .lb{color:var(--red);opacity:.8}
 .mres{display:grid;gap:8px;margin:12px 0 6px}.mres div{display:grid;grid-template-columns:10px 1fr auto;column-gap:8px;align-items:center}.mres i{width:10px;height:10px;border-radius:4px}.mres small{color:var(--muted);font-size:13px}.mres b{font-weight:600;font-variant-numeric:tabular-nums}.mres em{grid-column:2/4;font-style:normal;font-size:11.5px;color:var(--muted)}
