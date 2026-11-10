@@ -458,7 +458,11 @@ const dia=(y,m,d)=>new Date(y,m,Math.min(d,dim(y,m)));
 const FER=['01-01','04-21','05-01','09-07','10-12','11-02','11-15','11-20','12-25'];
 const util=d=>{while(d.getDay()===0||d.getDay()===6||FER.includes(iso(d).slice(5)))d.setDate(d.getDate()+1);return d};
 const fatDe=(c,s)=>{const F=num(c.fecha),V=num(c.vence),d=pd(s);let y=d.getFullYear(),m=d.getMonth();if(d.getDate()>=F){m++;if(m>11){m=0;y++}}const fe=dia(y,m,F);let vm=m+(V<=F?1:0),vy=y;if(vm>11){vm-=12;vy++}return {fecha:iso(fe),vence:iso(util(dia(vy,vm,V)))}};
-const faturas=c=>{if(c.kind!=='cartao'||!num(c.fecha)||!num(c.vence))return [];const g={};fin().filter(f=>f.account===c.id&&f.date).forEach(f=>{const k=fatDe(c,f.date);const x=g[k.vence]||(g[k.vence]={...k,conta:c,total:0});x.total+=(f.type==='despesa'?1:-1)*num(f.amount)});let D=Math.max(0,-saldoConta(c.id)+sum(fin().filter(f=>f.account===c.id&&!f.paid&&f.type==='despesa')));Object.values(g).sort((a,b)=>b.vence.localeCompare(a.vence)).forEach(x=>{x.total=Math.min(Math.max(0,x.total),D);D-=x.total});return Object.values(g).filter(x=>x.vence>=today()&&x.total>0.004).sort((a,b)=>a.vence.localeCompare(b.vence))};
+const fatGroups=c=>{if(c.kind!=='cartao'||!num(c.fecha)||!num(c.vence))return [];const g={};fin().filter(f=>f.account===c.id&&f.date).forEach(f=>{const k=fatDe(c,f.date);const x=g[k.vence]||(g[k.vence]={...k,conta:c,bruto:0,itens:[]});x.bruto+=(f.type==='despesa'?1:-1)*num(f.amount);x.itens.push(f)});let D=Math.max(0,-saldoConta(c.id)+sum(fin().filter(f=>f.account===c.id&&!f.paid&&f.type==='despesa')));const L=Object.values(g).sort((a,b)=>b.vence.localeCompare(a.vence));L.forEach(x=>{x.total=Math.min(Math.max(0,x.bruto),D);D-=x.total});return L.reverse()};
+const faturas=c=>fatGroups(c).filter(x=>x.vence>=today()&&x.total>0.004);
+/* fechamento e vencimento da fatura que vence no mês ym (AAAA-MM) */
+const fatMes=(c,ym)=>{const F=num(c.fecha),V=num(c.vence),[y,m]=ym.split('-').map(Number);const cm=new Date(y,m-1-(V<=F?1:0),1);return {fecha:iso(dia(cm.getFullYear(),cm.getMonth(),F)),vence:iso(util(dia(y,m-1,V)))}};
+const fatSt=x=>x.bruto>0.004&&x.total<=0.004?['Paga','ok']:x.fecha>today()?['Aberta','pend']:x.vence<today()?['Atrasada','']:['Fechada',''];
 const fatAll=who=>contasAll().filter(c=>who==='all'||(c.owner||'pj')===who).flatMap(faturas);
 /* Stond x Pessoal: o que a Stond pagou ou recebeu numa conta pessoal e ainda não foi acertado */
 /* cruzado = lançamento da Stond em conta pessoal, ou pessoal em conta da Stond. Positivo: a Stond te deve */
@@ -470,7 +474,7 @@ function deveBox(){const xs=cruzados(),d=deve();if(!xs.length&&!contasAll().some
 const isPessoa=f=>/pró-labore|folha|freela/i.test(f.category||'');
 const isImposto=f=>/imposto|contabil/i.test(f.category||'');
 const finSt=f=>f.paid?(f.type==='receita'?'Recebido':'Pago'):f.date&&f.date<today()?'Atrasado':'Em aberto';
-const FT=[['visao','Visão geral'],['lanc','Lançamentos'],['pr','A pagar e receber'],['contas','Contas'],['cat','Categorias']];
+const FT=[['visao','Visão geral'],['lanc','Lançamentos'],['pr','A pagar e receber'],['contas','Contas'],['cart','Cartões'],['cat','Categorias']];
 function finRow(f){return `<tr><td>${f.date?fmtD(f.date):'—'}</td><td><button class="lnk" data-edit-doc="fin:${esc(f.id)}"><b>${esc(f.desc||'Sem descrição')}</b></button>${f.client?`<small>${cdot(f.client)}${esc(cli(f.client).name)}</small>`:''}${FO()==='all'?`<small><span class="chip ${ownF(f)==='pf'?'pend':''}">${ownLb(ownF(f))}</span></small>`:''}${f.account&&contaOwn(f.account)!==ownF(f)?`<small>${f.reemb?'Acertado em '+fmtD(f.reemb):ownF(f)==='pj'?(f.type==='despesa'?'Pago com dinheiro seu · a Stond te deve':'Caiu na sua conta · você deve à Stond'):(f.type==='despesa'?'Pago pela Stond · você deve à Stond':'Caiu na conta da Stond · a Stond te deve')}</small>`:''}${f.kind==='fixa'?`<small>Fixa${f.until?' até '+MES[+f.until.slice(5,7)-1].slice(0,3)+'/'+f.until.slice(2,4):', sem data para acabar'}</small>`:''}</td><td><span class="cat ${f.type}">${esc(f.category||'Sem categoria')}</span></td><td class="mut">${esc(contaNome(f.account)||'—')}</td><td><button class="pg ${f.paid?'on':f.date&&f.date<today()?'late':''}" data-paid="${esc(f.id)}" aria-pressed="${!!f.paid}" title="${finSt(f)}">${f.paid?'✓':''}</button></td><td class="val ${f.type}">${f.type==='receita'?'+':'−'} ${brl(f.amount)}</td></tr>`}
 V.fin=()=>{
   const tab=fv('ft','visao'),who=FO(),mk=fv('fm',month()),[y,m]=mk.split('-').map(Number),R=finMonth(mk,'receita',who),Dp=finMonth(mk,'despesa',who);
@@ -530,6 +534,29 @@ V.fin=()=>{
     const sc=fall().filter(f=>!f.account&&f.paid);
     body=`<div class="cgrid">${contas().map(c=>`<button class="acc" data-edit-doc="contas:${esc(c.id)}" style="--cc:${esc(c.color||'#8f0a19')}"><span class="lb">${esc({banco:'Conta bancária',caixa:'Dinheiro',cartao:'Cartão de crédito',digital:'Conta digital'}[c.kind]||'Conta')} · ${ownLb(c.owner)}</span><b>${esc(c.name)}</b><div class="num">${brl(saldoConta(c.id))}</div><small>${(n=>n+(n===1?' lançamento':' lançamentos'))(docs('fin').filter(f=>f.account===c.id).length)}</small>${c.kind==='cartao'?(num(c.fecha)&&num(c.vence)?`<small>Fecha dia ${num(c.fecha)} · vence dia ${num(c.vence)}</small>${faturas(c).map(x=>`<small>Fatura ${fmtD(x.vence).replace(/^\w+, /,'')} · ${x.fecha<=today()?'fechada':'aberta'} · ${brl(x.total)}</small>`).join('')}`:'<small>Abra e preencha os dias de fechamento e vencimento</small>'):''}</button>`).join('')}<button class="acc add" data-new="contas" data-owner="${who==='pf'?'pf':'pj'}"><b>+ Nova conta</b><small>Banco, conta digital, cartão ou dinheiro</small></button></div>
     ${sc.length?`<p class="wait" style="margin-top:14px">${sc.length} lançamentos pagos estão sem conta. Abra e escolha a conta para o saldo ficar certo.</p>`:''}`;
+  }
+  if(tab==='cart'){
+    const CC=contas().filter(c=>c.kind==='cartao');
+    if(!CC.length)body=`<p class="wait">Nenhum cartão aqui. Cadastre em Contas, com o tipo Cartão de crédito.</p>`;
+    else{
+      const cid=CC.some(c=>c.id===fv('fc'))?fv('fc'):CC[0].id,c=CC.find(x=>x.id===cid),G=fatGroups(c);
+      if(!num(c.fecha)||!num(c.vence))body=`${segF('fc',CC.map(x=>[x.id,esc(x.name)]))}<p class="wait" style="margin-top:14px">Falta dizer o dia em que a fatura fecha e vence. <button class="btn sm ghost" data-edit-doc="contas:${esc(c.id)}">Preencher</button></p>`;
+      else{
+        const def=(G.find(x=>x.vence>=today()&&x.total>0.004)||G.find(x=>x.vence>=today())||{vence:today()}).vence.slice(0,7);
+        const ym=/^\d{4}-\d{2}$/.test(fv('fcm_'+cid)||'')?fv('fcm_'+cid):def,[fy,fmn]=ym.split('-').map(Number);
+        const x=G.find(g=>g.vence.startsWith(ym))||{...fatMes(c,ym),bruto:0,total:0,itens:[]},[st,stc]=fatSt(x);
+        const pv=iso(new Date(fy,fmn-2,1)).slice(0,7),nx=iso(new Date(fy,fmn,1)).slice(0,7);
+        const fnav=`<div class="mnav"><button data-f="fcm_${esc(cid)}" data-v="${pv}" aria-label="Fatura anterior">‹</button><b>${Mes(fmn-1)} ${fy}</b><button data-f="fcm_${esc(cid)}" data-v="${nx}" aria-label="Próxima fatura">›</button></div>`;
+        const its=x.itens.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+        const cats={};its.filter(f=>f.type==='despesa').forEach(f=>{cats[f.category||'Outros']=(cats[f.category||'Outros']||0)+num(f.amount)});
+        body=`<div class="filters" style="margin:0 0 12px">${segF('fc',CC.map(k=>[k.id,esc(k.name)]))}</div><div class="fbar">${fnav}</div>
+        <div class="bento"><div class="bx hero w2 w2m" style="--cc:${esc(c.color||'#8f0a19')}"><span class="lb">Fatura de ${Mes(fmn-1).toLowerCase()} · ${esc(c.name)} <span class="chip ${stc}">${st}</span></span><div class="num">${brl(x.bruto>0?x.bruto:0)}</div><span class="ft">Fecha ${fmtD(x.fecha)} · vence ${fmtD(x.vence)}${x.bruto>0.004&&x.total<x.bruto-0.004?` · já pago ${brl(x.bruto-x.total)}, falta ${brl(x.total)}`:''}</span></div>
+        <div class="bx"><span class="lb">Limite usado</span><div class="num">${brl(Math.max(0,-saldoConta(c.id)))}</div><span class="ft">Tudo o que o cartão deve hoje</span></div>
+        <div class="bx"><span class="lb">Compras</span><div class="num">${its.filter(f=>f.type==='despesa').length}</div><span class="ft">${Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([k,v])=>esc(k)+' '+brl(v)).join(' · ')||'Nada nesta fatura'}</span></div></div>
+        <div class="ftable" style="margin-top:14px">${its.length?`<div class="tw"><table class="tb"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Conta</th><th>Pago?</th><th style="text-align:right">Valor</th></tr></thead><tbody>${its.map(finRow).join('')}</tbody></table></div>`:empty('Nenhuma compra nesta fatura.')}</div>
+        <p class="wait" style="margin-top:10px">Compras até o dia ${num(c.fecha)-1} entram na fatura que vence no dia ${num(c.vence)}. Para pagar, lance uma transferência da conta para o cartão.</p>`;
+      }
+    }
   }
   if(tab==='cat'){
     const cw=who==='pf'?'pf':'pj';body=`${who==='all'?'<p class="wait" style="margin:0 0 12px">Mostrando as categorias da Stond. Escolha Pessoal (CPF) acima para ver as suas.</p>':''}<div class="g2">${['receita','despesa'].map(t=>`<section><h3 class="h3">${t==='receita'?'Receitas':'Despesas'}</h3><div class="list">${cats(t,cw).map(c=>{const xs=(t==='receita'?R:Dp).filter(f=>f.category===c);return `<div class="row"><span class="cat ${t}">${esc(c)}</span><small style="margin-left:auto;color:var(--muted)">${xs.length} no mês</small><b style="font-weight:500;min-width:90px;text-align:right">${brl(sum(xs))}</b></div>`}).join('')}</div></section>`).join('')}</div><button class="btn sm ghost" style="margin-top:14px" data-editcats="${cw}">Editar categorias ${cw==='pf'?'pessoais':'da Stond'}</button>`;
