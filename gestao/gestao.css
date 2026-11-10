@@ -239,7 +239,26 @@ html.light .kwc{background:#fff}.kwc:hover{border-color:var(--red)}.kwc.off{opac
 @media (max-width:520px){.olg.g2c{grid-template-columns:1fr}}
 
 /* Visão geral do Financeiro: tons de rosa, mais leve */
-.fdash{--ok:#4cb990;--warn:#f4a3c4}
-html.light .fdash{--ok:#2e9c74;--warn:#f08fb6}
+.fdash{--ok:#4cb990;--warn:#f4a3c4;--pink:#f4a3c4}
+html.light .fdash{--ok:#2e9c74;--warn:#f08fb6;--pink:#f08fb6}
 .fdash .bx{border-radius:22px}.fdash .lb{color:var(--red);opacity:.8}
 .mres{display:grid;gap:8px;margin:12px 0 6px}.mres div{display:grid;grid-template-columns:10px 1fr auto;column-gap:8px;align-items:center}.mres i{width:10px;height:10px;border-radius:4px}.mres small{color:var(--muted);font-size:13px}.mres b{font-weight:600;font-variant-numeric:tabular-nums}.mres em{grid-column:2/4;font-style:normal;font-size:11.5px;color:var(--muted)}
+
+.fdash .lb{color:var(--muted);opacity:1}
+.fd-hero .num{font-size:clamp(28px,10cqi,48px)!important;font-weight:600;margin:6px 0 2px}
+.fd-sts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}.fd-st{background:var(--bg);border-radius:16px;padding:12px 14px;min-width:0}html.light .fd-st{background:#f5f5f6}
+.fd-st small{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}.fd-st small i{width:8px;height:8px;border-radius:50%;flex:none}.fd-st b{display:block;font-size:clamp(14px,5cqi,19px);font-weight:600;margin-top:5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fd-donut{display:flex;align-items:center;gap:22px;margin-top:8px}.fd-donut svg{flex:none;font-family:inherit}
+.fd-lg{display:grid;gap:12px;flex:1;min-width:0}.fd-lg div{display:grid;grid-template-columns:10px 1fr auto;gap:10px;align-items:start;font-size:14px}.fd-lg i{width:10px;height:10px;border-radius:50%;margin-top:4px}.fd-lg small{display:block;color:var(--muted);font-size:12px}.fd-lg b{font-weight:600;font-variant-numeric:tabular-nums}
+.fd-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px}.fd-top b{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}.fd-top b small{font-size:12px;color:var(--muted);font-weight:400}
+.fd-row{display:flex;align-items:center;gap:13px;width:100%;padding:11px 0;border:0;border-top:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}.fd-row:first-of-type{border-top:0}
+.fd-av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:11.5px;flex:none}
+.fd-row .t{flex:1;min-width:0}.fd-row .t b{display:block;font-size:14px;font-weight:500}.fd-row .t small{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fd-row .v{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fd-cards{display:grid;gap:12px;margin-top:10px}
+.fd-cc{border:0;border-radius:18px;padding:16px 18px;color:#fff;text-align:left;font:inherit;cursor:pointer;width:100%}
+.fd-cc .h{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;opacity:.92}.fd-cc .f{font-size:24px;font-weight:600;margin:8px 0 1px;font-variant-numeric:tabular-nums}.fd-cc .d{font-size:12px;opacity:.82}
+.fd-cc .pb{height:6px;border-radius:99px;background:rgba(255,255,255,.25);margin:12px 0 6px;overflow:hidden}.fd-cc .pb i{display:block;height:100%;background:#fff;border-radius:99px}
+.fd-cc .lim{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;opacity:.92;flex-wrap:wrap}
+.fd-leg{display:flex;gap:16px;font-size:12px;color:var(--muted);margin:4px 0 4px}.fd-leg span{display:flex;align-items:center;gap:6px}.fd-leg i{width:8px;height:8px;border-radius:50%}
+.fd-cat{display:grid;grid-template-columns:minmax(90px,38%) 1fr auto;align-items:center;gap:12px;padding:7px 0;font-size:13.5px}.fd-cat span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fd-cat .bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;display:flex;gap:2px}.fd-cat .bar i{display:block;height:100%}.fd-cat b{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+@media (max-width:520px){.fd-donut{flex-direction:column;align-items:flex-start}.fd-sts{grid-template-columns:1fr}}
