@@ -15,7 +15,7 @@ const pd=s=>{const [y,m,d]=String(s).slice(0,10).split('-').map(Number);return n
 const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const fmtD=s=>{if(!s)return '';const d=pd(s);return `${WD[d.getDay()]}, ${d.getDate()} ${MES[d.getMonth()].slice(0,3)}`};
 const nf=n=>n==null||n===''?'—':Number(n).toLocaleString('pt-BR');
-const brl=n=>'R$ '+Number(n||0).toLocaleString('pt-BR',{maximumFractionDigits:0});
+const brl=n=>'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const num=v=>{if(typeof v==='number')return isFinite(v)?v:0;const t=String(v??'').trim();if(/^-?\d+\.\d{1,2}$/.test(t))return Number(t);return Number(t.replace(/\./g,'').replace(',','.'))||0};
 const today=()=>iso(new Date());
 const mediaUrl=(u,c)=>!u?'':/^https?:/.test(u)?u:MEDIA+(c?c+'/':'')+u;
