@@ -451,13 +451,14 @@ const contas=()=>contasAll().filter(c=>FO()==='all'||(c.owner||'pj')===FO());
 const contaOpts=()=>[['','Sem conta'],...contasAll().map(c=>[c.id,c.name+' · '+ownLb(c.owner)])];
 const contaNome=id=>(contasAll().find(c=>c.id===id)||{}).name||'';
 const saldoConta=id=>{const c=contasAll().find(x=>x.id===id)||{},F=docs('fin');return num(c.inicial)+sum(F.filter(f=>f.account===id&&f.paid&&f.type==='receita'))-sum(F.filter(f=>f.account===id&&f.paid&&f.type==='despesa'))};
-/* Faturas de cartão: compra antes do dia de fechamento entra na fatura do mês; depois, na seguinte */
+/* Faturas de cartão: compra antes do dia de fechamento entra na fatura do mês; depois, na seguinte.
+   O que já foi pago sai das faturas mais antigas: o que o cartão deve é distribuído da fatura mais nova para a mais velha. */
 const dim=(y,m)=>new Date(y,m+1,0).getDate();
 const dia=(y,m,d)=>new Date(y,m,Math.min(d,dim(y,m)));
 const FER=['01-01','04-21','05-01','09-07','10-12','11-02','11-15','11-20','12-25'];
 const util=d=>{while(d.getDay()===0||d.getDay()===6||FER.includes(iso(d).slice(5)))d.setDate(d.getDate()+1);return d};
 const fatDe=(c,s)=>{const F=num(c.fecha),V=num(c.vence),d=pd(s);let y=d.getFullYear(),m=d.getMonth();if(d.getDate()>=F){m++;if(m>11){m=0;y++}}const fe=dia(y,m,F);let vm=m+(V<=F?1:0),vy=y;if(vm>11){vm-=12;vy++}return {fecha:iso(fe),vence:iso(util(dia(vy,vm,V)))}};
-const faturas=c=>{if(c.kind!=='cartao'||!num(c.fecha)||!num(c.vence))return [];const g={};fin().filter(f=>f.account===c.id&&f.date).forEach(f=>{const k=fatDe(c,f.date);const x=g[k.vence]||(g[k.vence]={...k,conta:c,total:0});x.total+=(f.type==='despesa'?1:-1)*num(f.amount)});return Object.values(g).filter(x=>x.vence>=today()&&x.total>0.004).sort((a,b)=>a.vence.localeCompare(b.vence))};
+const faturas=c=>{if(c.kind!=='cartao'||!num(c.fecha)||!num(c.vence))return [];const g={};fin().filter(f=>f.account===c.id&&f.date).forEach(f=>{const k=fatDe(c,f.date);const x=g[k.vence]||(g[k.vence]={...k,conta:c,total:0});x.total+=(f.type==='despesa'?1:-1)*num(f.amount)});let D=Math.max(0,-saldoConta(c.id)+sum(fin().filter(f=>f.account===c.id&&!f.paid&&f.type==='despesa')));Object.values(g).sort((a,b)=>b.vence.localeCompare(a.vence)).forEach(x=>{x.total=Math.min(Math.max(0,x.total),D);D-=x.total});return Object.values(g).filter(x=>x.vence>=today()&&x.total>0.004).sort((a,b)=>a.vence.localeCompare(b.vence))};
 const fatAll=who=>contasAll().filter(c=>who==='all'||(c.owner||'pj')===who).flatMap(faturas);
 /* Stond x Pessoal: o que a Stond pagou ou recebeu numa conta pessoal e ainda não foi acertado */
 /* cruzado = lançamento da Stond em conta pessoal, ou pessoal em conta da Stond. Positivo: a Stond te deve */
