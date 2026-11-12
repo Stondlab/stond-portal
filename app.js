@@ -178,8 +178,9 @@ const posts=()=>D.posts||[];
 const pend=()=>posts().filter(p=>p.status==='pendente');
 const okP=()=>posts().filter(p=>p.status==='aprovado');
 const adj=()=>posts().filter(p=>p.status==='reprovado');
-const cover=p=>{const m=(p.media||[])[0];if(!m)return '';return m.kind==='video'?(m.poster?mediaUrl(m.poster):''):mediaUrl(m.url)};
-const thumb=(p,cls='')=>{const m=(p.media||[])[0];if(!m)return `<span class="noimg ${cls}">${ty(p.type)}</span>`;
+const vis=p=>(p.media||[]).filter(m=>m.kind!=='pdf'),pdfs=p=>(p.media||[]).filter(m=>m.kind==='pdf');
+const cover=p=>{const m=vis(p)[0];if(!m)return '';return m.kind==='video'?(m.poster?mediaUrl(m.poster):''):mediaUrl(m.url)};
+const thumb=(p,cls='')=>{const m=vis(p)[0];if(!m)return `<span class="noimg ${cls}">${ty(p.type)}</span>`;
   return m.kind==='video'&&!m.poster?`<video class="${cls}" src="${mediaUrl(m.url)}#t=1.5" muted playsinline preload="metadata"></video>`:`<img class="${cls}" src="${cover(p)}" alt="" loading="lazy">`};
 const chip=p=>p.status==='pendente'?'<span class="chip pend">Aprovar</span>':p.status==='aprovado'?'<span class="chip ok">Aprovado</span>':p.status==='reprovado'?'<span class="chip">Ajuste pedido</span>':'';
 const first=()=>((D.client&&D.client.name)||'').split(' ')[0];
@@ -323,7 +324,7 @@ const V={
  },
  ig(){
   const pr=D.profile||{},M=D.metrics||[],L=M[M.length-1]||{};
-  const feed=posts().filter(p=>p.type!=='story'&&(p.media||[]).length&&['pendente','aprovado','publicado'].includes(p.status)).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
+  const feed=posts().filter(p=>p.type!=='story'&&vis(p).length&&['pendente','aprovado','publicado'].includes(p.status)).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
   return `<div class="ig"><div class="top"><div><h2>Meu Instagram</h2><p>Como o seu perfil fica com os próximos posts.</p></div></div>
   <div class="igh">${photo()?`<img src="${photo()}" alt="">`:''}<div><div class="nm">${esc(pr.handle||D.client.handle||'')}</div><div class="stats"><span><b>${nf(L.posts??pr.posts)}</b> posts</span><span><b>${nf(L.followers??pr.followers)}</b> seguidores</span><span><b>${nf(L.following??pr.following)}</b> seguindo</span></div></div></div>
   <p class="bio"><b>${esc(pr.name||D.client.name)}</b>
@@ -375,7 +376,7 @@ ${esc(pr.bioNow||pr.bio||'')}</p>
 /* ---------- post aberto ---------- */
 function modal(){
   const p=posts().find(x=>x.id===OPEN);if(!p)return '';
-  const md=p.media||[];if(slide>=md.length)slide=0;const m=md[slide];
+  const md=vis(p);if(slide>=md.length)slide=0;const m=md[slide];
   const brief=(p.brief||'').split('\n').filter(l=>!/^Tipo:/i.test(l.trim())).join('\n').trim();
   const fb=(D.feedback||[]).filter(f=>f.post_id===p.id);
   const canDecide=['pendente','aprovado','reprovado'].includes(p.status);
@@ -383,7 +384,7 @@ function modal(){
    <div class="media">${m?(m.kind==='video'?`<video src="${mediaUrl(m.url)}" controls playsinline preload="metadata"></video>`:`<img src="${mediaUrl(m.url)}" alt="Slide ${slide+1} de ${md.length}">`):''}
     ${md.length>1?`<span class="cnt">${slide+1} de ${md.length}</span><button class="nv l" data-sl="-1" aria-label="Anterior">‹</button><button class="nv r" data-sl="1" aria-label="Próximo">›</button><div class="pg">${md.map((_,i)=>`<i class="${i===slide?'on':''}"></i>`).join('')}</div>`:''}</div>
    <div class="info"><div class="hd"><div><b>${esc(p.title)}</b><small>${ty(p.type)} · ${fmtD(p.date)}${p.time?' · '+esc(p.time):''} ${chip(p)}</small></div><button class="x" data-x aria-label="Fechar">✕</button></div>
-    <div class="sc">${p.caption?`<div><p class="eyebrow">Legenda</p><div class="cap">${esc(p.caption)}</div></div>`:''}
+    <div class="sc">${pdfs(p).length?`<div><p class="eyebrow">Arquivos</p><div class="det">${pdfs(p).map(f=>`<a href="${esc(mediaUrl(f.url))}" target="_blank" rel="noopener">${esc(f.name||'PDF')}</a>`).join('<br>')}</div></div>`:''}${p.caption?`<div><p class="eyebrow">Legenda</p><div class="cap">${esc(p.caption)}</div></div>`:''}
      ${brief?`<div><p class="eyebrow">Detalhes</p><div class="det">${esc(brief)}</div></div>`:''}
      ${fb.length?`<div><p class="eyebrow">Conversa</p><div class="hist">${fb.map(f=>`<div><b>${esc(f.author||'Você')}</b> <small>${f.kind==='aprovado'?'aprovou':f.kind==='ajuste'?'pediu ajuste':'comentou'} · ${new Date(f.at).toLocaleDateString('pt-BR')}</small>${f.text?`<p>${esc(f.text)}</p>`:''}</div>`).join('')}</div></div>`:''}</div>
     ${PREVIEW?`<div class="act"><p class="sub" style="margin:0">Você está vendo como o cliente. Aprovar e pedir ajuste ficam desligados aqui.</p></div>`:`<div class="act">
@@ -431,7 +432,7 @@ document.addEventListener('click',async e=>{
   const g=t.closest('[data-go]');if(g){go(g.dataset.go);return}
   const o=t.closest('[data-open]');if(o){OPEN=o.dataset.open;slide=0;render();return}
   if(t.closest('[data-x]')||t.matches('[data-close]')){OPEN=null;render();return}
-  const sl=t.closest('[data-sl]');if(sl){const n=(posts().find(x=>x.id===OPEN).media||[]).length;slide=(slide+ +sl.dataset.sl+n)%n;render();return}
+  const sl=t.closest('[data-sl]');if(sl){const n=vis(posts().find(x=>x.id===OPEN)).length;slide=(slide+ +sl.dataset.sl+n)%n;render();return}
   const fb=t.closest('[data-fb]');if(fb){sendFb(fb.dataset.fb);return}
   const nb=t.closest('[data-nota]');if(nb){NOTASEL=+nb.dataset.nota;render();const x=$('#notat');if(x)x.focus();return}
   if(t.closest('[data-nota-ok]')){const tx=($('#notat')||{}).value||'';try{await rpc('portal_nota',{p_score:NOTASEL,p_text:tx,p_token:TOKEN||null});NOTA='ok';render();setTimeout(()=>{NOTA=false;if(S==='inicio')render()},4000)}catch(e){toast(e.message)}return}
@@ -443,9 +444,9 @@ document.addEventListener('click',async e=>{
   if(t.closest('[data-out]')){await sb.auth.signOut();D=null;login('entrar');return}
 });
 document.addEventListener('keydown',e=>{if(!OPEN)return;if(e.key==='Escape'){OPEN=null;render()}
-  const n=(posts().find(x=>x.id===OPEN)?.media||[]).length;if(n>1&&(e.key==='ArrowRight'||e.key==='ArrowLeft')&&!/TEXTAREA|INPUT/.test(document.activeElement.tagName)){slide=(slide+(e.key==='ArrowRight'?1:-1)+n)%n;render()}});
+  const n=vis(posts().find(x=>x.id===OPEN)||{}).length;if(n>1&&(e.key==='ArrowRight'||e.key==='ArrowLeft')&&!/TEXTAREA|INPUT/.test(document.activeElement.tagName)){slide=(slide+(e.key==='ArrowRight'?1:-1)+n)%n;render()}});
 let tx0=null;document.addEventListener('touchstart',e=>{if(e.target.closest('.media'))tx0=e.touches[0].clientX},{passive:true});
-document.addEventListener('touchend',e=>{if(tx0==null||!OPEN)return;const dx=e.changedTouches[0].clientX-tx0;tx0=null;const n=(posts().find(x=>x.id===OPEN)?.media||[]).length;if(n>1&&Math.abs(dx)>40){slide=(slide+(dx<0?1:-1)+n)%n;render()}},{passive:true});
+document.addEventListener('touchend',e=>{if(tx0==null||!OPEN)return;const dx=e.changedTouches[0].clientX-tx0;tx0=null;const n=vis(posts().find(x=>x.id===OPEN)||{}).length;if(n>1&&Math.abs(dx)>40){slide=(slide+(dx<0?1:-1)+n)%n;render()}},{passive:true});
 addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(D&&h&&h!==S&&V[h]){S=h;OPEN=null;render()}});
 
 boot();

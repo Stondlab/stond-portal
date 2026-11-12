@@ -18,6 +18,8 @@ const nf=n=>n==null||n===''?'—':Number(n).toLocaleString('pt-BR');
 const brl=n=>'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const num=v=>{if(typeof v==='number')return isFinite(v)?v:0;const t=String(v??'').trim();if(/^-?\d+\.\d{1,2}$/.test(t))return Number(t);return Number(t.replace(/\./g,'').replace(',','.'))||0};
 const today=()=>iso(new Date());
+const isPdf=f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name);
+const mthIn=(m,u)=>m.kind==='pdf'?`<a class="noimg pdf" href="${esc(u)}" target="_blank" rel="noopener" title="${esc(m.name||'PDF')}">PDF<small>${esc((m.name||'').replace(/\.pdf$/i,'').slice(0,18))}</small></a>`:m.kind==='video'?'<span class="noimg">vídeo</span>':`<img src="${u}" alt="">`;
 const mediaUrl=(u,c)=>!u?'':/^https?:/.test(u)?u:MEDIA+(c?c+'/':'')+u;
 function toast(msg){let t=$('#toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t)}t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3200)}
 
@@ -202,7 +204,7 @@ V.inicio=()=>{
 /* Demandas */
 const COLS=[['ideia','Ideias','#8a5560'],['producao','Em produção','#3f8fd8'],['aprovacao','Aprovação do cliente','#e0a33b'],['agendamento','Agendamento','#c868b8'],['publicado','Publicado','#3fbf7f']];
 function colOf(p){if(isDone(p))return 'publicado';if(p.status==='aprovado')return 'agendamento';if(p.status==='pendente')return 'aprovacao';if(p.status==='reprovado')return 'producao';return p.stage==='producao'?'producao':'ideia'}
-const cover=p=>{const m=(p.media||[])[0];if(!m)return '';return m.kind==='video'?(m.poster?mediaUrl(m.poster,p.client_id):''):mediaUrl(m.url,p.client_id)};
+const cover=p=>{const m=(p.media||[]).filter(x=>x.kind!=='pdf')[0];if(!m)return '';return m.kind==='video'?(m.poster?mediaUrl(m.poster,p.client_id):''):mediaUrl(m.url,p.client_id)};
 V.dem=()=>{
   const c=fv('dc','all'),list=posts().filter(p=>c==='all'||p.client_id===c).filter(p=>p.type!=='story'||fv('ds','0')==='1');
   const mk=fv('dm',month()),inM=list.filter(p=>!p.date||String(p.date).startsWith(mk)||colOf(p)!=='publicado');
@@ -661,7 +663,7 @@ const POSTF=[['title','Título'],['client_id','Cliente','sel',()=>CL().map(c=>[c
 function openPost(id){
   const p=id?posts().find(x=>x.id===id):{client_id:fv('dc','all')!=='all'?fv('dc'):CL()[0]?.id,type:'carrossel',status:'rascunho',stage:'ideia',media:[]};
   const media=(p.media||[]);
-  const extra=`<div class="fld full"><label>Mídia</label><div class="mrow">${media.map((m,i)=>`<span class="mth">${m.kind==='video'?'<span class="noimg">vídeo</span>':`<img src="${mediaUrl(m.url,p.client_id)}" alt="">`}<button type="button" data-rmmedia="${i}" aria-label="Tirar">✕</button></span>`).join('')}<label class="mth add">+<input type="file" id="fmup" accept="image/*,video/*" multiple hidden></label></div></div>${id&&D.feedback.some(f=>f.post_id===id)?`<div class="fld full"><label>Conversa com o cliente</label>${D.feedback.filter(f=>f.post_id===id).map(f=>`<small class="hist">${esc(f.author||'Cliente')} · ${f.kind==='aprovado'?'aprovou':f.kind==='ajuste'?'pediu ajuste':'comentou'}${f.text?': '+esc(f.text):''}</small>`).join('')}</div>`:''}`;
+  const extra=`<div class="fld full"><label>Mídia</label><div class="mrow">${media.map((m,i)=>`<span class="mth">${mthIn(m,mediaUrl(m.url,p.client_id))}<button type="button" data-rmmedia="${i}" aria-label="Tirar">✕</button></span>`).join('')}<label class="mth add">+<input type="file" id="fmup" accept="image/*,video/*,application/pdf,.pdf" multiple hidden></label></div></div>${id&&D.feedback.some(f=>f.post_id===id)?`<div class="fld full"><label>Conversa com o cliente</label>${D.feedback.filter(f=>f.post_id===id).map(f=>`<small class="hist">${esc(f.author||'Cliente')} · ${f.kind==='aprovado'?'aprovou':f.kind==='ajuste'?'pediu ajuste':'comentou'}${f.text?': '+esc(f.text):''}</small>`).join('')}</div>`:''}`;
   const vals={...p,col:colOf(p)==='publicado'?'agendamento':colOf(p)};
   POST_EDIT={...p,media:[...media]};
   formModal(id?'Demanda':'Nova demanda',POSTF,vals,async v=>{
@@ -814,12 +816,13 @@ document.addEventListener('input',e=>{if(e.target.id==='fq'){FILT.fq=e.target.va
 document.addEventListener('change',async e=>{
   if(e.target.id==='fmup'){const files=[...e.target.files];const c=$('#fm').elements.client_id.value;
     const sp=space();if(sp&&sp.f>=.98){toast('O espaço de arquivos está cheio. Apague vídeos antigos antes de enviar.');e.target.value='';return}
-    for(const f of files){if(f.size>50*1048576){toast(f.name+' tem mais de 50 MB. Comprima o vídeo antes de enviar.');continue}
+    for(const f of files){if(f.size>50*1048576){toast(f.name+' tem mais de 50 MB. Comprima o arquivo antes de enviar.');continue}
       const path=`${c}/${Date.now()}-${f.name.normalize('NFD').replace(/[^\w.-]+/g,'-')}`;toast('Enviando '+f.name);
-      const {error}=await sb.storage.from('media').upload(path,f,{contentType:f.type,upsert:false});if(error){toast(error.message);continue}
+      const {error}=await sb.storage.from('media').upload(path,f,{contentType:isPdf(f)?'application/pdf':f.type,upsert:false});if(error){toast(error.message);continue}
       if(D.usage){D.usage.files_bytes+=f.size;D.usage.files_count++}
-      POST_EDIT.media.push({url:MEDIA+path,kind:f.type.startsWith('video')?'video':'image'});
-      const add=e.target.closest('.add');add.insertAdjacentHTML('beforebegin',`<span class="mth">${f.type.startsWith('video')?'<span class="noimg">vídeo</span>':`<img src="${MEDIA+path}" alt="">`}</span>`)}
+      const m={url:MEDIA+path,kind:isPdf(f)?'pdf':f.type.startsWith('video')?'video':'image'};if(m.kind==='pdf')m.name=f.name;
+      POST_EDIT.media.push(m);
+      const add=e.target.closest('.add');add.insertAdjacentHTML('beforebegin',`<span class="mth">${mthIn(m,MEDIA+path)}</span>`)}
     toast('Mídia enviada');}
 });
 /* arrastar cartões */
