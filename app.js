@@ -81,6 +81,7 @@ const ic={
  met:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19h16M7 16v-5M12 16V7M17 16v-8"/></svg>',
  ig:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.8" cy="7.2" r=".8" fill="currentColor"/></svg>',
  arq:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7.5a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>',
+ marca:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="2.6"/><circle cx="5" cy="6" r="1.8"/><circle cx="19" cy="6" r="1.8"/><circle cx="5" cy="18" r="1.8"/><circle cx="19" cy="18" r="1.8"/><path d="M6.5 7.2l3.4 3M17.5 7.2l-3.4 3M6.5 16.8l3.4-3M17.5 16.8l-3.4-3"/></svg>',
  link:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>'
 };
 const fld=(id,label,type,icon,extra='')=>`<div class="fld in"><label for="${id}">${label}</label><div class="gin">${ic[icon]}<input id="${id}" type="${type}" ${extra}>${type==='password'?`<button type="button" class="eye" data-eye="${id}" aria-label="Mostrar senha">${ic.eye}</button>`:''}</div></div>`;
@@ -225,13 +226,14 @@ function notaCard(){
    <div class="nsc">${Array.from({length:11},(_,i)=>`<button data-nota="${i}" class="${NOTASEL===i?'on':''}">${i}</button>`).join('')}</div>
    ${NOTASEL!=null?`<textarea id="notat" rows="2" placeholder="Quer contar o porquê? (opcional)"></textarea><button class="btn red" data-nota-ok>Enviar nota</button>`:''}</div>`;
 }
-function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','arq'].includes(h)?h:'inicio';render();
+function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','arq'].concat(hasMarca()?['marca']:[]).includes(h)?h:'inicio';render();
   if(window.StondIA)StondIA.mount({sb,mode:'cliente',local:iaLocal,fab:false,title:'Assistente Stond',sub:'Responde com os dados do seu portal',hello:'Oi, '+(first()||'tudo bem')+'! Posso dizer o que falta aprovar, o que vai ao ar e como está o seu Instagram.',hints:['O que falta eu aprovar?','O que vai ao ar esta semana?','Como está meu Instagram?','Como peço um ajuste?']})}
 function go(s){S=s;OPEN=null;if(location.hash.slice(1)!==s)history.replaceState(null,'','#'+s);render();const m=$('.main');if(m)m.scrollTop=0}
 
+const hasMarca=()=>!!(D&&D.brand&&window.StondMarca);
 function shell(inner){
-  const items=[['inicio','Início'],['aprov','Aprovações',pend().length],['cal','Calendário'],['met','Métricas'],['ig','Meu Instagram'],['arq','Arquivos e links']];
-  const tabs=[['inicio','Início'],['aprov','Aprovar',pend().length],['cal','Calendário'],['met','Métricas'],['arq','Arquivos']];
+  const items=[['inicio','Início'],...(hasMarca()?[['marca','Sua marca']]:[]),['aprov','Aprovações',pend().length],['cal','Calendário'],['met','Métricas'],['ig','Meu Instagram'],['arq','Arquivos e links']];
+  const tabs=[['inicio','Início'],...(hasMarca()?[['marca','Marca']]:[]),['aprov','Aprovar',pend().length],['cal','Calendário'],['met','Métricas'],['arq','Arquivos']];
   const ph=photo();
   return `<div class="app"><aside class="side"><img class="logo" src="${LOGO}" alt="Stond">
    <div class="who">${ph?`<img src="${ph}" alt="">`:''}<div><b>${esc(D.client.name)}</b><small>${esc(D.client.handle||'')}</small></div></div>
@@ -311,6 +313,7 @@ const V={
 ${esc(pr.bioNow||pr.bio||'')}</p>
   <div class="feed">${feed.map(p=>`<button data-open="${esc(p.id)}">${thumb(p)}<span class="tag">${p.status==='aprovado'?'Aprovado':p.status==='publicado'?'No ar':'Prévia'}</span></button>`).join('')}</div></div>`;
  },
+ marca(){return hasMarca()?StondMarca.view(D.brand):'<div class="empty">A sua marca aparece aqui quando a Stond publicar.</div>'},
  arq(){
   const L=(D.links||[]).filter(l=>l.kind==='link'),F=(D.links||[]).filter(l=>l.kind==='arquivo'),U=D.uploads||[];
   const ext=u=>{const m=String(u).split('?')[0].match(/\.([a-z0-9]{2,4})$/i);return m?m[1].toUpperCase():'LINK'};
@@ -389,7 +392,7 @@ document.addEventListener('click',async e=>{
   const fl=t.closest('[data-filter]');if(fl){FILTER=fl.dataset.filter;render();return}
   const cl=t.closest('[data-cal]');if(cl){CALM=new Date(CALM.getFullYear(),CALM.getMonth()+ +cl.dataset.cal,1);ss.set('stond-day',null);render();return}
   const dy=t.closest('[data-day]');if(dy){ss.set('stond-day',dy.dataset.day);render();return}
-  const cp=t.closest('[data-copy]');if(cp){try{await navigator.clipboard.writeText(cp.dataset.copy);toast('Link copiado.')}catch(x){toast(cp.dataset.copy)}return}
+  const cp=t.closest('[data-copy]');if(cp){try{await navigator.clipboard.writeText(cp.dataset.copy);toast(cp.dataset.copyMsg||'Link copiado.')}catch(x){toast(cp.dataset.copy)}return}
   const gt=t.closest('[data-get]');if(gt){const {data,error}=await sb.storage.from('client-files').createSignedUrl(gt.dataset.get,300);if(error)return toast(error.message);window.open(data.signedUrl,'_blank','noopener');return}
   if(t.closest('[data-out]')){await sb.auth.signOut();D=null;login('entrar');return}
 });
