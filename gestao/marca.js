@@ -12,7 +12,7 @@
     values:[],personas:[],personas_note:'',out_tribe:'',archetype:'',archetype_desc:'',shadow:'',words3:'',is_not:[],tone:[],
     use:[],avoid:[],avoid_why:'',messages:[],tagline:'',pillars:[],colors:[],colors_why:'',font_title:'',font_accent:'',font_body:'',font_note:'',
     type_sample:'',type_word:'',type_text:'',proof_title:'',proof:{},sig1:'',sig2:'',sig_line:'',logo_note:'',photo_use:[],photo_avoid:[],
-    journey:[],checklist:[],rules:[],metrics:[],next_review:'',version:'',doc:'',pdf_url:'',guide_url:''});
+    journey:[],checklist:[],rules:[],metrics:[],tasks:[],compare:[],next_review:'',version:'',doc:'',pdf_url:'',guide_url:''});
 
   /* a marca do cliente como objeto vivo (as edições mudam este objeto e ele é salvo) */
   function brandOf(c){

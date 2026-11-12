@@ -5,7 +5,10 @@
 (function(){
   const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const A=v=>Array.isArray(v)?v:[];
-  const TABS=[['mapa','Visão geral'],['quem','Quem somos'],['fala','Como falamos'],['visual','Como aparecemos'],['cuida','Como cuidamos'],['doc','Manual completo']];
+  /* abas de cima: a marca + o projeto. A marca tem sub-abas (visão geral e as 4 partes + manual) */
+  const TABS=[['mapa','A marca'],['plano','O que vamos fazer'],['fazendo','Em andamento'],['entregue','Entregue'],['metricas','Métricas'],['antes','Antes e depois']];
+  const SUB=[['mapa','Visão geral'],['quem','Quem somos'],['fala','Como falamos'],['visual','Como aparecemos'],['cuida','Como cuidamos'],['doc','Manual completo']];
+  const ST={plano:'O que vamos fazer',fazendo:'Em andamento',entregue:'Entregue'};
   let TAB='mapa', fontsLoaded='', ED=null, B=null, FOCUS=null;
 
   /* ---------- dados: caminhos "chave", "chave.i", "chave.i.campo", "chave;i" (pontos separados por ;) ---------- */
@@ -54,7 +57,10 @@
     const s=A(B.steps);if(!s.length&&!ED)return '';
     return `<div class="mk-steps">${s.map((x,i)=>`<div class="mk-step mk-it ${E(x.state||'')}">${X('steps.'+i)}<i class="mk-bar"${ED?` data-cyc="steps.${i}" title="Clique para mudar: feito, agora, depois"`:''}></i><b>${T(`steps.${i}.name`,'Etapa',{raw:1})}</b><small>${T(`steps.${i}.note`,'Situação',{raw:1})}</small></div>`).join('')}${ADD('steps',{name:'',note:'',state:''},'Etapa')}</div>`;
   }
-  function tabs(){return `<div class="mk-tabs" role="tablist">${TABS.map(([k,l])=>`<button role="tab" data-mk="${k}" aria-selected="${k===TAB}">${l}</button>`).join('')}</div>`}
+  function tabs(){
+    const inB=SUB.some(([k])=>k===TAB),cnt=k=>A(B.tasks).filter(t=>(t.status||'plano')===k).length;
+    return `<div class="mk-tabs" role="tablist">${TABS.map(([k,l])=>{const n=ST[k]?cnt(k):0;return `<button role="tab" data-mk="${k}" aria-selected="${k==='mapa'?inB:k===TAB}">${l}${n?`<span class="mk-cnt">${n}</span>`:''}</button>`}).join('')}</div>
+     ${inB?`<div class="mk-sub">${SUB.map(([k,l])=>`<button data-mk="${k}" aria-pressed="${k===TAB}">${l}</button>`).join('')}</div>`:''}`}
 
   function phraseHTML(){
     if(ED)return T('phrase','Frase central da marca');
@@ -74,6 +80,7 @@
         ${A(B.colors).length?`<div class="mk-dots">${A(B.colors).slice(0,6).map(c=>`<i style="background:#${E(String(c.hex||'').replace('#',''))}" title="${E(c.name)}"></i>`).join('')}</div>`:''}</div>
      </section>
      ${S(B.pending)?`<div class="mk-pend"><b>Falta você</b><span>${T('pending','O que falta o cliente fazer',{ml:1})}</span></div>`:''}
+     ${projStrip()}
      <div class="mk-parts">${P.map(([k,n,h,q,m])=>{const ch=chipsOf(B[m]);
        return `<div class="mk-part"><span class="mk-n">${n}</span><h4>${h}</h4><small>${q}</small>
         <ul>${ch.map((c,i)=>`<li class="mk-it">${X(m+';'+i)}${T(m+';'+i,'Ponto-chave',{raw:1})}</li>`).join('')}</ul>
@@ -129,7 +136,7 @@
      <div class="mk-grid">
       ${S(B.checklist)?`<div class="mk-card">${lb('Antes de postar')}<ul class="mk-ck">${A(B.checklist).map((x,i)=>`<li class="mk-it">${X('checklist.'+i)}${T('checklist.'+i,'Pergunta',{ml:1})}</li>`).join('')}</ul>${ADD('checklist','','Pergunta')}</div>`:''}
       ${S(B.rules)?`<div class="mk-card">${lb('Regras do setor')}<ul class="mk-ck">${A(B.rules).map((x,i)=>`<li class="mk-it">${X('rules.'+i)}${T('rules.'+i,'Regra',{ml:1})}</li>`).join('')}</ul>${ADD('rules','','Regra')}</div>`:''}
-      ${S(B.metrics)?`<div class="mk-card mk-full">${lb('Como vamos medir')}${LIST('metrics',(m,i,p)=>`<div class="mk-mt mk-it">${X(p)}<span>${T(p+'.name','Indicador',{raw:1})}<small>${T(p+'.desc','Explicação',{raw:1})}</small></span><b>${T(p+'.value','Valor',{raw:1})}</b></div>`,{name:'',desc:'',value:''},'Indicador')}${S(B.next_review)?`<p class="mk-muted">${T('next_review','Próxima leitura',{raw:1})}</p>`:''}</div>`:''}
+      <div class="mk-card mk-full mk-link"><span>Os números de como a marca está indo ficam na aba <b>Métricas</b>.</span><button class="mk-go" data-mk="metricas">Ver métricas →</button></div>
      </div>`;
   }
 
@@ -153,15 +160,57 @@
      ${out.length?`<div class="mk-doc">${toc.length>2?`<nav class="mk-card mk-toc" aria-label="Índice">${toc.map(([id,t])=>`<a href="#" data-mk-to="${id}">${E(t)}</a>`).join('')}</nav>`:''}<article class="mk-card mk-paper">${out.join('')}</article></div>`:'<div class="empty">O manual completo aparece aqui quando a Stond publicar.</div>'}`;
   }
 
+  /* ---------- projeto: o que vamos fazer, em andamento, entregue ---------- */
+  const STAGES=['Diagnóstico','Construção','Ativação','Otimização','Escala'];
+  function projStrip(){
+    const t=A(B.tasks);if(!t.length)return '';const c=k=>t.filter(x=>(x.status||'plano')===k).length;
+    return `<div class="mk-proj">${[['entregue','Entregue'],['fazendo','Em andamento'],['plano','O que vamos fazer']].map(([k,l])=>`<button data-mk="${k}" class="mk-pj ${k}"><b>${c(k)}</b><span>${l}</span></button>`).join('')}</div>`;
+  }
+  function tasks(st){
+    const all=A(B.tasks),rows=all.map((t,i)=>[t,i]).filter(([t])=>(t.status||'plano')===st);
+    const dl={plano:'Previsto para',fazendo:'Previsto para',entregue:'Entregue em'}[st];
+    const intro={plano:'O que ainda vamos fazer na sua marca, na ordem do método.',fazendo:'O que a Stond está fazendo agora.',entregue:'Tudo o que já foi entregue, com o link para abrir.'}[st];
+    const card=([t,i],grouped)=>{const p='tasks.'+i;return `<div class="mk-task mk-it ${st}">${X(p)}
+      <div class="mk-tk-h">${S(t.stage)&&(!grouped||ED)?`<span class="mk-stage">${T(p+'.stage','Etapa do método',{raw:1})}</span>`:''}${st==='entregue'?'<span class="mk-ok">✓ Entregue</span>':st==='fazendo'?'<span class="mk-doing">Em andamento</span>':''}</div>
+      <b>${T(p+'.name','Nome da entrega',{raw:1})}</b>${S(t.desc)?`<p>${T(p+'.desc','O que é e para que serve',{ml:1})}</p>`:''}
+      <div class="mk-tk-f">${S(t.date)?`<small>${dl} ${T(p+'.date','dd/mm',{raw:1})}</small>`:'<small></small>'}
+        ${ED?`<small class="mk-lk">Link: ${T(p+'.link','https://…',{raw:1})}</small>`:t.link?`<a class="mk-open" href="${E(t.link)}" target="_blank" rel="noopener">Abrir →</a>`:''}</div>
+      ${ED?`<div class="mk-mv">${Object.entries({plano:'A fazer',fazendo:'Fazendo',entregue:'Entregue'}).map(([k,l])=>`<button data-st="${p}" data-v="${k}" aria-pressed="${k===st}">${l}</button>`).join('')}</div>`:''}</div>`};
+    const groups=STAGES.map(g=>[g,rows.filter(([t])=>t.stage===g)]).filter(([,r])=>r.length);
+    const other=rows.filter(([t])=>!STAGES.includes(t.stage));
+    const body=rows.length?(st==='entregue'?`<div class="mk-tasks">${rows.map(x=>card(x)).join('')}</div>`
+      :[...groups,...(other.length?[['Outras',other]]:[])].map(([g,r])=>`<div class="mk-tg"><span class="mk-lb">${E(g)}</span><div class="mk-tasks">${r.map(x=>card(x,1)).join('')}</div></div>`).join(''))
+      :`<div class="mk-card mk-empty">${{plano:'Nada planejado por enquanto.',fazendo:'Nada em andamento agora.',entregue:'As entregas aparecem aqui assim que ficarem prontas.'}[st]}</div>`;
+    return `<p class="mk-intro">${intro}</p>${body}${ED?`<button class="mk-add" data-add="tasks" data-tpl='${E(JSON.stringify({name:'',desc:'',stage:'',status:st,date:'',link:''}))}'>+ Entrega</button>`:''}`;
+  }
+
+  /* ---------- métricas: antes, agora e meta ---------- */
+  const sz=v=>String(v||'').length>7?' class="tx"':'';
+  function metricas(){
+    return `<p class="mk-intro">Como vamos saber se a marca está funcionando. "Antes" é o ponto de partida, "agora" é a última leitura.</p>
+     <div class="mk-mets">${LIST('metrics',(m,i,p)=>`<div class="mk-met mk-it">${X(p)}<b>${T(p+'.name','Indicador',{raw:1})}</b><small>${T(p+'.desc','O que mostra',{raw:1})}</small>
+       <div class="mk-mv3"><div><span>Antes</span><em${sz(m.before)}>${T(p+'.before','—',{raw:1})||'—'}</em></div><i>→</i><div class="now"><span>Agora</span><em${sz(m.value)}>${T(p+'.value','—',{raw:1})||'—'}</em></div><div class="goal"><span>Meta</span><em${sz(m.goal)}>${T(p+'.goal','—',{raw:1})||'—'}</em></div></div></div>`,{name:'',desc:'',before:'',value:'',goal:''},'Indicador')}</div>
+     ${S(B.next_review)?`<p class="mk-muted">${T('next_review','Próxima leitura',{raw:1})}</p>`:''}`;
+  }
+
+  /* ---------- antes e depois ---------- */
+  function antes(){
+    const img=(p,u,ph)=>ED?`<small class="mk-lk">Imagem: ${T(p,ph,{raw:1})}</small>`:u?`<img src="${E(u)}" alt="" loading="lazy">`:'';
+    return `<p class="mk-intro">Como a marca era e como ficou.</p>
+     <div class="mk-bas">${LIST('compare',(c,i,p)=>`<div class="mk-ba mk-it">${X(p)}<span class="mk-lb">${T(p+'.topic','Tema',{raw:1})}</span>
+       <div class="mk-ba2"><div class="b"><small>Antes</small>${img(p+'.img_before',c.img_before,'link da imagem (opcional)')}<p>${T(p+'.before','Como era',{ml:1})}</p></div>
+       <div class="a"><small>Depois</small>${img(p+'.img_after',c.img_after,'link da imagem (opcional)')}<p>${T(p+'.after','Como ficou',{ml:1})}</p></div></div></div>`,{topic:'',before:'',after:'',img_before:'',img_after:''},'Comparação')}</div>`;
+  }
+
   function view(b,opt={}){
     B=b||{};ED=opt.edit?opt:null;loadFonts(B);
-    if(!TABS.some(([k])=>k===TAB))TAB='mapa';
+    if(!TABS.some(([k])=>k===TAB)&&!SUB.some(([k])=>k===TAB))TAB='mapa';
     const P=palette(B);
     const vars=`--mb:${P.base};--ma:${P.accent};--mf:${fam(B.font_title,'Montserrat,sans-serif')};--ms:${fam(B.font_accent,'Georgia,serif')}`;
-    const body={mapa,quem,fala,visual,cuida,doc}[TAB]();
+    const body={mapa,quem,fala,visual,cuida,doc,metricas,antes,plano:()=>tasks('plano'),fazendo:()=>tasks('fazendo'),entregue:()=>tasks('entregue')}[TAB]();
     if(FOCUS)requestAnimationFrame(()=>{const el=document.querySelector(`[data-e^="${FOCUS}"]`);FOCUS=null;if(el)el.focus()});
     return `<div class="mk${ED?' mk-editing':''}" style='${vars}'>
-      ${opt.head===false?'':`<div class="top"><div><h2>Sua marca</h2><p>Tudo o que a sua marca é, num lugar só. Comece pela visão geral e abra cada parte para ver os detalhes.</p></div></div>`}
+      ${opt.head===false?'':`<div class="top"><div><h2>Sua marca</h2><p>O que a sua marca é, o que estamos fazendo nela e os resultados, num lugar só.</p></div></div>`}
       ${steps()}${tabs()}<div class="mk-body">${body}</div></div>`;
   }
 
@@ -185,6 +234,8 @@
     if(add){const k=add.dataset.add;if(!Array.isArray(B[k]))B[k]=[];B[k].push(JSON.parse(add.dataset.tpl));FOCUS=`${k}.${B[k].length-1}`;changed();rerender();return}
     const ch=e.target.closest('[data-chip]');
     if(ch){const k=ch.dataset.chip;const a=chipsOf(B[k]);a.push('Novo ponto');B[k]=a.join('; ');FOCUS=`${k};${a.length-1}`;changed();rerender();return}
+    const sm=e.target.closest('[data-st]');
+    if(sm){const t=getP(B,sm.dataset.st);if(t){t.status=sm.dataset.v;changed();rerender()}return}
     const cy=e.target.closest('[data-cyc]');
     if(cy){const s=getP(B,cy.dataset.cyc);if(s){s.state=s.state==='done'?'now':s.state==='now'?'':'done';changed();rerender()}return}
   });
