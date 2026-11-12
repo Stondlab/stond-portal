@@ -9,7 +9,7 @@
   const TABS=[['mapa','A marca'],['plano','O que vamos fazer'],['fazendo','Em andamento'],['entregue','Entregue'],['metricas','Métricas'],['antes','Antes e depois']];
   const SUB=[['mapa','Visão geral'],['quem','Quem somos'],['fala','Como falamos'],['visual','Como aparecemos'],['cuida','Como cuidamos'],['doc','Manual completo']];
   const ST={plano:'O que vamos fazer',fazendo:'Em andamento',entregue:'Entregue'};
-  let TAB='mapa', fontsLoaded='', ED=null, B=null, FOCUS=null;
+  let TAB='mapa', fontsLoaded='', ED=null, B=null, FOCUS=null, SEC='';
 
   /* ---------- dados: caminhos "chave", "chave.i", "chave.i.campo", "chave;i" (pontos separados por ;) ---------- */
   function getP(o,p){if(p.includes(';')){const [k,i]=p.split(';');return chipsOf(o[k])[+i]??''}return p.split('.').reduce((x,k)=>x==null?x:x[k],o)}
@@ -57,10 +57,11 @@
     const s=A(B.steps);if(!s.length&&!ED)return '';
     return `<div class="mk-steps">${s.map((x,i)=>`<div class="mk-step mk-it ${E(x.state||'')}">${X('steps.'+i)}<i class="mk-bar"${ED?` data-cyc="steps.${i}" title="Clique para mudar: feito, agora, depois"`:''}></i><b>${T(`steps.${i}.name`,'Etapa',{raw:1})}</b><small>${T(`steps.${i}.note`,'Situação',{raw:1})}</small></div>`).join('')}${ADD('steps',{name:'',note:'',state:''},'Etapa')}</div>`;
   }
-  function tabs(){
-    const inB=SUB.some(([k])=>k===TAB),cnt=k=>A(B.tasks).filter(t=>(t.status||'plano')===k).length;
-    return `<div class="mk-tabs" role="tablist">${TABS.map(([k,l])=>{const n=ST[k]?cnt(k):0;return `<button role="tab" data-mk="${k}" aria-selected="${k==='mapa'?inB:k===TAB}">${l}${n?`<span class="mk-cnt">${n}</span>`:''}</button>`}).join('')}</div>
-     ${inB?`<div class="mk-sub">${SUB.map(([k,l])=>`<button data-mk="${k}" aria-pressed="${k===TAB}">${l}</button>`).join('')}</div>`:''}`}
+  function tabs(list,cur,sub){
+    const cnt=k=>A(B.tasks).filter(t=>(t.status||'plano')===k).length;
+    const inB=SUB.some(([k])=>k===cur);
+    return `<div class="mk-tabs" role="tablist">${list.map(([k,l])=>{const n=ST[k]?cnt(k):0;return `<button role="tab" data-mk="${k}" aria-selected="${sub&&k==='mapa'?inB:k===cur}">${l}${n?`<span class="mk-cnt">${n}</span>`:''}</button>`}).join('')}</div>
+     ${sub&&inB?`<div class="mk-sub">${SUB.map(([k,l])=>`<button data-mk="${k}" aria-pressed="${k===cur}">${l}</button>`).join('')}</div>`:''}`}
 
   function phraseHTML(){
     if(ED)return T('phrase','Frase central da marca');
@@ -136,7 +137,7 @@
      <div class="mk-grid">
       ${S(B.checklist)?`<div class="mk-card">${lb('Antes de postar')}<ul class="mk-ck">${A(B.checklist).map((x,i)=>`<li class="mk-it">${X('checklist.'+i)}${T('checklist.'+i,'Pergunta',{ml:1})}</li>`).join('')}</ul>${ADD('checklist','','Pergunta')}</div>`:''}
       ${S(B.rules)?`<div class="mk-card">${lb('Regras do setor')}<ul class="mk-ck">${A(B.rules).map((x,i)=>`<li class="mk-it">${X('rules.'+i)}${T('rules.'+i,'Regra',{ml:1})}</li>`).join('')}</ul>${ADD('rules','','Regra')}</div>`:''}
-      <div class="mk-card mk-full mk-link"><span>Os números de como a marca está indo ficam na aba <b>Métricas</b>.</span><button class="mk-go" data-mk="metricas">Ver métricas →</button></div>
+      <div class="mk-card mk-full mk-link"><span>Os números de como a marca está indo ficam na aba <b>Métricas</b>.</span><button class="mk-go" data-mk="metricas"${SEC?' data-go="met"':''}>Ver métricas →</button></div>
      </div>`;
   }
 
@@ -164,7 +165,7 @@
   const STAGES=['Diagnóstico','Construção','Ativação','Otimização','Escala'];
   function projStrip(){
     const t=A(B.tasks);if(!t.length)return '';const c=k=>t.filter(x=>(x.status||'plano')===k).length;
-    return `<div class="mk-proj">${[['entregue','Entregue'],['fazendo','Em andamento'],['plano','O que vamos fazer']].map(([k,l])=>`<button data-mk="${k}" class="mk-pj ${k}"><b>${c(k)}</b><span>${l}</span></button>`).join('')}</div>`;
+    return `<div class="mk-proj">${[['entregue','Entregue'],['fazendo','Em andamento'],['plano','O que vamos fazer']].map(([k,l])=>`<button data-mk="${k}"${SEC?' data-go="proj"':''} class="mk-pj ${k}"><b>${c(k)}</b><span>${l}</span></button>`).join('')}</div>`;
   }
   function tasks(st){
     const all=A(B.tasks),rows=all.map((t,i)=>[t,i]).filter(([t])=>(t.status||'plano')===st);
@@ -187,7 +188,7 @@
   /* ---------- métricas: antes, agora e meta ---------- */
   const sz=v=>String(v||'').length>7?' class="tx"':'';
   function metricas(){
-    return `<p class="mk-intro">Como vamos saber se a marca está funcionando. "Antes" é o ponto de partida, "agora" é a última leitura.</p>
+    return `${SEC==='metas'?'<span class="mk-lb">Metas da marca · antes, agora e meta</span>':'<p class="mk-intro">Como vamos saber se a marca está funcionando. "Antes" é o ponto de partida, "agora" é a última leitura.</p>'}
      <div class="mk-mets">${LIST('metrics',(m,i,p)=>`<div class="mk-met mk-it">${X(p)}<b>${T(p+'.name','Indicador',{raw:1})}</b><small>${T(p+'.desc','O que mostra',{raw:1})}</small>
        <div class="mk-mv3"><div><span>Antes</span><em${sz(m.before)}>${T(p+'.before','—',{raw:1})||'—'}</em></div><i>→</i><div class="now"><span>Agora</span><em${sz(m.value)}>${T(p+'.value','—',{raw:1})||'—'}</em></div><div class="goal"><span>Meta</span><em${sz(m.goal)}>${T(p+'.goal','—',{raw:1})||'—'}</em></div></div></div>`,{name:'',desc:'',before:'',value:'',goal:''},'Indicador')}</div>
      ${S(B.next_review)?`<p class="mk-muted">${T('next_review','Próxima leitura',{raw:1})}</p>`:''}`;
@@ -196,22 +197,31 @@
   /* ---------- antes e depois ---------- */
   function antes(){
     const img=(p,u,ph)=>ED?`<small class="mk-lk">Imagem: ${T(p,ph,{raw:1})}</small>`:u?`<img src="${E(u)}" alt="" loading="lazy">`:'';
-    return `<p class="mk-intro">Como a marca era e como ficou.</p>
+    return `${SEC==='antes'?'':'<p class="mk-intro">Como a marca era e como ficou.</p>'}
      <div class="mk-bas">${LIST('compare',(c,i,p)=>`<div class="mk-ba mk-it">${X(p)}<span class="mk-lb">${T(p+'.topic','Tema',{raw:1})}</span>
        <div class="mk-ba2"><div class="b"><small>Antes</small>${img(p+'.img_before',c.img_before,'link da imagem (opcional)')}<p>${T(p+'.before','Como era',{ml:1})}</p></div>
        <div class="a"><small>Depois</small>${img(p+'.img_after',c.img_after,'link da imagem (opcional)')}<p>${T(p+'.after','Como ficou',{ml:1})}</p></div></div></div>`,{topic:'',before:'',after:'',img_before:'',img_after:''},'Comparação')}</div>`;
   }
 
+  /* section: sem nada = tudo junto (gestão); 'marca' | 'projeto' | 'antes' | 'metas' = uma página do menu do portal */
+  const PROJ=[['plano','O que vamos fazer'],['fazendo','Em andamento'],['entregue','Entregue']];
+  const HEAD={marca:['Sua marca','O que a sua marca é e o porquê de cada escolha.'],projeto:['Projeto da marca','O que já foi entregue, o que está em andamento e o que vem a seguir.'],antes:['Antes e depois','Como a sua marca era e como ficou.']};
   function view(b,opt={}){
-    B=b||{};ED=opt.edit?opt:null;loadFonts(B);
-    if(!TABS.some(([k])=>k===TAB)&&!SUB.some(([k])=>k===TAB))TAB='mapa';
+    B=b||{};ED=opt.edit?opt:null;SEC=opt.section||'';loadFonts(B);
     const P=palette(B);
     const vars=`--mb:${P.base};--ma:${P.accent};--mf:${fam(B.font_title,'Montserrat,sans-serif')};--ms:${fam(B.font_accent,'Georgia,serif')}`;
-    const body={mapa,quem,fala,visual,cuida,doc,metricas,antes,plano:()=>tasks('plano'),fazendo:()=>tasks('fazendo'),entregue:()=>tasks('entregue')}[TAB]();
+    const fn={mapa,quem,fala,visual,cuida,doc,metricas,antes,plano:()=>tasks('plano'),fazendo:()=>tasks('fazendo'),entregue:()=>tasks('entregue')};
+    let cur=TAB,top='',body;
+    if(SEC==='marca'){cur=SUB.some(([k])=>k===TAB)?TAB:'mapa';top=tabs(SUB,cur)}
+    else if(SEC==='projeto'){const def=A(B.tasks).some(t=>t.status==='fazendo')?'fazendo':'plano';cur=PROJ.some(([k])=>k===TAB)?TAB:def;top=steps()+tabs(PROJ,cur)}
+    else if(SEC==='antes'||SEC==='metas'){cur=SEC==='antes'?'antes':'metricas'}
+    else{cur=TABS.some(([k])=>k===TAB)||SUB.some(([k])=>k===TAB)?TAB:'mapa';top=steps()+tabs(TABS,cur,1)}
+    body=fn[cur]();
     if(FOCUS)requestAnimationFrame(()=>{const el=document.querySelector(`[data-e^="${FOCUS}"]`);FOCUS=null;if(el)el.focus()});
-    return `<div class="mk${ED?' mk-editing':''}" style='${vars}'>
-      ${opt.head===false?'':`<div class="top"><div><h2>Sua marca</h2><p>O que a sua marca é, o que estamos fazendo nela e os resultados, num lugar só.</p></div></div>`}
-      ${steps()}${tabs()}<div class="mk-body">${body}</div></div>`;
+    const h=HEAD[SEC]||(SEC?null:['Sua marca','O que a sua marca é, o que estamos fazendo nela e os resultados, num lugar só.']);
+    return `<div class="mk${ED?' mk-editing':''}${SEC?' mk-s-'+SEC:''}" style='${vars}'>
+      ${opt.head===false||!h?'':`<div class="top"><div><h2>${h[0]}</h2><p>${h[1]}</p></div></div>`}
+      ${top}<div class="mk-body">${body}</div></div>`;
   }
 
   /* ---------- eventos ---------- */

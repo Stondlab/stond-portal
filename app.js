@@ -82,7 +82,11 @@ const ic={
  ig:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="16.8" cy="7.2" r=".8" fill="currentColor"/></svg>',
  arq:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7.5a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>',
  marca:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="2.6"/><circle cx="5" cy="6" r="1.8"/><circle cx="19" cy="6" r="1.8"/><circle cx="5" cy="18" r="1.8"/><circle cx="19" cy="18" r="1.8"/><path d="M6.5 7.2l3.4 3M17.5 7.2l-3.4 3M6.5 16.8l3.4-3M17.5 16.8l-3.4-3"/></svg>',
- link:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>'
+ proj:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 9h8M8 12.5h5M8 16h3"/></svg>',
+ inv:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M14.6 9.2c-.5-.8-1.5-1.3-2.6-1.3-1.5 0-2.6.8-2.6 2s1.1 1.7 2.6 2 2.7.8 2.7 2.1-1.2 2.1-2.7 2.1c-1.2 0-2.2-.5-2.7-1.4M12 6.5v1.4M12 16.1v1.4"/></svg>',
+ antes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="7.5" height="14" rx="2"/><rect x="13" y="5" width="7.5" height="14" rx="2"/><path d="M6 15l2-3 2 2M15.5 15l2-4 2 3"/></svg>',
+ auto:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11l-4.5 3.5v-3.5h0a2 2 0 0 1-2-2z"/><path d="M12.6 7.5l-2.2 3.6h3.2l-2.2 3.6"/></svg>',
+ link:'<svg width="18" height="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>'
 };
 const fld=(id,label,type,icon,extra='')=>`<div class="fld in"><label for="${id}">${label}</label><div class="gin">${ic[icon]}<input id="${id}" type="${type}" ${extra}>${type==='password'?`<button type="button" class="eye" data-eye="${id}" aria-label="Mostrar senha">${ic.eye}</button>`:''}</div></div>`;
 
@@ -226,21 +230,32 @@ function notaCard(){
    <div class="nsc">${Array.from({length:11},(_,i)=>`<button data-nota="${i}" class="${NOTASEL===i?'on':''}">${i}</button>`).join('')}</div>
    ${NOTASEL!=null?`<textarea id="notat" rows="2" placeholder="Quer contar o porquê? (opcional)"></textarea><button class="btn red" data-nota-ok>Enviar nota</button>`:''}</div>`;
 }
-function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','arq'].concat(hasMarca()?['marca']:[]).includes(h)?h:'inicio';render();
+function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','inv','auto','arq'].concat(hasMarca()?['marca','proj','antes']:[]).includes(h)?h:'inicio';render();
   if(window.StondIA)StondIA.mount({sb,mode:'cliente',local:iaLocal,fab:false,title:'Assistente Stond',sub:'Responde com os dados do seu portal',hello:'Oi, '+(first()||'tudo bem')+'! Posso dizer o que falta aprovar, o que vai ao ar e como está o seu Instagram.',hints:['O que falta eu aprovar?','O que vai ao ar esta semana?','Como está meu Instagram?','Como peço um ajuste?']})}
 function go(s){S=s;OPEN=null;if(location.hash.slice(1)!==s)history.replaceState(null,'','#'+s);render();const m=$('.main');if(m)m.scrollTop=0}
 
 const hasMarca=()=>!!(D&&D.brand&&window.StondMarca);
+const RES=['met','inv','antes','auto'];
+/* no celular a barra de baixo só tem 5 botões: as páginas de cada bloco ganham pílulas no topo */
+const pills=L=>`<div class="pills">${L.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${l}</button>`).join('')}</div>`;
+const resPills=()=>pills([['met','Métricas'],['inv','Investimento'],...(hasMarca()?[['antes','Antes e depois']]:[]),['auto','Automações']]);
+const marcaPills=()=>pills([['marca','A marca'],['proj','Projeto']]);
+const brl=v=>v==null||v===''||isNaN(+v)?'—':(+v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:(+v)%1?2:0});
+const mesN=m=>{const [y,mm]=String(m||'').split('-');return mm?MES[+mm-1][0].toUpperCase()+MES[+mm-1].slice(1)+' '+y:String(m||'')};
 function shell(inner){
-  const items=[['inicio','Início'],...(hasMarca()?[['marca','Sua marca']]:[]),['aprov','Aprovações',pend().length],['cal','Calendário'],['met','Métricas'],['ig','Meu Instagram'],['arq','Arquivos e links']];
-  const tabs=[['inicio','Início'],...(hasMarca()?[['marca','Marca']]:[]),['aprov','Aprovar',pend().length],['cal','Calendário'],['met','Métricas'],['arq','Arquivos']];
+  const M=hasMarca(),groups=[['Dia a dia',[['inicio','Início'],['aprov','Aprovações',pend().length],['cal','Calendário'],['ig','Meu Instagram']]],
+   ...(M?[['Sua marca',[['marca','A marca'],['proj','Projeto']]]]:[]),
+   ['Resultados',[['met','Métricas'],['inv','Investimento'],...(M?[['antes','Antes e depois']]:[]),['auto','Automações']]],
+   ['Arquivos',[['arq','Arquivos e links']]]];
+  const tabs=[['inicio','Início'],['aprov','Aprovar',pend().length],['cal','Calendário'],...(M?[['marca','Marca']]:[]),['met','Resultados']];
+  const cur=k=>k===S||(k==='met'&&RES.includes(S))||(k==='marca'&&S==='proj');
   const ph=photo();
   return `<div class="app"><aside class="side"><img class="logo" src="${LOGO}" alt="Stond">
    <div class="who">${ph?`<img src="${ph}" alt="">`:''}<div><b>${esc(D.client.name)}</b><small>${esc(D.client.handle||'')}</small></div></div>
-   <nav class="nav">${items.map(([k,l,b])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${ic[k]}${l}${b?`<span class="bdg">${b}</span>`:''}</button>`).join('')}</nav>
+   <nav class="nav">${groups.map(([g,L])=>`<span class="grp">${g}</span>${L.map(([k,l,b])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${ic[k]}${l}${b?`<span class="bdg">${b}</span>`:''}</button>`).join('')}`).join('')}</nav>
    ${tt()}${MODE==='login'?'<button class="out" style="margin-top:0;padding-left:4px" data-out>Sair</button>':''}</aside>
    <main class="main"><div class="mhead"><img class="l" src="${LOGO}" alt="Stond"><span style="display:flex;gap:10px;align-items:center">${tt()}${ph?`<img class="a" src="${ph}" alt="">`:''}${MODE==='login'?'<button class="out" data-out style="padding:0">Sair</button>':''}</span></div>${inner}</main>
-   <nav class="tabbar">${tabs.map(([k,l,b])=>`<button data-go="${k}" ${k===S||(k==='met'&&S==='ig')?'aria-current="page"':''}>${ic[k]}${l}${b?`<span class="bdg">${b}</span>`:''}</button>`).join('')}</nav></div>${OPEN?modal():''}`;
+   <nav class="tabbar">${tabs.map(([k,l,b])=>`<button data-go="${k}" ${cur(k)?'aria-current="page"':''}>${ic[k]}${l}${b?`<span class="bdg">${b}</span>`:''}</button>`).join('')}</nav></div>${OPEN?modal():''}`;
 }
 const row=p=>`<button class="row" data-open="${esc(p.id)}">${thumb(p)}<div class="t"><b>${esc(p.title)}</b><small>${ty(p.type)} · ${fmtD(p.date)}${p.time?' · '+esc(p.time):''}</small></div>${chip(p)}</button>`;
 
@@ -291,7 +306,8 @@ const V={
   const best=X.best?(posts().find(p=>p.id===X.best.post_id)||(X.best.permalink?{title:X.best.caption||'Post do mês',type:'post',media:X.best.thumb?[{url:X.best.thumb,kind:'image'}]:[]}:null)):null;
   const fm=X.formats?Object.entries(X.formats):[],fmc={reels:'var(--red)',carrossel:'var(--carr)',story:'#8a5560'};
   const now=new Date(),mk=iso(now).slice(0,7),mp=posts().filter(p=>String(p.date).startsWith(mk)),pub=mp.filter(p=>p.status==='publicado'||p.status==='aprovado').length;
-  return `<div class="top"><div><h2>Métricas</h2><p>Como o seu Instagram está evoluindo${fd?' desde '+fd:''}.</p></div></div>
+  const metas=hasMarca()&&(D.brand.metrics||[]).length?`<div style="margin-top:26px">${StondMarca.view(D.brand,{section:'metas',head:false})}</div>`:'';
+  return `${resPills()}<div class="top"><div><h2>Métricas</h2><p>Como o seu Instagram está evoluindo${fd?' desde '+fd:''}.</p></div></div>
   <div class="bento">
    <div class="bx hero w2 h2 w2m"><span class="lb">Seguidores</span><div class="num">${nf(L.followers)}${dl!=null?`<small style="${dl<0?'color:var(--red)':''}">${dl>=0?'+':''}${nf(dl)} desde ${fd}</small>`:''}</div>${chart}
     ${F.followers!=null?`<span class="ft">Ponto de partida: ${nf(F.followers)} seguidores, ${nf(F.posts)} posts, ${nf(F.following)} seguindo</span>`:''}</div>
@@ -302,7 +318,7 @@ const V={
    <div class="bx"><span class="lb">Visualizações</span>${L.views!=null?`<div class="num">${kf(L.views)}</div><span class="ft">No mês</span>`:wait}</div>
    <div class="bx"><span class="lb">Formato que mais rende</span>${fm.length?`<div class="num" style="font-size:28px">${ty(fm.sort((a,b)=>b[1]-a[1])[0][0])}</div><div class="stack">${fm.map(([k,v])=>`<i style="width:${v}%;background:${fmc[k]||'var(--muted)'}"></i>`).join('')}</div><span class="ft">${fm.map(([k,v])=>`${v}% ${ty(k).toLowerCase()}`).join(' · ')}</span>`:wait}</div>
    <div class="bx"><span class="lb">${MES[now.getMonth()][0].toUpperCase()+MES[now.getMonth()].slice(1)} aprovado</span><div class="num">${pub}<small style="color:var(--muted)">de ${mp.length}</small></div><div class="prog"><b style="width:${mp.length?pub/mp.length*100:0}%"></b></div><button class="lnkb" data-go="ig">Ver prévia do feed</button></div>
-  </div>`;
+  </div>${metas}`;
  },
  ig(){
   const pr=D.profile||{},M=D.metrics||[],L=M[M.length-1]||{};
@@ -313,7 +329,25 @@ const V={
 ${esc(pr.bioNow||pr.bio||'')}</p>
   <div class="feed">${feed.map(p=>`<button data-open="${esc(p.id)}">${thumb(p)}<span class="tag">${p.status==='aprovado'?'Aprovado':p.status==='publicado'?'No ar':'Prévia'}</span></button>`).join('')}</div></div>`;
  },
- marca(){return hasMarca()?StondMarca.view(D.brand):'<div class="empty">A sua marca aparece aqui quando a Stond publicar.</div>'},
+ marca(){return hasMarca()?marcaPills()+StondMarca.view(D.brand,{section:'marca'}):'<div class="empty">A sua marca aparece aqui quando a Stond publicar.</div>'},
+ proj(){return hasMarca()?marcaPills()+StondMarca.view(D.brand,{section:'projeto'}):''},
+ antes(){return hasMarca()?resPills()+StondMarca.view(D.brand,{section:'antes'}):''},
+ inv(){
+  const L=(D.invest||[]).slice().sort((a,b)=>String(b.month).localeCompare(String(a.month)));
+  const tot=L.reduce((t,r)=>t+(+r.spent||0),0),conv=L.reduce((t,r)=>t+(+r.conversations||0),0);
+  const cpc=r=>+r.spent&&+r.conversations?brl(r.spent/r.conversations):'—';
+  return `${resPills()}<div class="top"><div><h2>Investimento</h2><p>Quanto foi investido em anúncios e o que isso trouxe.</p></div></div>
+  ${L.length?`<div class="sum"><div><b>${brl(tot)}</b><span>Investido no total</span></div><div><b>${conv?nf(conv):'—'}</b><span>Conversas geradas</span></div><div><b>${conv?brl(tot/conv):'—'}</b><span>Custo por conversa</span></div></div>
+  <div class="invl">${L.map(r=>`<div class="inv"><div class="h"><b>${esc(mesN(r.month))}</b><span class="v">${brl(r.spent)}</span></div>
+   <div class="k"><div><b>${r.reach!=null&&r.reach!==''?nf(r.reach):'—'}</b><span>Alcance</span></div><div><b>${r.clicks!=null&&r.clicks!==''?nf(r.clicks):'—'}</b><span>Cliques</span></div><div><b>${r.conversations!=null&&r.conversations!==''?nf(r.conversations):'—'}</b><span>Conversas</span></div><div><b>${cpc(r)}</b><span>Por conversa</span></div></div>
+   ${r.note?`<p>${esc(r.note)}</p>`:''}</div>`).join('')}</div>`:'<div class="empty">Quando a Stond lançar o investimento do mês em anúncios, ele aparece aqui com o que trouxe de volta.</div>'}`;
+ },
+ auto(){
+  const L=D.automations||[];
+  return `${resPills()}<div class="top"><div><h2>Automações</h2><p>Quem comenta a palavra-chave recebe o link no direct sozinho.</p></div></div>
+  ${L.length?`<div class="sum"><div><b>${nf(L.reduce((t,a)=>t+(+a.asked||0),0))}</b><span>Pedidos no total</span></div><div><b>${nf(L.reduce((t,a)=>t+(+a.sent||0),0))}</b><span>Links entregues</span></div><div><b>${nf(L.reduce((t,a)=>t+(+a.asked30||0),0))}</b><span>Últimos 30 dias</span></div></div>
+  <div class="autol">${L.map(a=>`<div class="au"><span class="kw">${esc(a.keyword)}</span><div class="t"><b>${esc(String(a.title||'Link no direct').replace(/\s*👇\s*$/,''))}</b><small>Ativa desde ${a.since?new Date(a.since).toLocaleDateString('pt-BR'):'—'}</small></div><div class="n"><b>${nf(a.asked||0)}</b><span>pedidos</span></div><div class="n"><b>${nf(a.sent||0)}</b><span>entregues</span></div><div class="n"><b>${nf(a.asked30||0)}</b><span>30 dias</span></div></div>`).join('')}</div>`:'<div class="empty">Quando uma palavra-chave estiver ativa, aqui aparece quantas pessoas pediram e receberam o link.</div>'}`;
+ },
  arq(){
   const L=(D.links||[]).filter(l=>l.kind==='link'),F=(D.links||[]).filter(l=>l.kind==='arquivo'),U=D.uploads||[];
   const ext=u=>{const m=String(u).split('?')[0].match(/\.([a-z0-9]{2,4})$/i);return m?m[1].toUpperCase():'LINK'};
