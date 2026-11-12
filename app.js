@@ -86,6 +86,7 @@ const ic={
  inv:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M14.6 9.2c-.5-.8-1.5-1.3-2.6-1.3-1.5 0-2.6.8-2.6 2s1.1 1.7 2.6 2 2.7.8 2.7 2.1-1.2 2.1-2.7 2.1c-1.2 0-2.2-.5-2.7-1.4M12 6.5v1.4M12 16.1v1.4"/></svg>',
  antes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="7.5" height="14" rx="2"/><rect x="13" y="5" width="7.5" height="14" rx="2"/><path d="M6 15l2-3 2 2M15.5 15l2-4 2 3"/></svg>',
  auto:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11l-4.5 3.5v-3.5h0a2 2 0 0 1-2-2z"/><path d="M12.6 7.5l-2.2 3.6h3.2l-2.2 3.6"/></svg>',
+ lnk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
  link:'<svg width="18" height="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>'
 };
 const fld=(id,label,type,icon,extra='')=>`<div class="fld in"><label for="${id}">${label}</label><div class="gin">${ic[icon]}<input id="${id}" type="${type}" ${extra}>${type==='password'?`<button type="button" class="eye" data-eye="${id}" aria-label="Mostrar senha">${ic.eye}</button>`:''}</div></div>`;
@@ -230,22 +231,22 @@ function notaCard(){
    <div class="nsc">${Array.from({length:11},(_,i)=>`<button data-nota="${i}" class="${NOTASEL===i?'on':''}">${i}</button>`).join('')}</div>
    ${NOTASEL!=null?`<textarea id="notat" rows="2" placeholder="Quer contar o porquê? (opcional)"></textarea><button class="btn red" data-nota-ok>Enviar nota</button>`:''}</div>`;
 }
-function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','inv','auto','arq'].concat(hasMarca()?['marca','proj','antes']:[]).includes(h)?h:'inicio';render();
+function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','inv','lnk','auto','arq'].concat(hasMarca()?['marca','proj','antes']:[]).includes(h)?h:'inicio';render();
   if(window.StondIA)StondIA.mount({sb,mode:'cliente',local:iaLocal,fab:false,title:'Assistente Stond',sub:'Responde com os dados do seu portal',hello:'Oi, '+(first()||'tudo bem')+'! Posso dizer o que falta aprovar, o que vai ao ar e como está o seu Instagram.',hints:['O que falta eu aprovar?','O que vai ao ar esta semana?','Como está meu Instagram?','Como peço um ajuste?']})}
 function go(s){S=s;OPEN=null;if(location.hash.slice(1)!==s)history.replaceState(null,'','#'+s);render();const m=$('.main');if(m)m.scrollTop=0}
 
 const hasMarca=()=>!!(D&&D.brand&&window.StondMarca);
-const RES=['met','inv','antes','auto'];
+const RES=['met','inv','lnk','antes','auto'];
 /* no celular a barra de baixo só tem 5 botões: as páginas de cada bloco ganham pílulas no topo */
 const pills=L=>`<div class="pills">${L.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${l}</button>`).join('')}</div>`;
-const resPills=()=>pills([['met','Métricas'],['inv','Investimento'],...(hasMarca()?[['antes','Antes e depois']]:[]),['auto','Automações']]);
+const resPills=()=>pills([['met','Métricas'],['inv','Investimento'],['lnk','Links'],...(hasMarca()?[['antes','Antes e depois']]:[]),['auto','Automações']]);
 const marcaPills=()=>pills([['marca','A marca'],['proj','Projeto']]);
 const brl=v=>v==null||v===''||isNaN(+v)?'—':(+v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:(+v)%1?2:0});
 const mesN=m=>{const [y,mm]=String(m||'').split('-');return mm?MES[+mm-1][0].toUpperCase()+MES[+mm-1].slice(1)+' '+y:String(m||'')};
 function shell(inner){
   const M=hasMarca(),groups=[['Dia a dia',[['inicio','Início'],['aprov','Aprovações',pend().length],['cal','Calendário'],['ig','Meu Instagram']]],
    ...(M?[['Sua marca',[['marca','A marca'],['proj','Projeto']]]]:[]),
-   ['Resultados',[['met','Métricas'],['inv','Investimento'],...(M?[['antes','Antes e depois']]:[]),['auto','Automações']]],
+   ['Resultados',[['met','Métricas'],['inv','Investimento'],['lnk','Links e cliques'],...(M?[['antes','Antes e depois']]:[]),['auto','Automações']]],
    ['Arquivos',[['arq','Arquivos e links']]]];
   const tabs=[['inicio','Início'],['aprov','Aprovar',pend().length],['cal','Calendário'],...(M?[['marca','Marca']]:[]),['met','Resultados']];
   const cur=k=>k===S||(k==='met'&&RES.includes(S))||(k==='marca'&&S==='proj');
@@ -341,6 +342,17 @@ ${esc(pr.bioNow||pr.bio||'')}</p>
   <div class="invl">${L.map(r=>`<div class="inv"><div class="h"><b>${esc(mesN(r.month))}</b><span class="v">${brl(r.spent)}</span></div>
    <div class="k"><div><b>${r.reach!=null&&r.reach!==''?nf(r.reach):'—'}</b><span>Alcance</span></div><div><b>${r.clicks!=null&&r.clicks!==''?nf(r.clicks):'—'}</b><span>Cliques</span></div><div><b>${r.conversations!=null&&r.conversations!==''?nf(r.conversations):'—'}</b><span>Conversas</span></div><div><b>${cpc(r)}</b><span>Por conversa</span></div></div>
    ${r.note?`<p>${esc(r.note)}</p>`:''}</div>`).join('')}</div>`:'<div class="empty">Quando a Stond lançar o investimento do mês em anúncios, ele aparece aqui com o que trouxe de volta.</div>'}`;
+ },
+ lnk(){
+  const L=D.shortlinks||[],G=[...new Set(L.map(l=>l.grp||'Outros'))];
+  const short=l=>'portal.stond.com.br/l/'+l.slug;
+  const utm=u=>{try{const q=new URL(u).searchParams;return ['utm_source','utm_medium','utm_campaign'].map(k=>q.get(k)).filter(Boolean).join(' · ')}catch(e){return ''}};
+  const page=u=>{try{const x=new URL(u);return (x.hostname.replace(/^www\./,'')+x.pathname).replace(/\/$/,'')}catch(e){return u}};
+  const top=L.slice().sort((a,b)=>(b.clicks30||0)-(a.clicks30||0))[0];
+  return `${resPills()}<div class="top"><div><h2>Links e cliques</h2><p>Cada link curto conta quantas pessoas clicaram e leva para o site já com as UTMs.</p></div></div>
+  ${L.length?`<div class="sum"><div><b>${nf(L.reduce((t,l)=>t+(+l.clicks||0),0))}</b><span>Cliques no total</span></div><div><b>${nf(L.reduce((t,l)=>t+(+l.clicks30||0),0))}</b><span>Últimos 30 dias</span></div><div><b style="font-size:20px">${top&&top.clicks30?esc(top.label):'—'}</b><span>Mais clicado no mês</span></div></div>
+  ${G.map(g=>`<p class="eyebrow" style="margin-top:20px">${esc(g)}</p><div class="lnkl">${L.filter(l=>(l.grp||'Outros')===g).map(l=>`<div class="lk"><div class="t"><b>${esc(l.label)}</b><small>${esc(page(l.url))}${utm(l.url)?` · <span class="utm">${esc(utm(l.url))}</span>`:''}</small><code>${esc(short(l))}</code></div><div class="n"><b>${nf(l.clicks||0)}</b><span>cliques</span></div><div class="n"><b>${nf(l.clicks30||0)}</b><span>30 dias</span></div><button class="btn sm ghost" data-copy="https://${esc(short(l))}">Copiar</button></div>`).join('')}</div>`).join('')}`
+  :'<div class="empty">Quando a Stond criar os links curtos da bio, do direct e dos Stories, aqui aparece quantas pessoas clicaram em cada um.</div>'}`;
  },
  auto(){
   const L=D.automations||[];

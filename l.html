@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Abrindo…</title>
+<style>:root{color-scheme:light dark}body{margin:0;min-height:100vh;display:grid;place-items:center;font:15px/1.5 Montserrat,"Segoe UI",system-ui,sans-serif;background:#f4f5f6;color:#2b2325}@media (prefers-color-scheme:dark){body{background:#0d0a0b;color:#f1ebec}}p{margin:0;opacity:.7}a{color:inherit}</style>
+</head><body><p id="m">Abrindo…</p>
+<script>
+/* Link curto da Stond: portal.stond.com.br/l/<nome> conta o clique e leva ao destino (com as UTMs). */
+(async()=>{
+  const slug=decodeURIComponent(location.pathname.replace(/^\/l\/?/,'').replace(/\/$/,'')).toLowerCase();
+  const m=document.getElementById('m');
+  try{
+    const r=await fetch('https://mkhewgatxdkjowvhqppb.supabase.co/rest/v1/rpc/link_go',{method:'POST',headers:{'content-type':'application/json',apikey:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1raGV3Z2F0eGRram93dmhxcHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4OTkxNDMsImV4cCI6MjEwOTQ3NTE0M30.0uGUnW5dqt3d3P7Cad0UYtT6k3fp69rxoMLJgMazbsg',authorization:'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1raGV3Z2F0eGRram93dmhxcHBiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4OTkxNDMsImV4cCI6MjEwOTQ3NTE0M30.0uGUnW5dqt3d3P7Cad0UYtT6k3fp69rxoMLJgMazbsg'},body:JSON.stringify({p_slug:slug}),keepalive:true});
+    const u=r.ok?await r.json():null;
+    if(typeof u==='string'&&/^https?:\/\//i.test(u)){location.replace(u);return}
+  }catch(e){}
+  m.innerHTML='Este link não existe mais. <a href="https://stond.com.br">Ir para a Stond</a>';
+})();
+</script></body></html>

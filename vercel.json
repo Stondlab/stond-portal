@@ -53,5 +53,11 @@
       "destination": "/gestao/",
       "permanent": false
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/l/:slug",
+      "destination": "/l"
+    }
   ]
 }
