@@ -178,8 +178,8 @@ const posts=()=>D.posts||[];
 const pend=()=>posts().filter(p=>p.status==='pendente');
 const okP=()=>posts().filter(p=>p.status==='aprovado');
 const adj=()=>posts().filter(p=>p.status==='reprovado');
-const cover=p=>{const m=(p.media||[])[0];if(!m)return '';return m.kind==='video'?(m.poster?mediaUrl(m.poster):''):mediaUrl(m.url)};
-const thumb=(p,cls='')=>{const m=(p.media||[])[0];if(!m)return `<span class="noimg ${cls}">${ty(p.type)}</span>`;
+const cover=p=>{const m=(p.media||[]).find(x=>x.kind!=='pdf');if(!m)return '';return m.kind==='video'?(m.poster?mediaUrl(m.poster):''):mediaUrl(m.url)};
+const thumb=(p,cls='')=>{const m=(p.media||[]).find(x=>x.kind!=='pdf');if(!m)return `<span class="noimg ${cls}">${ty(p.type)}</span>`;
   return m.kind==='video'&&!m.poster?`<video class="${cls}" src="${mediaUrl(m.url)}#t=1.5" muted playsinline preload="metadata"></video>`:`<img class="${cls}" src="${cover(p)}" alt="" loading="lazy">`};
 const chip=p=>p.status==='pendente'?'<span class="chip pend">Aprovar</span>':p.status==='aprovado'?'<span class="chip ok">Aprovado</span>':p.status==='reprovado'?'<span class="chip">Ajuste pedido</span>':'';
 const first=()=>((D.client&&D.client.name)||'').split(' ')[0];
@@ -380,7 +380,7 @@ function modal(){
   const fb=(D.feedback||[]).filter(f=>f.post_id===p.id);
   const canDecide=['pendente','aprovado','reprovado'].includes(p.status);
   return `<div class="ovl" data-close><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(p.title)}">
-   <div class="media">${m?(m.kind==='video'?`<video src="${mediaUrl(m.url)}" controls playsinline preload="metadata"></video>`:`<img src="${mediaUrl(m.url)}" alt="Slide ${slide+1} de ${md.length}">`):''}
+   <div class="media">${m?(m.kind==='pdf'?`<a class="pdf" href="${mediaUrl(m.url)}" target="_blank" rel="noopener">Abrir PDF${m.name?': '+esc(m.name):''}</a>`:m.kind==='video'?`<video src="${mediaUrl(m.url)}" controls playsinline preload="metadata"></video>`:`<img src="${mediaUrl(m.url)}" alt="Slide ${slide+1} de ${md.length}">`):''}
     ${md.length>1?`<span class="cnt">${slide+1} de ${md.length}</span><button class="nv l" data-sl="-1" aria-label="Anterior">‹</button><button class="nv r" data-sl="1" aria-label="Próximo">›</button><div class="pg">${md.map((_,i)=>`<i class="${i===slide?'on':''}"></i>`).join('')}</div>`:''}</div>
    <div class="info"><div class="hd"><div><b>${esc(p.title)}</b><small>${ty(p.type)} · ${fmtD(p.date)}${p.time?' · '+esc(p.time):''} ${chip(p)}</small></div><button class="x" data-x aria-label="Fechar">✕</button></div>
     <div class="sc">${p.caption?`<div><p class="eyebrow">Legenda</p><div class="cap">${esc(p.caption)}</div></div>`:''}
