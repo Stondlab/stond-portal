@@ -55,7 +55,7 @@ async function publish(post: any) {
   const { data: acc } = await db.from("dm_accounts").select("api,ig_user_id,access_token,active").eq("client_id", post.client_id).maybeSingle();
   if (!acc?.access_token) throw new Error("A conta do Instagram deste cliente não está conectada");
   const a = acc as Acc, ig = a.ig_user_id;
-  const media = (post.media ?? []).map((m: any) => ({ ...m, u: full(m.url, post.client_id) })).filter((m: any) => m.u);
+  const media = (post.media ?? []).filter((m: any) => m.kind !== "pdf").map((m: any) => ({ ...m, u: full(m.url, post.client_id) })).filter((m: any) => m.u);
   if (!media.length) throw new Error("O post não tem imagem ou vídeo");
   const caption = post.caption ?? "";
   let creation = post.ig_container as string | null;
