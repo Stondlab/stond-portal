@@ -98,6 +98,18 @@ async function collect(a: Acc) {
   row.following = prof.follows_count ?? null;
   row.posts = prof.media_count ?? null;
 
+  // perfil de hoje (bio, nome, números) em ig_profiles, para o Agendados mostrar igual ao Instagram
+  try {
+    const bio = await graph(a, `/${ig}`, { fields: "biography,name,username" });
+    const { data: cur } = await db.from("ig_profiles").select("data").eq("client_id", a.client_id).maybeSingle();
+    const d = { ...((cur?.data as Record<string, unknown>) ?? {}) };
+    if (typeof bio.biography === "string") { d.bioNow = bio.biography; d.bio = bio.biography; }
+    if (bio.name) d.name = bio.name;
+    if (bio.username) d.handle = bio.username;
+    d.followers = row.followers; d.following = row.following; d.posts = row.posts; d.date = today;
+    await db.from("ig_profiles").upsert({ client_id: a.client_id, data: d }, { onConflict: "client_id" });
+  } catch (e) { errors.push(`perfil: ${(e as Error).message}`); }
+
   // totais do mês até hoje (uma métrica por vez, para uma que falhar não derrubar as outras)
   const tot: Record<string, number> = {};
   for (const m of ["reach", "views", "total_interactions", "accounts_engaged"]) {
