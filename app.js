@@ -330,12 +330,12 @@ const V={
   const ds=vis.map(p=>p.date).filter(Boolean).sort(),t0=new Date().toISOString().slice(0,10),fim=ds.length?ds[ds.length-1]:t0;
   const slots=posts().filter(p=>/reel|video/i.test(p.type||'')&&!(p.media||[]).length&&p.status!=='reprovado'&&(p.date||'')>=t0&&(p.date||'')<=fim);
   const feed=vis.concat(slots).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
-  const slot=p=>`<div class="rslot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg><b>Reels</b><small>${esc(fmtD(p.date))}${p.time?' · '+esc(p.time):''}</small>${p.title?`<small class="rt">${esc(p.title)}</small>`:''}<span class="tag">Vem aí</span></div>`;
+  const slot=p=>`<div class="rslot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg><b>Reels</b><small>${esc(fmtD(p.date))}${p.time?' · '+esc(p.time):''}</small>${p.title?`<small class="rt">${esc(p.title)}</small>`:''}<span class="tag">Em produção</span></div>`;
   return `<div class="ig"><div class="top"><div><h2>Meu Instagram</h2><p>Como o seu perfil fica com os próximos posts.</p></div></div>
   <div class="igh">${photo()?`<img src="${photo()}" alt="">`:''}<div><div class="nm">${esc(pr.handle||D.client.handle||'')}</div><div class="stats"><span><b>${nf(L.posts??pr.posts)}</b> posts</span><span><b>${nf(L.followers??pr.followers)}</b> seguidores</span><span><b>${nf(L.following??pr.following)}</b> seguindo</span></div></div></div>
   <p class="bio"><b>${esc(pr.name||D.client.name)}</b>
 ${esc(pr.bioNow||pr.bio||'')}</p>
-  <div class="feed">${feed.map(p=>!(p.media||[]).length?slot(p):`<button data-open="${esc(p.id)}">${thumb(p)}<span class="tag">${p.status==='aprovado'?'Aprovado':p.status==='publicado'?'No ar':'Prévia'}</span>${p.date?`<span class="dt">${esc(fmtD(p.date))}${p.time?' · '+esc(p.time):''}</span>`:''}</button>`).join('')}</div></div>`;
+  <div class="feed">${feed.map(p=>!(p.media||[]).length?slot(p):`<button data-open="${esc(p.id)}">${thumb(p)}<span class="tag">${p.status==='publicado'||(p.status==='aprovado'&&(p.date||'')+(p.time||'23:59')<new Date(Date.now()-3*36e5).toISOString().slice(0,16).replace('T',''))?'No ar':p.status==='aprovado'?'Aprovado':'Prévia'}</span>${p.date?`<span class="dt">${esc(fmtD(p.date))}${p.time?' · '+esc(p.time):''}</span>`:''}</button>`).join('')}</div></div>`;
  },
  marca(){return hasMarca()?marcaPills()+StondMarca.view(BR(),{section:'marca',...edOpt()}):'<div class="empty">A sua marca aparece aqui quando a Stond publicar.</div>'},
  proj(){return hasMarca()?marcaPills()+StondMarca.view(BR(),{section:'projeto',posts:D.posts||[],...edOpt()}):''},
