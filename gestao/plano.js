@@ -4,7 +4,7 @@
    agency_docs: 'plano' (id = cliente_AAAA-MM: done, funnel, kv, map) e 'pautas' (id aleatório). */
 (function(){
   ic.plano=sv('<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M8 14.2l1.8 1.8 3.6-3.8"/>');
-  const g=GROUPS[0];if(!g[1].some(([k])=>k==='plano'))g[1].splice(1,0,['plano','Planejamento']);
+  if(!GROUPS.some(g=>g[1].some(([k])=>k==='plano')))GROUPS[0][1].splice(1,0,['plano','Planejamento']);
 
   const FMT=[['reels','Reels'],['carrossel','Carrossel'],['story','Stories'],['post','Post']];
   const FUN=[['topo','Topo','Atrair','Gente nova conhecendo a marca: alcance, conteúdo que se compartilha.','#3f8fd8',40],
