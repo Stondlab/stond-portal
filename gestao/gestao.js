@@ -239,6 +239,8 @@ V.agenda=()=>{
 
 /* Publicação */
 /* Agendados: o perfil do Instagram de cada cliente com o que vai entrar por cima (como vai ficar o feed) */
+/* o feed começa no primeiro post de quando a Stond assumiu o perfil */
+const FEED_INI={gabriel:'2026-10-08'};
 function igGrid(){
   const ids=CL().map(c=>c.id),c=fv('pcl',ids[0]),cl=cli(c),pr=(D.profiles||{})[c]||{},m=D.metrics.filter(x=>x.client_id===c).slice(-1)[0]||{};
   const t0=today(),tab=fv('pgt','feed');
@@ -247,7 +249,7 @@ function igGrid(){
     .sort((a,b)=>((b.publish_at||b.date||'')+(b.time||'')).localeCompare((a.publish_at||a.date||'')+(a.time||'')));
   /* o feed como está hoje no Instagram; Reels de teste (não compartilhados no feed) ficam à parte */
   const all=(D.media||[]).filter(x=>x.client_id===c).sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
-  const feed=all.filter(x=>x.in_feed!==false).slice(0,45),tests=all.filter(x=>x.in_feed===false);
+  const ini=FEED_INI[c]||'',feed=all.filter(x=>x.in_feed!==false&&String(x.ts).slice(0,10)>=ini).slice(0,45),tests=all.filter(x=>x.in_feed===false);
   const when=p=>{const d=p.publish_at?new Date(p.publish_at):pd(p.date);if(!d||isNaN(d))return '';const h=p.publish_at?d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):(p.time||'');return d.toLocaleDateString('pt-BR',{day:'numeric',month:'short'}).replace('.','')+(h?' · '+h:'')};
   const I={reels:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg>',carrossel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="7.5" y="3.5" width="13" height="13" rx="2"/><path d="M16.5 20.5h-11a2 2 0 0 1-2-2v-11"/></svg>',
     clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>'};
