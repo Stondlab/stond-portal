@@ -275,9 +275,9 @@ const V={
  },
  aprov(){
   const L={pend:pend(),ok:okP(),adj:adj(),all:posts().filter(p=>(p.media||[]).length)}[FILTER];
-  return `<div class="top"><div><h2>Aprovações</h2><p>Abra cada post, veja a arte e a legenda, e aprove ou peça ajuste.</p></div></div>
+  return `<div class="top"><div><h2>Aprovações</h2><p>Toque em Aprovar no post que está ok. Para ver a legenda ou pedir uma mudança, toque na arte.</p></div></div>
   <div class="filters"><div class="seg">${[['pend','Para aprovar',pend().length],['ok','Aprovados',okP().length],['adj','Ajustes pedidos',adj().length],['all','Todos']].map(([k,l,n])=>`<button data-filter="${k}" aria-pressed="${FILTER===k}">${l}${n!=null?' · '+n:''}</button>`).join('')}</div></div>
-  ${L.length?`<div class="grid">${L.map(p=>`<button class="card" data-open="${esc(p.id)}"><div class="ph">${thumb(p)}<span class="k">${ty(p.type)}</span></div><div class="bd"><small>${fmtD(p.date)}${p.time?' · '+esc(p.time):''}</small><b>${esc(p.title)}</b>${p.status==='pendente'?'<span class="chip pend" style="align-self:flex-start">Esperando você</span>':chip(p).replace('class="chip','style="align-self:flex-start" class="chip')}</div></button>`).join('')}</div>`:'<div class="empty">Nada por aqui.</div>'}`;
+  ${L.length?`<div class="grid">${L.map(p=>`<div class="card${p.status==='pendente'?' cpend':''}"><button class="cop" data-open="${esc(p.id)}" aria-label="Abrir ${esc(p.title)}"><div class="ph">${thumb(p)}<span class="k">${ty(p.type)}</span></div><div class="bd"><small>${fmtD(p.date)}${p.time?' · '+esc(p.time):''}</small><b>${esc(p.title)}</b>${p.status==='pendente'?'':chip(p).replace('class="chip','style="align-self:flex-start" class="chip')}</div></button>${p.status==='pendente'?`<div class="qa"><button class="btn ok" data-qok="${esc(p.id)}"${PREVIEW?' disabled title="Desligado na visão da Stond"':''}>Aprovar</button><button class="btn ghost" data-open="${esc(p.id)}">Pedir ajuste</button></div>`:''}</div>`).join('')}</div>`:'<div class="empty">Nada por aqui.</div>'}`;
  },
  cal(){
   const now=new Date();if(!CALM)CALM=new Date(now.getFullYear(),now.getMonth(),1);
@@ -325,12 +325,17 @@ const V={
  },
  ig(){
   const pr=D.profile||{},M=D.metrics||[],L=M[M.length-1]||{};
-  const feed=posts().filter(p=>p.type!=='story'&&(p.media||[]).length&&['pendente','aprovado','publicado'].includes(p.status)).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
+  const vis=posts().filter(p=>p.type!=='story'&&(p.media||[]).length&&['pendente','aprovado','publicado'].includes(p.status));
+  /* Reels ainda sem vídeo guardam o lugar deles no feed, entre os posts que já têm arte */
+  const ds=vis.map(p=>p.date).filter(Boolean).sort(),t0=new Date().toISOString().slice(0,10),fim=ds.length?ds[ds.length-1]:t0;
+  const slots=posts().filter(p=>/reel|video/i.test(p.type||'')&&!(p.media||[]).length&&p.status!=='reprovado'&&(p.date||'')>=t0&&(p.date||'')<=fim);
+  const feed=vis.concat(slots).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||'')));
+  const slot=p=>`<div class="rslot"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg><b>Reels</b><small>${esc(fmtD(p.date).replace(/^\w+, /,''))}</small>${p.title?`<small class="rt">${esc(p.title)}</small>`:''}<span class="tag">Vem aí</span></div>`;
   return `<div class="ig"><div class="top"><div><h2>Meu Instagram</h2><p>Como o seu perfil fica com os próximos posts.</p></div></div>
   <div class="igh">${photo()?`<img src="${photo()}" alt="">`:''}<div><div class="nm">${esc(pr.handle||D.client.handle||'')}</div><div class="stats"><span><b>${nf(L.posts??pr.posts)}</b> posts</span><span><b>${nf(L.followers??pr.followers)}</b> seguidores</span><span><b>${nf(L.following??pr.following)}</b> seguindo</span></div></div></div>
   <p class="bio"><b>${esc(pr.name||D.client.name)}</b>
 ${esc(pr.bioNow||pr.bio||'')}</p>
-  <div class="feed">${feed.map(p=>`<button data-open="${esc(p.id)}">${thumb(p)}<span class="tag">${p.status==='aprovado'?'Aprovado':p.status==='publicado'?'No ar':'Prévia'}</span></button>`).join('')}</div></div>`;
+  <div class="feed">${feed.map(p=>!(p.media||[]).length?slot(p):`<button data-open="${esc(p.id)}">${thumb(p)}<span class="tag">${p.status==='aprovado'?'Aprovado':p.status==='publicado'?'No ar':'Prévia'}</span></button>`).join('')}</div></div>`;
  },
  marca(){return hasMarca()?marcaPills()+StondMarca.view(BR(),{section:'marca',...edOpt()}):'<div class="empty">A sua marca aparece aqui quando a Stond publicar.</div>'},
  proj(){return hasMarca()?marcaPills()+StondMarca.view(BR(),{section:'projeto',posts:D.posts||[],...edOpt()}):''},
@@ -507,6 +512,9 @@ document.addEventListener('click',async e=>{
   if(t.closest('[data-x]')||t.matches('[data-close]')){OPEN=null;render();return}
   const sl=t.closest('[data-sl]');if(sl){const n=(posts().find(x=>x.id===OPEN).media||[]).length;slide=(slide+ +sl.dataset.sl+n)%n;render();return}
   const fb=t.closest('[data-fb]');if(fb){sendFb(fb.dataset.fb);return}
+  const qk=t.closest('[data-qok]');if(qk){if(PREVIEW)return;qk.disabled=true;qk.textContent='Aprovando…';
+    try{const id=qk.dataset.qok;D=MODE==='token'?await rpc('portal_feedback',{p_token:TOKEN,p_post:id,p_kind:'aprovado',p_text:'',p_author:(D.client&&D.client.name)||'Cliente'}):await rpc('portal_feedback_me',{p_post:id,p_kind:'aprovado',p_text:''});toast('Aprovado. Obrigado!');render()}
+    catch(x){qk.disabled=false;qk.textContent='Aprovar';toast(x.message)}return}
   const nb=t.closest('[data-nota]');if(nb){NOTASEL=+nb.dataset.nota;render();const x=$('#notat');if(x)x.focus();return}
   if(t.closest('[data-nota-ok]')){const tx=($('#notat')||{}).value||'';try{await rpc('portal_nota',{p_score:NOTASEL,p_text:tx,p_token:TOKEN||null});NOTA='ok';render();setTimeout(()=>{NOTA=false;if(S==='inicio')render()},4000)}catch(e){toast(e.message)}return}
   const fl=t.closest('[data-filter]');if(fl){FILTER=fl.dataset.filter;render();return}
