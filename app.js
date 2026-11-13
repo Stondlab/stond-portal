@@ -425,6 +425,7 @@ function entregas(){
     const u=String(x.url),pm=u.match(/^(?:https?:\/\/portal\.stond\.com\.br\/?)?#(\w+)$/);
     x.k=pm?'portal':/\.pdf(\?|$)/i.test(u)?'pdf':/\.(png|jpe?g|webp|gif)(\?|$)/i.test(u)?'img':/instagram\.com/i.test(u)?'ig':/^https?:/i.test(u)&&!x.file?'site':'file';
     if(pm){x.hash=pm[1];if(!V[x.hash]||(['marca','proj','antes'].includes(x.hash)&&!hasMarca()))return}
+    if(x.k==='portal'||x.k==='ig')return;
     out.push(x)};
   const T=hasMarca()?(D.brand.tasks||[]).filter(t=>t.status==='entregue'):[];
   T.forEach(t=>{(t.files||[]).forEach(f=>add({title:String(f.name||t.name).replace(/\.[a-z0-9]{2,4}$/i,''),dn:f.name,url:f.url,note:t.name,file:true}));if(t.link)add({title:t.name,url:t.link,note:t.stage?'Entregue · '+t.stage:'Entregue'})});
