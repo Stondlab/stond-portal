@@ -122,7 +122,7 @@ function login(){
 const GROUPS=[['',[['inicio','Hoje']]],
  ['Dia a dia',[['agenda','Calendário de posts'],['dem','Demandas'],['aprov','Aprovação'],['pub','Agendados']]],
  ['Planejar',[['plano','Planejamento dos meses'],['proj','Projetos'],['marca','Marca']]],
- ['Resultados',[['met','Métricas'],['antes','Antes e depois'],['auto','Automações']]],
+ ['Resultados',[['met','Métricas'],['auto','Automações']]],
  ['Gestão',[['cli','Clientes'],['fin','Financeiro']]],
  ['Mais',[['msg','Mensagens'],['rel','Relatórios'],['inv','Investimento'],['lnk','Links curtos'],['com','Comercial'],['prop','Propostas e contratos'],['gest','Gestão da Stond'],['cres','Crescimento'],['adm','Administrativo']]]];
 function badge(k){if(k==='aprov')return pend().length;if(k==='dem')return late().length;if(k==='pub')return queue().filter(p=>p.publish_status==='agendado').length;if(k==='msg')return docs('messages').filter(m=>m.who==='Cliente'&&!m.readStond).length;return 0}
