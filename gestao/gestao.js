@@ -119,17 +119,20 @@ function login(){
 }
 
 /* ---------- casca ---------- */
-const GROUPS=[['',[['inicio','Início'],['dem','Demandas'],['aprov','Aprovação'],['agenda','Agenda'],['pub','Publicação'],['auto','Automação']]],
- ['Clientes',[['cli','Clientes'],['met','Métricas'],['rel','Relatórios'],['msg','Mensagens']]],
- ['Negócio',[['gest','Gestão da Stond'],['cres','Crescimento'],['com','Comercial'],['prop','Propostas e contratos'],['fin','Financeiro'],['adm','Administrativo']]]];
+const GROUPS=[['',[['inicio','Hoje']]],
+ ['Dia a dia',[['agenda','Calendário de posts'],['dem','Demandas'],['aprov','Aprovação'],['pub','Agendados']]],
+ ['Planejar',[['plano','Planejamento dos meses'],['proj','Projetos'],['marca','Marca']]],
+ ['Resultados',[['met','Métricas'],['antes','Antes e depois'],['auto','Automações']]],
+ ['Gestão',[['cli','Clientes'],['fin','Financeiro']]],
+ ['Mais',[['msg','Mensagens'],['rel','Relatórios'],['inv','Investimento'],['lnk','Links curtos'],['com','Comercial'],['prop','Propostas e contratos'],['gest','Gestão da Stond'],['cres','Crescimento'],['adm','Administrativo']]]];
 function badge(k){if(k==='aprov')return pend().length;if(k==='dem')return late().length;if(k==='pub')return queue().filter(p=>p.publish_status==='agendado').length;if(k==='msg')return docs('messages').filter(m=>m.who==='Cliente'&&!m.readStond).length;return 0}
-function menuClosed(){const v=ls.get('sg-menu');return v==null?['Negócio']:v.split('|').filter(Boolean)}
+function menuClosed(){const v=ls.get('sg-menu2');return v==null?['Mais']:v.split('|').filter(Boolean)}
 function shell(inner){
-  const tabs=[['inicio','Início'],['dem','Demandas'],['aprov','Aprovar'],['pub','Publicar'],['gest','Gestão']];
+  const tabs=[['inicio','Hoje'],['agenda','Posts'],['aprov','Aprovar'],['pub','Agendados'],['fin','Financeiro']];
   const b=k=>{const n=badge(k);return n?`<span class="bdg">${n}</span>`:''};
   return `<div class="app"><aside class="side"><div class="stop"><img class="logo" src="${LOGO}" alt="">${tt()}</div>
    <div class="who"><span class="av">${esc((ME.name||'?')[0])}</span><div><b>${esc(ME.name)}</b><small>${esc(ME.role==='dona'?'Stond · dona':'Stond · equipe')}</small></div></div>
-   <nav class="nav">${GROUPS.map(([t,it])=>{const here=it.some(([k])=>k===S),open=!t||here||!menuClosed().includes(t),n=it.reduce((a,[k])=>a+badge(k),0);
+   <nav class="nav">${GROUPS.map(([t,it0])=>{const it=it0.filter(([k])=>V[k]);if(!it.length)return '';const here=it.some(([k])=>k===S),open=!t||here||!menuClosed().includes(t),n=it.reduce((a,[k])=>a+badge(k),0);
      return (t?`<button class="sec" data-sec="${t}" aria-expanded="${open}"><span>${t}</span>${!open&&n?`<span class="bdg">${n}</span>`:''}<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></button>`:'')+(open?it.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${ic[k]}${l}${b(k)}</button>`).join(''):'')}).join('')}</nav>
    <button class="out" style="margin-top:0;padding-left:4px" data-out>Sair</button></aside>
    <main class="main"><div class="mhead"><img class="l" src="${LOGO}" alt=""><span style="display:flex;gap:10px;align-items:center">${tt()}<button class="out" data-out style="padding:0">Sair</button></span></div>${inner}</main>
@@ -235,13 +238,41 @@ V.agenda=()=>{
 };
 
 /* Publicação */
+/* Agendados: o perfil do Instagram de cada cliente com o que vai entrar por cima (como vai ficar o feed) */
+function igGrid(){
+  const ids=CL().map(c=>c.id),c=fv('pcl',ids[0]),cl=cli(c),pr=(D.profiles||{})[c]||{},m=D.metrics.filter(x=>x.client_id===c).slice(-1)[0]||{};
+  const t0=today();
+  const up=posts().filter(p=>p.client_id===c&&!isDone(p)&&(p.publish_status==='agendado'||((p.status==='aprovado'||p.status==='pendente')&&(p.date||'')>=t0)))
+    .sort((a,b)=>((b.publish_at||b.date||'')+(b.time||'')).localeCompare((a.publish_at||a.date||'')+(a.time||'')));
+  const pub=(D.media||[]).filter(x=>x.client_id===c).sort((a,b)=>String(b.ts).localeCompare(String(a.ts))).slice(0,30);
+  const when=p=>{const d=p.publish_at?new Date(p.publish_at):pd(p.date);if(!d||isNaN(d))return '';const h=p.publish_at?d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):(p.time||'');return d.toLocaleDateString('pt-BR',{day:'numeric',month:'short'}).replace('.','')+(h?' · '+h:'')};
+  const kind=p=>p.publish_status==='agendado'?['ag','Agendado']:p.status==='pendente'?['pe','Falta aprovar']:['ap','Aprovado, sem horário'];
+  const tile=p=>{const [k,l]=kind(p),im=cover(p);return `<button class="igt ${k}" data-edit-post="${esc(p.id)}" title="${esc(p.title||'')}">${im?`<img src="${esc(im)}" alt="" loading="lazy">`:`<span class="igph">${esc(ty(p.type))}<small>${esc(p.title||'')}</small></span>`}<span class="igb">${esc(when(p))}</span><span class="igk">${l}</span></button>`};
+  const old=x=>`<a class="igt done" href="${esc(x.permalink||'#')}" target="_blank" rel="noopener">${x.thumb?`<img src="${esc(x.thumb)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span class="igph">${esc(x.format||'post')}</span>${x.format==='reels'?'<span class="igr">▶</span>':''}</a>`;
+  const n=v=>v==null||v===''?'—':nf(v);
+  const ph=cphoto(c),handle=String(pr.handle||cl.handle||'').replace(/^@/,'');
+  const cnt={ag:up.filter(p=>p.publish_status==='agendado').length,pe:up.filter(p=>p.status==='pendente'&&p.publish_status!=='agendado').length};
+  return `<div class="filters">${segF('pcl',CL().map(k=>[k.id,k.name]))}</div>
+  <div class="igp">
+   <div class="igh">${ph?`<img class="igav" src="${esc(ph)}" alt="">`:`<span class="igav" style="background:${esc(cl.color||'#8a5560')}">${esc((cl.name||'?')[0])}</span>`}
+    <div class="igi"><b>${handle?'@'+esc(handle):esc(cl.name)}</b>
+     <div class="igs"><span><b>${n(pr.posts??m.posts)}</b> posts</span><span><b>${n(pr.followers??m.followers)}</b> seguidores</span><span><b>${n(pr.following??m.following)}</b> seguindo</span></div>
+     ${pr.name?`<div class="ign">${esc(pr.name)}</div>`:''}${pr.bio||pr.bioNow?`<p class="igbio">${esc(pr.bioNow||pr.bio)}</p>`:''}</div></div>
+   <div class="igl"><span><i class="ag"></i>Agendado ${cnt.ag}</span><span><i class="pe"></i>Falta aprovar ${cnt.pe}</span><span><i class="dn"></i>Já no ar</span></div>
+   <div class="igg">${up.map(tile).join('')}${pub.map(old).join('')}</div>
+   ${!up.length&&!pub.length?empty('Nada agendado nem publicado para este cliente ainda.'):''}
+   ${!pub.length&&up.length?'<p class="igft">Os posts que já estão no ar aparecem aqui quando a conta do Instagram estiver conectada.</p>':''}
+  </div>`;
+}
 V.pub=()=>{
+  if(fv('pf','perfil')==='perfil')return shell(topb('Agendados','Como o feed de cada cliente vai ficar: o que entra por cima do que já está no ar')+`
+  <div class="filters">${segF('pf',[['perfil','Ver como perfil'],['fila','Lista da fila'],['feito','Publicados pelo app']])}</div>${igGrid()}`);
   const Q=queue().sort((a,b)=>((a.publish_at||a.date||'')+(a.time||'')).localeCompare((b.publish_at||b.date||'')+(b.time||''))).filter(p=>fv('pf','fila')==='fila'?!isDone(p):isDone(p));
   const st=p=>p.publish_status==='publicado'?['Publicado','ok']:p.publish_status==='erro'?['Erro','']:p.publish_status==='agendado'?['Agendado','pend']:p.publish_status==='publicando'?['Publicando','pend']:['Aprovado, sem horário',''];
   const when=p=>p.publish_at?new Date(p.publish_at).toLocaleString('pt-BR',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):`${fmtD(p.date)}${p.time?' · '+p.time:''}`;
-  return shell(topb('Publicação','Aprovou no portal, o app agenda e publica no Instagram sozinho')+`
+  return shell(topb('Agendados','Aprovou no portal, o app agenda e publica no Instagram sozinho')+`
   <div class="flow">${[['Cliente aprova','no portal'],['Entra na fila','dia e hora do calendário'],['Publica sozinho','feed, carrossel ou Reels'],['Volta com o link','e marca Publicado']].map(([a,b],i)=>`<div><span>${i+1}</span><b>${a}</b><small>${b}</small></div>`).join('')}</div>
-  <div class="filters">${segF('pf',[['fila','Na fila'],['feito','Publicados']])}</div>
+  <div class="filters">${segF('pf',[['perfil','Ver como perfil'],['fila','Lista da fila'],['feito','Publicados pelo app']])}</div>
   <div class="pgl"><div>${Q.length?`<div class="list">${Q.map(p=>{const [s,c]=st(p),k=p.keyword;return `<div class="row">${cover(p)?`<img src="${cover(p)}" alt="" style="width:46px;height:58px;object-fit:cover;border-radius:8px">`:`<span class="noimg" style="width:46px;height:58px">${ty(p.type)}</span>`}<div class="t"><b>${esc(p.title)}</b><small>${cdot(p.client_id)}${esc(cli(p.client_id).name)} · ${esc(when(p))}${k?` · palavra <span class="kw ${D.kw.has(k.toLowerCase())?'':'miss'}">${esc(k.toUpperCase())}</span>${D.kw.has(k.toLowerCase())?'':' falta criar'}`:''}${p.publish_error?` · <span style="color:var(--red)">${esc(p.publish_error)}</span>`:''}</small></div><div class="ra"><span class="chip ${c}">${s}</span>${p.permalink?`<a class="btn sm ghost" href="${esc(p.permalink)}" target="_blank" rel="noopener">Ver post</a>`:`<button class="btn sm ghost" data-sched="${esc(p.id)}">${p.publish_status==='agendado'?'Mudar':'Agendar'}</button><button class="btn sm ghost" data-pubnow="${esc(p.id)}">Publicar agora</button>`}</div></div>`}).join('')}</div>`:empty(fv('pf','fila')==='fila'?'Nenhum post aprovado esperando publicação.':'Nada publicado pelo app ainda.')}</div>
   <div class="bx"><span class="lb">Contas conectadas</span><div class="al">${CL().map(c=>{const a=D.accounts.find(x=>x.client_id===c.id);return `<div>${cdot(c.id)}<b>${esc(c.name)}</b><small>${a?'@'+esc(a.username):''}</small>${a?`<button class="btn sm ghost" data-check="${esc(c.id)}">Testar</button>`:'<span class="chip">Não conectada</span>'}</div>`}).join('')}</div><span class="ft">Pelo app Stond no Meta · música da biblioteca do Instagram não funciona</span></div></div>`);
 };
@@ -754,7 +785,7 @@ document.addEventListener('click',async e=>{
       const r=(data.res||[])[0]||{};if(r.error)throw new Error(r.error);await load();render();toast(r.errors&&r.errors.length?'Seguidores atualizados. Alcance e visualizações precisam da permissão de métricas no Meta.':'Números atualizados do Meta')}
     catch(x){toast(x.message);sy.disabled=false;sy.textContent='Puxar do Meta'}return}
   const ek=t.closest('[data-edit-kw]');if(ek){openKw(ek.dataset.editKw);return}
-  const sm=t.closest('[data-sec]');if(sm){const k=sm.dataset.sec,c=menuClosed();ls.set('sg-menu',(c.includes(k)?c.filter(x=>x!==k):[...c,k]).join('|'));render();return}
+  const sm=t.closest('[data-sec]');if(sm){const k=sm.dataset.sec,c=menuClosed();ls.set('sg-menu2',(c.includes(k)?c.filter(x=>x!==k):[...c,k]).join('|'));render();return}
   if(MODAL){
     if(t.closest('[data-x]')||(t.matches('[data-close]'))){MODAL=null;render();return}
     const rm=t.closest('[data-rmmedia]');if(rm){POST_EDIT.media.splice(+rm.dataset.rmmedia,1);rm.parentElement.remove();return}

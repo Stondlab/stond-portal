@@ -41,6 +41,18 @@
      ${StondMarca.view(b,{edit:true,head:false,onChange:d=>queue(c,d)})}`);
   };
 
+  /* Projetos e Antes e depois: as mesmas partes da marca, cada uma com página própria no menu */
+  ic.proj=sv('<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 9.5h17M8 13.5h5M8 16h8"/>');
+  ic.antes=sv('<rect x="3" y="5" width="8" height="14" rx="1.5"/><rect x="13" y="5" width="8" height="14" rx="1.5"/><path d="M6 15l2-3 2 3M16 14.5l1.5-2 2.5 3"/>');
+  const page=(sec,title,sub)=>()=>{
+    const ids=CL().map(k=>k.id),c=fv('mc',ids[0]),b=brandOf(c).data;
+    return shell(topb(title,sub,`<span class="mk-st-txt" id="mkst">${b.updated?'Salvo':''}</span>`)+`
+     <div class="filters">${segF('mc',CL().map(k=>[k.id,k.name]))}</div>
+     ${StondMarca.view(b,{edit:true,head:false,section:sec,onChange:d=>queue(c,d)})}`);
+  };
+  V.proj=page('projeto','Projetos','O que vamos fazer, o que está em andamento e o que já foi entregue, por cliente');
+  V.antes=page('antes','Antes e depois','Como cada cliente era e como ficou');
+
   document.addEventListener('click',async e=>{
     const t=e.target.closest('[data-mk-share]');if(!t)return;
     const c=fv('mc',CL()[0]?.id),row=brandOf(c),b=row.data;
