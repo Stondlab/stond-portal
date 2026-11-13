@@ -42,6 +42,8 @@ let NOTA=false, NOTASEL=null, D=null, MODE=null, S='inicio', OPEN=null, slide=0,
 async function rpc(fn,args){const {data,error}=await sb.rpc(fn,args||{});if(error)throw new Error(error.message);return data}
 
 async function boot(){
+  const volta=ls.get('stond-volta');
+  if(volta&&!TOKEN){const {data:{session}}=await sb.auth.getSession();ls.set('stond-volta',null);if(session&&volta.startsWith(location.origin+'/?')){location.replace(volta);return}}
   if(TOKEN){MODE='token';try{D=await rpc('portal_get',{p_token:TOKEN})}catch(e){D=null}
     if(!D)return screenMsg('Link inválido','Este link não funciona mais. Peça um novo para a Stond.');return start()}
   const {data:{session}}=await sb.auth.getSession();
@@ -231,11 +233,12 @@ function notaCard(){
    <div class="nsc">${Array.from({length:11},(_,i)=>`<button data-nota="${i}" class="${NOTASEL===i?'on':''}">${i}</button>`).join('')}</div>
    ${NOTASEL!=null?`<textarea id="notat" rows="2" placeholder="Quer contar o porquê? (opcional)"></textarea><button class="btn red" data-nota-ok>Enviar nota</button>`:''}</div>`;
 }
-function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','inv','lnk','auto','arq'].concat(hasMarca()?['marca','proj']:[]).includes(h)?h:'inicio';render();
+function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});if(PREVIEW)edCheck();const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','inv','lnk','auto','arq'].concat(hasMarca()?['marca','proj']:[]).includes(h)?h:'inicio';render();
   if(window.StondIA)StondIA.mount({sb,mode:'cliente',local:iaLocal,fab:false,title:'Assistente Stond',sub:'Responde com os dados do seu portal',hello:'Oi, '+(first()||'tudo bem')+'! Posso dizer o que falta aprovar, o que vai ao ar e como está o seu Instagram.',hints:['O que falta eu aprovar?','O que vai ao ar esta semana?','Como está meu Instagram?','Como peço um ajuste?']})}
 function go(s){S=s;OPEN=null;if(location.hash.slice(1)!==s)history.replaceState(null,'','#'+s);render();const m=$('.main');if(m)m.scrollTop=0}
 
-const hasMarca=()=>!!(D&&D.brand&&window.StondMarca);
+const BR=()=>EDIT||(D&&D.brand);
+const hasMarca=()=>!!(D&&BR()&&window.StondMarca);
 const RES=['met','inv','lnk','auto'];
 /* no celular a barra de baixo só tem 5 botões: as páginas de cada bloco ganham pílulas no topo */
 const pills=L=>`<div class="pills">${L.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${l}</button>`).join('')}</div>`;
@@ -254,7 +257,7 @@ function shell(inner){
    <div class="who">${ph?`<img src="${ph}" alt="">`:''}<div><b>${esc(D.client.name)}</b><small>${esc(D.client.handle||'')}</small></div></div>
    <nav class="nav">${groups.map(([g,L])=>`<span class="grp">${g}</span>${L.map(([k,l,b])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${ic[k]}${l}${b?`<span class="bdg">${b}</span>`:''}</button>`).join('')}`).join('')}</nav>
    ${tt()}${MODE==='login'?'<button class="out" style="margin-top:0;padding-left:4px" data-out>Sair</button>':''}</aside>
-   <main class="main"><div class="mhead"><img class="l" src="${LOGO}" alt="Stond"><span style="display:flex;gap:10px;align-items:center">${tt()}${ph?`<img class="a" src="${ph}" alt="">`:''}${MODE==='login'?'<button class="out" data-out style="padding:0">Sair</button>':''}</span></div>${inner}</main>
+   <main class="main"><div class="mhead"><img class="l" src="${LOGO}" alt="Stond"><span style="display:flex;gap:10px;align-items:center">${tt()}${ph?`<img class="a" src="${ph}" alt="">`:''}${MODE==='login'?'<button class="out" data-out style="padding:0">Sair</button>':''}</span></div>${edBar()}${inner}</main>
    <nav class="tabbar">${tabs.map(([k,l,b])=>`<button data-go="${k}" ${cur(k)?'aria-current="page"':''}>${ic[k]}${l}${b?`<span class="bdg">${b}</span>`:''}</button>`).join('')}</nav></div>${OPEN?modal():''}`;
 }
 const row=p=>`<button class="row" data-open="${esc(p.id)}">${thumb(p)}<div class="t"><b>${esc(p.title)}</b><small>${ty(p.type)} · ${fmtD(p.date)}${p.time?' · '+esc(p.time):''}</small></div>${chip(p)}</button>`;
@@ -306,7 +309,7 @@ const V={
   const best=X.best?(posts().find(p=>p.id===X.best.post_id)||(X.best.permalink?{title:X.best.caption||'Post do mês',type:'post',media:X.best.thumb?[{url:X.best.thumb,kind:'image'}]:[]}:null)):null;
   const fm=X.formats?Object.entries(X.formats):[],fmc={reels:'var(--red)',carrossel:'var(--carr)',story:'#8a5560'};
   const now=new Date(),mk=iso(now).slice(0,7),mp=posts().filter(p=>String(p.date).startsWith(mk)),pub=mp.filter(p=>p.status==='publicado'||p.status==='aprovado').length;
-  const metas=hasMarca()&&(D.brand.metrics||[]).length?`<div style="margin-top:26px">${StondMarca.view(D.brand,{section:'metas',head:false})}</div>`:'';
+  const metas=hasMarca()&&(BR().metrics||[]).length?`<div style="margin-top:26px">${StondMarca.view(BR(),{section:'metas',head:false})}</div>`:'';
   return `${resPills()}<div class="top"><div><h2>Métricas</h2><p>Como o seu Instagram está evoluindo${fd?' desde '+fd:''}.</p></div></div>
   <div class="bento">
    <div class="bx hero w2 h2 w2m"><span class="lb">Seguidores</span><div class="num">${nf(L.followers)}${dl!=null?`<small style="${dl<0?'color:var(--red)':''}">${dl>=0?'+':''}${nf(dl)} desde ${fd}</small>`:''}</div>${chart}
@@ -329,8 +332,8 @@ const V={
 ${esc(pr.bioNow||pr.bio||'')}</p>
   <div class="feed">${feed.map(p=>`<button data-open="${esc(p.id)}">${thumb(p)}<span class="tag">${p.status==='aprovado'?'Aprovado':p.status==='publicado'?'No ar':'Prévia'}</span></button>`).join('')}</div></div>`;
  },
- marca(){return hasMarca()?marcaPills()+StondMarca.view(D.brand,{section:'marca'}):'<div class="empty">A sua marca aparece aqui quando a Stond publicar.</div>'},
- proj(){return hasMarca()?marcaPills()+StondMarca.view(D.brand,{section:'projeto',posts:D.posts||[]}):''},
+ marca(){return hasMarca()?marcaPills()+StondMarca.view(BR(),{section:'marca',...edOpt()}):'<div class="empty">A sua marca aparece aqui quando a Stond publicar.</div>'},
+ proj(){return hasMarca()?marcaPills()+StondMarca.view(BR(),{section:'projeto',posts:D.posts||[],...edOpt()}):''},
  inv(){
   const L=(D.invest||[]).slice().sort((a,b)=>String(b.month).localeCompare(String(a.month)));
   const tot=L.reduce((t,r)=>t+(+r.spent||0),0),conv=L.reduce((t,r)=>t+(+r.conversations||0),0);
@@ -426,13 +429,13 @@ function entregas(){
     if(pm){x.hash=pm[1];if(!V[x.hash]||(['marca','proj','antes'].includes(x.hash)&&!hasMarca()))return}
     if(x.k==='portal'||x.k==='ig')return;
     out.push(x)};
-  const T=hasMarca()?(D.brand.tasks||[]).filter(t=>t.status==='entregue'):[];
+  const T=hasMarca()?(BR().tasks||[]).filter(t=>t.status==='entregue'):[];
   T.forEach(t=>{(t.files||[]).forEach(f=>add({title:String(f.name||t.name).replace(/\.[a-z0-9]{2,4}$/i,''),dn:f.name,url:f.url,note:t.name,file:true}));if(t.link)add({title:t.name,url:t.link,note:t.stage?'Entregue · '+t.stage:'Entregue'})});
   (D.links||[]).forEach(l=>add({title:l.title,url:l.url,note:l.note,file:l.kind==='arquivo'}));
   return out;
 }
 const dlUrl=(u,n)=>/\/storage\/v1\/object\/public\//.test(u)?u.split('?')[0]+'?download='+encodeURIComponent(n||''):u;
-const brandBg=()=>{const c=(D.brand&&D.brand.colors)||[];const a=(c[0]&&c[0].hex)||'#2b2325',b=(c.find(x=>/dourad|gold/i.test(x.name||''))||c[1]||{}).hex||'#c9a35e';return `background:radial-gradient(120% 90% at 100% 0%,${a}cc,${a});--ac:${b}`};
+const brandBg=()=>{const c=(BR()&&BR().colors)||[];const a=(c[0]&&c[0].hex)||'#2b2325',b=(c.find(x=>/dourad|gold/i.test(x.name||''))||c[1]||{}).hex||'#c9a35e';return `background:radial-gradient(120% 90% at 100% 0%,${a}cc,${a});--ac:${b}`};
 let PDFJS=null;
 function vitrine(){
   const fr=[...document.querySelectorAll('.vp.site iframe')];
@@ -444,6 +447,45 @@ function vitrine(){
   if(!PDFJS)PDFJS=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';ok()};s.onerror=no;document.head.appendChild(s)});
   PDFJS.then(go).catch(()=>cs.forEach(c=>c.parentElement.classList.add('nopdf')));
 }
+/* ---------- A Stond edita na própria visão do cliente ----------
+   Em "Ver como cliente" (?ver=1), quem é da equipe e entrou com o Google edita Marca e Projeto ali mesmo.
+   O cliente nunca vê isso: sem login da equipe a tela fica só de leitura. */
+let EDIT=null,TEAM=null,EDST='',EDT=null;
+const blankBrand=()=>({shared:false,phrase:'',summary:'',steps:['Diagnóstico','Construção','Ativação','Otimização','Escala'].map(n=>({name:n,note:'',state:''})),tasks:[],escala:[]});
+async function edCheck(){
+  try{const {data:{session}}=await sb.auth.getSession();
+    TEAM=!!session&&!!(await rpc('team_me'));
+    if(TEAM){const {data,error}=await sb.from('agency_docs').select('data').eq('collection','marca').eq('id',D.client.id).maybeSingle();if(error)throw new Error(error.message);EDIT=(data&&data.data)||blankBrand();EDST=EDIT.updated?'Salvo':''}
+    const h=location.hash.slice(1);if(EDIT&&['marca','proj'].includes(h))S=h;
+  }catch(e){TEAM=false;EDIT=null;toast(e.message)}
+  render();
+}
+async function edWrite(){
+  EDIT.client=D.client.id;EDIT.updated=new Date().toISOString();
+  const {data:{session}}=await sb.auth.getSession();
+  const {error}=await sb.from('agency_docs').upsert({collection:'marca',id:D.client.id,client_id:D.client.id,data:EDIT,updated_at:EDIT.updated,updated_by:(session&&session.user.email)||null});
+  if(error)throw new Error(error.message);
+  const {shared,updated,...pub}=EDIT;D.brand=shared?JSON.parse(JSON.stringify(pub)):null;
+}
+const edSt=t=>{EDST=t;const el=$('#edst');if(el)el.textContent=t};
+function edSave(){edSt('Salvando…');clearTimeout(EDT);EDT=setTimeout(async()=>{try{await edWrite();edSt('Salvo')}catch(x){edSt('Não salvou');toast(x.message)}},600)}
+async function edUpload(f){
+  if(f.size>50*1048576){toast(f.name+' tem mais de 50 MB.');return null}
+  const path=`${D.client.id}/entregas/${Date.now()}-${f.name.normalize('NFD').replace(/[^\w.-]+/g,'-')}`;toast('Enviando '+f.name);
+  const {error}=await sb.storage.from('media').upload(path,f,{contentType:f.type||undefined,upsert:false});
+  if(error){toast(error.message);return null}
+  toast('Arquivo enviado');return MEDIA+path;
+}
+const edOpt=()=>EDIT&&['marca','proj'].includes(S)?{edit:true,onChange:edSave,onUpload:edUpload}:{};
+function edBar(){
+  if(!PREVIEW)return '';
+  if(TEAM===null)return '<div class="edbar"><span>Você está vendo como o cliente vê.</span></div>';
+  if(!TEAM)return `<div class="edbar"><span>Você está vendo como o cliente vê. A Stond pode editar a marca e o projeto aqui mesmo.</span><button class="btn sm" data-ed-login>Entrar para editar</button></div>`;
+  const on=!!EDIT.shared,here=['marca','proj'].includes(S);
+  return `<div class="edbar on"><span>${here?'<b>Modo edição.</b> Clique em qualquer texto para mudar. Salva sozinho.':'<b>Modo edição</b> na Marca e no Projeto. O resto é só como o cliente vê.'}</span>
+   <span class="edr"><span class="edst" id="edst">${esc(EDST)}</span><button class="edsw${on?' on':''}" data-ed-share aria-pressed="${on}"><i></i>${on?'Visível para o cliente':'Oculta para o cliente'}</button>${here?'':'<button class="btn sm ghost" data-go="proj">Editar projeto</button>'}</span></div>`;
+}
+
 function render(){
   if(!D)return;
   document.getElementById('app').innerHTML=shell(V[S]());
@@ -471,6 +513,11 @@ document.addEventListener('click',async e=>{
   const cp=t.closest('[data-copy]');if(cp){try{await navigator.clipboard.writeText(cp.dataset.copy);toast(cp.dataset.copyMsg||'Link copiado.')}catch(x){toast(cp.dataset.copy)}return}
   const gt=t.closest('[data-get]');if(gt){const {data,error}=await sb.storage.from('client-files').createSignedUrl(gt.dataset.get,300);if(error)return toast(error.message);window.open(data.signedUrl,'_blank','noopener');return}
   if(t.closest('[data-out]')){await sb.auth.signOut();D=null;login('entrar');return}
+  if(t.closest('[data-ed-login]')){ls.set('stond-volta',location.href);const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/'}});if(error)toast(error.message);return}
+  if(t.closest('[data-ed-share]')&&EDIT){
+    if(!EDIT.shared&&!String(EDIT.phrase||'').trim())return toast('Preencha pelo menos a frase central da marca antes de liberar.');
+    EDIT.shared=!EDIT.shared;clearTimeout(EDT);
+    try{await edWrite();toast(EDIT.shared?'Agora o cliente vê a marca e o projeto.':'Marca e projeto ocultos para o cliente.');render()}catch(x){EDIT.shared=!EDIT.shared;toast(x.message)}return}
 });
 document.addEventListener('keydown',e=>{if(!OPEN)return;if(e.key==='Escape'){OPEN=null;render()}
   const n=(posts().find(x=>x.id===OPEN)?.media||[]).length;if(n>1&&(e.key==='ArrowRight'||e.key==='ArrowLeft')&&!/TEXTAREA|INPUT/.test(document.activeElement.tagName)){slide=(slide+(e.key==='ArrowRight'?1:-1)+n)%n;render()}});
