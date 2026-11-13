@@ -361,12 +361,15 @@ ${esc(pr.bioNow||pr.bio||'')}</p>
   <div class="autol">${L.map(a=>`<div class="au"><span class="kw">${esc(a.keyword)}</span><div class="t"><b>${esc(String(a.title||'Link no direct').replace(/\s*👇\s*$/,''))}</b><small>Ativa desde ${a.since?new Date(a.since).toLocaleDateString('pt-BR'):'—'}</small></div><div class="n"><b>${nf(a.asked||0)}</b><span>pedidos</span></div><div class="n"><b>${nf(a.sent||0)}</b><span>entregues</span></div><div class="n"><b>${nf(a.asked30||0)}</b><span>30 dias</span></div></div>`).join('')}</div>`:'<div class="empty">Quando uma palavra-chave estiver ativa, aqui aparece quantas pessoas pediram e receberam o link.</div>'}`;
  },
  arq(){
-  const L=(D.links||[]).filter(l=>l.kind==='link'),F=(D.links||[]).filter(l=>l.kind==='arquivo'),U=D.uploads||[];
+  const U=D.uploads||[];
   const ext=u=>{const m=String(u).split('?')[0].match(/\.([a-z0-9]{2,4})$/i);return m?m[1].toUpperCase():'LINK'};
-  const host=u=>String(u).replace(/^https?:\/\//,'').replace(/\/$/,'');
-  return `<div class="top"><div><h2>Arquivos e links</h2><p>Tudo do seu projeto num lugar só.</p></div></div>
-  <p class="eyebrow">Links</p>${L.length?`<div class="files">${L.map(l=>`<div class="fl"><span class="ico">${ic.link}</span><div class="t"><b>${esc(l.title)}</b><small>${esc(host(l.url))}</small>${l.note?`<small>${esc(l.note)}</small>`:''}</div><a class="btn sm ghost" href="${esc(l.url)}" target="_blank" rel="noopener">Abrir</a><button class="btn sm ghost" data-copy="${esc(l.url)}">Copiar</button></div>`).join('')}</div>`:'<div class="empty">Nenhum link ainda.</div>'}
-  <p class="eyebrow" style="margin-top:22px">Arquivos da Stond</p>${F.length?`<div class="files">${F.map(l=>`<div class="fl"><span class="ico">${ext(l.url)}</span><div class="t"><b>${esc(l.title)}</b>${l.note?`<small>${esc(l.note)}</small>`:''}</div><a class="btn sm ghost" href="${esc(l.url)}" target="_blank" rel="noopener">Abrir</a></div>`).join('')}</div>`:'<div class="empty">Quando a Stond compartilhar um arquivo com você, ele aparece aqui.</div>'}
+  const host=u=>String(u).replace(/^https?:\/\//,'').replace(/^www\./,'').replace(/\/$/,'');
+  const it=entregas();
+  return `<div class="top"><div><h2>Arquivos e links</h2><p>Tudo o que a Stond entregou para você. Toque para abrir ou baixar.</p></div></div>
+  ${it.length?`<div class="vit">${it.map((x,i)=>{const pv=x.k==='pdf'?`<canvas data-pdf="${esc(x.url)}"></canvas><span class="vtag">PDF</span>`:x.k==='img'?`<img src="${esc(x.url)}" alt="" loading="lazy">`:x.k==='site'?`<iframe data-site src="${esc(x.url)}" loading="lazy" sandbox="allow-scripts allow-same-origin" tabindex="-1" aria-hidden="true" title=""></iframe><span class="vurl">${esc(host(x.url))}</span>`:x.k==='portal'?`<div class="vbr" style="${brandBg()}"><small>Sua marca</small><b>${esc(x.title)}</b></div>`:x.k==='ig'?`<div class="vig">${photo()?`<img src="${esc(photo())}" alt="">`:''}<b>@${esc(host(x.url).split('/')[1]||'')}</b></div>`:`<div class="vext">${ext(x.url)}</div>`;
+    const open=x.k==='portal'?`<button class="btn sm red" data-go="${esc(x.hash)}">Abrir</button>`:`<a class="btn sm red" href="${esc(x.url)}" target="_blank" rel="noopener">Abrir</a>`;
+    const dl=x.file?`<a class="btn sm ghost" href="${esc(dlUrl(x.url,x.dn||x.title))}" download="${esc(x.dn||x.title)}">Baixar</a>`:x.k==='site'?`<button class="btn sm ghost" data-copy="${esc(x.url)}">Copiar link</button>`:'';
+    return `<article class="vc"><a class="vp ${x.k}" ${x.k==='portal'?`href="#${esc(x.hash)}"`:`href="${esc(x.url)}" target="_blank" rel="noopener"`} aria-label="Abrir ${esc(x.title)}">${pv}</a><div class="vb"><b>${esc(x.title)}</b>${x.note?`<small>${esc(x.note)}</small>`:''}<div class="va">${open}${dl}</div></div></article>`}).join('')}</div>`:'<div class="empty">Quando a Stond entregar um documento ou site, ele aparece aqui com a prévia.</div>'}
   ${MODE==='login'?`<p class="eyebrow" style="margin-top:22px">Enviados por você</p>${U.length?`<div class="files">${U.map(u=>{const n=u.path.split('/').pop().replace(/^\d+-/,'');return `<div class="fl"><span class="ico">${ext(n)}</span><div class="t"><b>${esc(n)}</b><small>${new Date(u.at).toLocaleDateString('pt-BR')}${u.size?' · '+(u.size/1048576).toLocaleString('pt-BR',{maximumFractionDigits:1})+' MB':''}</small></div><button class="btn sm ghost" data-get="${esc(u.path)}">Abrir</button></div>`}).join('')}</div>`:''}
   <label class="drop" id="drop" for="up"><b style="color:var(--ink);font-weight:500">Mandar um arquivo para a Stond</b><span>Arraste aqui ou escolha no seu computador. Fotos, vídeos e documentos até 50 MB.</span><span class="btn sm">Escolher arquivo</span><input id="up" type="file" multiple hidden></label>`:''}`;
  }
@@ -415,10 +418,38 @@ async function upload(files){
   D=await rpc('portal_me');toast('Arquivo enviado para a Stond.');render();
 }
 
+
+/* ---------- entregas (Arquivos e links): documentos e sites com prévia ---------- */
+const norm=u=>String(u||'').replace(/^https?:\/\/(www\.)?/,'').replace(/[\/#?]+$/,'').toLowerCase();
+function entregas(){
+  const out=[],seen=new Set(),add=x=>{if(!x.url)return;const n=norm(x.url);if(seen.has(n))return;seen.add(n);
+    const u=String(x.url),pm=u.match(/^(?:https?:\/\/portal\.stond\.com\.br\/?)?#(\w+)$/);
+    x.k=pm?'portal':/\.pdf(\?|$)/i.test(u)?'pdf':/\.(png|jpe?g|webp|gif)(\?|$)/i.test(u)?'img':/instagram\.com/i.test(u)?'ig':/^https?:/i.test(u)&&!x.file?'site':'file';
+    if(pm){x.hash=pm[1];if(!V[x.hash]||(['marca','proj','antes'].includes(x.hash)&&!hasMarca()))return}
+    out.push(x)};
+  const T=hasMarca()?(D.brand.tasks||[]).filter(t=>t.status==='entregue'):[];
+  T.forEach(t=>{(t.files||[]).forEach(f=>add({title:String(f.name||t.name).replace(/\.[a-z0-9]{2,4}$/i,''),dn:f.name,url:f.url,note:t.name,file:true}));if(t.link)add({title:t.name,url:t.link,note:t.stage?'Entregue · '+t.stage:'Entregue'})});
+  (D.links||[]).forEach(l=>add({title:l.title,url:l.url,note:l.note,file:l.kind==='arquivo'}));
+  return out;
+}
+const dlUrl=(u,n)=>/\/storage\/v1\/object\/public\//.test(u)?u.split('?')[0]+'?download='+encodeURIComponent(n||''):u;
+const brandBg=()=>{const c=(D.brand&&D.brand.colors)||[];const a=(c[0]&&c[0].hex)||'#2b2325',b=(c.find(x=>/dourad|gold/i.test(x.name||''))||c[1]||{}).hex||'#c9a35e';return `background:radial-gradient(120% 90% at 100% 0%,${a}cc,${a});--ac:${b}`};
+let PDFJS=null;
+function vitrine(){
+  const fr=[...document.querySelectorAll('.vp.site iframe')];
+  const fit=()=>fr.forEach(f=>{const w=f.parentElement.clientWidth;f.style.transform=`scale(${w/1280})`});fit();
+  if(fr.length&&!window.__vfit){window.__vfit=1;addEventListener('resize',()=>{document.querySelectorAll('.vp.site iframe').forEach(f=>{f.style.transform=`scale(${f.parentElement.clientWidth/1280})`})})}
+  const cs=[...document.querySelectorAll('canvas[data-pdf]')];if(!cs.length)return;
+  const go=()=>cs.forEach(async c=>{try{const doc=await window.pdfjsLib.getDocument({url:c.dataset.pdf}).promise;const pg=await doc.getPage(1);const vp=pg.getViewport({scale:1});const sc=Math.min(2,(c.parentElement.clientWidth*2)/vp.width);const v2=pg.getViewport({scale:sc});c.width=v2.width;c.height=v2.height;await pg.render({canvasContext:c.getContext('2d'),viewport:v2}).promise;c.classList.add('ok')}catch(e){c.parentElement.classList.add('nopdf')}});
+  if(window.pdfjsLib)return go();
+  if(!PDFJS)PDFJS=new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';ok()};s.onerror=no;document.head.appendChild(s)});
+  PDFJS.then(go).catch(()=>cs.forEach(c=>c.parentElement.classList.add('nopdf')));
+}
 function render(){
   if(!D)return;
   document.getElementById('app').innerHTML=shell(V[S]());
   document.title=({inicio:'Início',aprov:'Aprovações',cal:'Calendário',met:'Métricas',ig:'Meu Instagram',arq:'Arquivos e links'}[S])+' · Stond';
+  if(S==='arq')vitrine();
   const up=$('#up');if(up){up.onchange=()=>upload([...up.files]);const dz=$('#drop');
     dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('on')});dz.addEventListener('dragleave',()=>dz.classList.remove('on'));
     dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('on');upload([...e.dataTransfer.files])});}
