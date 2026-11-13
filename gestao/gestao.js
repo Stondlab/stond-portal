@@ -121,7 +121,7 @@ function login(){
 /* ---------- casca ---------- */
 const GROUPS=[['',[['inicio','Hoje']]],
  ['Dia a dia',[['agenda','Calendário de posts'],['dem','Demandas'],['aprov','Aprovação'],['pub','Agendados']]],
- ['Planejar',[['plano','Planejamento dos meses'],['proj','Projetos'],['marca','Marca']]],
+ ['Planejar',[['plano','Planejamento dos meses']]],
  ['Resultados',[['met','Métricas'],['auto','Automações']]],
  ['Gestão',[['cli','Clientes'],['fin','Financeiro']]],
  ['Mais',[['msg','Mensagens'],['rel','Relatórios'],['inv','Investimento'],['lnk','Links curtos'],['com','Comercial'],['prop','Propostas e contratos'],['gest','Gestão da Stond'],['cres','Crescimento'],['adm','Administrativo']]]];
@@ -305,7 +305,7 @@ V.cli=()=>{
    return `<article class="cc" style="--cc:${esc(c.color)}"><div class="cb">${cphoto(c.id)?`<img class="cav" src="${esc(cphoto(c.id))}" alt="">`:`<span class="cav" style="background:${esc(c.color)}">${esc(c.name[0])}</span>`}<div style="min-width:0"><b>${esc(c.name)}</b><small>${c.handle?'@'+esc(c.handle):'Sem Instagram'}</small></div><span class="hpill" title="Saúde do cliente">${h}</span></div>
    <div class="cs"><div><b>${ps.filter(p=>p.status==='pendente').length}</b><small>para aprovar</small></div><div><b>${ps.filter(p=>String(p.date).startsWith(month())).length}</b><small>posts no mês</small></div><div><b>${m?nf(m.followers):'—'}</b><small>seguidores</small></div></div>
    <div class="cx">${info||'Sem mensalidade cadastrada'}</div>${up.length?`<div class="cx up">Oferecer: ${up.join(', ')}</div>`:''}
-   <div class="ca"><button class="lk" data-edit-client="${esc(c.id)}">Editar</button><a class="lk" href="https://portal.stond.com.br/?c=${esc(c.access_token)}&ver=1" target="_blank" rel="noopener">Ver como cliente</a><button class="lk" data-invite="${esc(c.id)}">${(c.data||{}).convite_em?'Reenviar convite':'Convidar por e-mail'}</button><button class="lk" data-copy="https://portal.stond.com.br/?convite=${esc(c.access_token)}">Copiar link</button></div></article>`}).join('')}</div>`);
+   <div class="ca"><button class="lk" data-edit-client="${esc(c.id)}">Editar</button><a class="lk" href="https://portal.stond.com.br/?c=${esc(c.access_token)}&ver=1" target="_blank" rel="noopener">Ver e editar como cliente</a><button class="lk" data-invite="${esc(c.id)}">${(c.data||{}).convite_em?'Reenviar convite':'Convidar por e-mail'}</button><button class="lk" data-copy="https://portal.stond.com.br/?convite=${esc(c.access_token)}">Copiar link</button></div></article>`}).join('')}</div>`);
 };
 
 /* Automação de direct (tipo ManyChat) */
