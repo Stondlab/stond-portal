@@ -366,7 +366,7 @@ ${esc(pr.bioNow||pr.bio||'')}</p>
   return `${hasMarca()?marcaPills():''}<div class="top"><div><h2>Arquivos e links</h2><p>Tudo o que a Stond entregou para você. Toque para abrir ou baixar.</p></div></div>
   ${it.length?`<div class="vit">${it.map((x,i)=>{const pv=x.k==='pdf'?`<canvas data-pdf="${esc(x.url)}"></canvas><span class="vtag">PDF</span>`:x.k==='img'?`<img src="${esc(x.url)}" alt="" loading="lazy">`:x.k==='site'?`<iframe data-site src="${esc(x.url)}" loading="lazy" sandbox="allow-scripts allow-same-origin" tabindex="-1" aria-hidden="true" title=""></iframe><span class="vurl">${esc(host(x.url))}</span>`:x.k==='portal'?`<div class="vbr" style="${brandBg()}"><small>Sua marca</small><b>${esc(x.title)}</b></div>`:x.k==='ig'?`<div class="vig">${photo()?`<img src="${esc(photo())}" alt="">`:''}<b>@${esc(host(x.url).split('/')[1]||'')}</b></div>`:`<div class="vext">${ext(x.url)}</div>`;
     const open=x.k==='portal'?`<button class="btn sm red" data-go="${esc(x.hash)}">Abrir</button>`:`<a class="btn sm red" href="${esc(x.url)}" target="_blank" rel="noopener">Abrir</a>`;
-    const dl=x.file?`<a class="btn sm ghost" href="${esc(dlUrl(x.url,x.dn||x.title))}" download="${esc(x.dn||x.title)}">Baixar</a>`:x.k==='site'?`<button class="btn sm ghost" data-copy="${esc(x.url)}">Copiar link</button>`:'';
+    const dl=x.file?`<a class="btn sm ghost" href="${esc(dlUrl(x.url,x.dn||x.title))}" download="${esc(dlName(x.url,x.dn||x.title))}">Baixar</a>`:x.k==='site'?`<button class="btn sm ghost" data-copy="${esc(x.url)}">Copiar link</button>`:'';
     return `<article class="vc"><a class="vp ${x.k}" ${x.k==='portal'?`href="#${esc(x.hash)}"`:`href="${esc(x.url)}" target="_blank" rel="noopener"`} aria-label="Abrir ${esc(x.title)}">${pv}</a><div class="vb"><b>${esc(x.title)}</b>${x.note&&x.note!==x.title?`<small>${esc(x.note)}</small>`:''}<div class="va">${open}${dl}</div></div></article>`}).join('')}</div>`:'<div class="empty">Quando a Stond entregar um documento ou site, ele aparece aqui com a prévia.</div>'}
   ${MODE==='login'?`<p class="eyebrow" style="margin-top:22px">Enviados por você</p>${U.length?`<div class="files">${U.map(u=>{const n=u.path.split('/').pop().replace(/^\d+-/,'');return `<div class="fl"><span class="ico">${ext(n)}</span><div class="t"><b>${esc(n)}</b><small>${new Date(u.at).toLocaleDateString('pt-BR')}${u.size?' · '+(u.size/1048576).toLocaleString('pt-BR',{maximumFractionDigits:1})+' MB':''}</small></div><button class="btn sm ghost" data-get="${esc(u.path)}">Abrir</button></div>`}).join('')}</div>`:''}
   <label class="drop" id="drop" for="up"><b style="color:var(--ink);font-weight:500">Mandar um arquivo para a Stond</b><span>Arraste aqui ou escolha no seu computador. Fotos, vídeos e documentos até 50 MB.</span><span class="btn sm">Escolher arquivo</span><input id="up" type="file" multiple hidden></label>`:''}`;
@@ -431,7 +431,9 @@ function entregas(){
   (D.links||[]).forEach(l=>add({title:l.title,url:l.url,note:l.note,file:l.kind==='arquivo'}));
   return out;
 }
-const dlUrl=(u,n)=>/\/storage\/v1\/object\/public\//.test(u)?u.split('?')[0]+'?download='+encodeURIComponent(n||''):u;
+/* nome do arquivo baixado sempre com a extensão (sem ela o computador não sabe que é PDF) */
+const dlName=(u,n)=>{const e=(String(u).split('?')[0].match(/\.([a-z0-9]{2,5})$/i)||[])[1];n=String(n||'arquivo').trim();return e&&!new RegExp('\\.'+e+'$','i').test(n)?n+'.'+e.toLowerCase():n};
+const dlUrl=(u,n)=>/\/storage\/v1\/object\/public\//.test(u)?u.split('?')[0]+'?download='+encodeURIComponent(dlName(u,n)):u;
 const brandBg=()=>{const c=(D.brand&&D.brand.colors)||[];const a=(c[0]&&c[0].hex)||'#2b2325',b=(c.find(x=>/dourad|gold/i.test(x.name||''))||c[1]||{}).hex||'#c9a35e';return `background:radial-gradient(120% 90% at 100% 0%,${a}cc,${a});--ac:${b}`};
 let PDFJS=null;
 function vitrine(){
