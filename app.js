@@ -395,10 +395,10 @@ function modal(){
     <div class="sc">${p.caption?`<div><p class="eyebrow">Legenda</p><div class="cap">${esc(p.caption)}</div></div>`:''}
      ${brief?`<div><p class="eyebrow">Detalhes</p><div class="det">${esc(brief)}</div></div>`:''}
      ${fb.length?`<div><p class="eyebrow">Conversa</p><div class="hist">${fb.map(f=>`<div><b>${esc(f.author||'Você')}</b> <small>${f.kind==='aprovado'?'aprovou':f.kind==='ajuste'?'pediu ajuste':'comentou'} · ${new Date(f.at).toLocaleDateString('pt-BR')}</small>${f.text?`<p>${esc(f.text)}</p>`:''}</div>`).join('')}</div></div>`:''}</div>
-    ${PREVIEW?`<div class="act"><p class="sub" style="margin:0">Você está vendo como o cliente. Aprovar e pedir ajuste ficam desligados aqui.</p></div>`:`<div class="act">
-     <div class="fld"><label for="cm">Comentário ${canDecide?'(opcional para aprovar)':''}</label><textarea id="cm" placeholder="Escreva aqui se quiser mudar algo"></textarea></div>
+    ${(()=>{const off=PREVIEW?' disabled':'';return `<div class="act">
+     <div class="fld"><label for="cm">Comentário ${canDecide?'(opcional para aprovar)':''}</label><textarea id="cm" placeholder="Escreva aqui se quiser mudar algo"${off}></textarea></div>
      <p class="err" id="perr" role="alert" hidden></p>
-     <div class="bt">${canDecide?'<button class="btn red" data-fb="aprovado">Aprovar</button><button class="btn" data-fb="ajuste">Pedir ajuste</button>':''}<button class="btn ghost" data-fb="comentario">Só comentar</button></div></div>`}</div></div></div>`;
+     <div class="bt">${canDecide?`<button class="btn red" data-fb="aprovado"${off}>Aprovar</button><button class="btn" data-fb="ajuste"${off}>Pedir ajuste</button>`:''}<button class="btn ghost" data-fb="comentario"${off}>Só comentar</button></div>${PREVIEW?'<p class="pvn">Prévia: é assim que o cliente vê. Os botões só funcionam para ele.</p>':''}</div>`})()}</div></div></div>`;
 }
 async function sendFb(kind){
   const txt=$('#cm').value.trim(),err=$('#perr');err.hidden=true;
