@@ -330,7 +330,7 @@ ${esc(pr.bioNow||pr.bio||'')}</p>
   <div class="feed">${feed.map(p=>`<button data-open="${esc(p.id)}">${thumb(p)}<span class="tag">${p.status==='aprovado'?'Aprovado':p.status==='publicado'?'No ar':'Prévia'}</span></button>`).join('')}</div></div>`;
  },
  marca(){return hasMarca()?marcaPills()+StondMarca.view(D.brand,{section:'marca'}):'<div class="empty">A sua marca aparece aqui quando a Stond publicar.</div>'},
- proj(){return hasMarca()?marcaPills()+StondMarca.view(D.brand,{section:'projeto'}):''},
+ proj(){return hasMarca()?marcaPills()+StondMarca.view(D.brand,{section:'projeto',posts:D.posts||[]}):''},
  inv(){
   const L=(D.invest||[]).slice().sort((a,b)=>String(b.month).localeCompare(String(a.month)));
   const tot=L.reduce((t,r)=>t+(+r.spent||0),0),conv=L.reduce((t,r)=>t+(+r.conversations||0),0);

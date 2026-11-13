@@ -186,6 +186,61 @@
     return `<p class="mk-intro">${intro}</p>${body}${ED?`<button class="mk-add" data-add="tasks" data-tpl='${E(JSON.stringify({name:'',desc:'',stage:'',status:st,date:'',link:''}))}'>+ Entrega</button>`:''}`;
   }
 
+  /* ---------- projeto no Método Stond: etapas, este mês, até 3 meses, projeção (Escala), já entregue ---------- */
+  const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const ymOf=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const addM=(ym,n)=>{const [y,m]=ym.split('-').map(Number);return ymOf(new Date(y,m-1+n,1))};
+  const mName=ym=>{const m=+String(ym).split('-')[1];return m?MESES[m-1][0].toUpperCase()+MESES[m-1].slice(1):''};
+  const PHC={'Diagnóstico':'#8a7e81','Construção':'#5a7fa8','Ativação':'#8f0a19','Otimização':'#d08a1c','Escala':'#3f9f6f'};
+  const METDESC={'Diagnóstico':'Entender onde a marca está hoje.','Construção':'Posicionamento, identidade e manual da marca.','Ativação':'Colocar a marca no ar e rodar o conteúdo.','Otimização':'Ler os números e ajustar o que não funciona.','Escala':'Crescer o que deu certo.'};
+  let POSTS=[];
+  function autoProg(t){
+    if(t.auto!=='posts'||!t.month)return null;
+    const L=POSTS.filter(p=>String(p.date||'').slice(0,7)===t.month&&p.stage!=='arquivado'&&p.type!=='story');if(!L.length)return null;
+    const ok=L.filter(p=>p.status==='aprovado'||p.status==='publicado'||p.publish_status==='publicado').length;
+    return {ok,n:L.length};
+  }
+  const stLb={entregue:['k','Pronto'],fazendo:['f','Fazendo'],plano:['v','Vem aí']};
+  function edFields(t,i){const p='tasks.'+i;if(!ED)return '';
+    return `<div class="pj-ed"><small>Mês ${T(p+'.month','AAAA-MM',{raw:1})}</small><small>Etapa ${T(p+'.stage','Ativação',{raw:1})}</small><small>Link ${T(p+'.link','https://…',{raw:1})}</small>
+      <button class="pj-tg" data-tg="${p}.you" aria-pressed="${!!t.you}">Precisa do cliente</button><button class="pj-tg" data-tg="${p}.auto" data-v="posts" aria-pressed="${t.auto==='posts'}">Progresso pelos posts</button>
+      <div class="mk-mv">${Object.entries({plano:'Vem aí',fazendo:'Fazendo',entregue:'Pronto'}).map(([k,l])=>`<button data-st="${p}" data-v="${k}" aria-pressed="${k===(t.status||'plano')}">${l}</button>`).join('')}</div>
+      ${ED.onUpload?`<div class="mk-files">${A(t.files).map((f,j)=>`<span class="mk-file"><a href="${E(f.url)}" target="_blank" rel="noopener">${E(f.name||'arquivo')}</a><button class="mk-x" data-del="${p}.files.${j}" aria-label="Tirar arquivo">×</button></span>`).join('')}<label class="mk-up">+ Arquivo<input type="file" data-mk-file="${p}" multiple hidden></label></div>`:''}</div>`}
+  function item(t,i){const p='tasks.'+i,[c,l]=stLb[t.status||'plano'],pr=autoProg(t);
+    const desc=pr?`${pr.ok} de ${pr.n} posts aprovados.`:'';
+    return `<div class="pj-it mk-it${t.you?' you':''}">${X(p)}<span class="pj-st ${c}">${t.you&&t.status!=='entregue'?'Precisa de você':l}</span><b>${T(p+'.name','Nome da entrega',{raw:1})}</b>
+      ${S(t.desc)||desc?`<p>${desc&&!ED?E(desc)+(t.desc?' ':''):''}${S(t.desc)?T(p+'.desc','Uma frase sobre a entrega',{ml:1}):''}</p>`:''}
+      ${pr?`<div class="pj-mini"><i style="width:${Math.round(pr.ok/pr.n*100)}%"></i></div>`:''}
+      ${!ED&&t.link?`<a class="mk-open" href="${E(t.link)}" target="_blank" rel="noopener">Abrir →</a>`:''}${edFields(t,i)}</div>`}
+  function rc(t,i){const p='tasks.'+i,c=PHC[t.stage]||'#8a7e81';
+    return `<div class="pj-rc mk-it${t.you&&t.status!=='entregue'?' you':''}${t.status==='entregue'?' ok':''}" style="--pc:${c}">${X(p)}<span class="pp">${E(t.stage||'')}</span><b>${T(p+'.name','Nome da entrega',{raw:1})}</b>
+      ${t.you&&t.status!=='entregue'?`<small>Precisa de você${t.desc?': '+E(t.desc):''}</small>`:S(t.desc)?`<small>${T(p+'.desc','Detalhe',{raw:1})}</small>`:''}${t.status==='entregue'?'<small class="okk">✓ Pronto</small>':''}${edFields(t,i)}</div>`}
+  function projeto(){
+    const cur=ymOf(new Date()),all=A(B.tasks).map((t,i)=>[t,i]);
+    const mOf=t=>t.month||(t.status==='entregue'?'':cur);
+    const st=A(B.steps);
+    const met=`<span class="mk-lb">Método Stond</span><div class="pj-met">${st.map((x,i)=>`<div class="pj-ph mk-it ${E(x.state||'')}">${X('steps.'+i)}<span class="dot"${ED?` data-cyc="steps.${i}" title="Clique para mudar: feito, agora, depois"`:''}>${x.state==='done'?'✓':i+1}</span>
+      <b>${T(`steps.${i}.name`,'Etapa',{raw:1})}</b><p>${ED?T(`steps.${i}.desc`,METDESC[x.name]||'O que é esta etapa',{raw:1}):E(x.desc||METDESC[x.name]||'')}</p><em>${T(`steps.${i}.note`,'Situação',{raw:1})}</em></div>`).join('')}${ADD('steps',{name:'',desc:'',note:'',state:''},'Etapa')}</div>`;
+    const now=all.filter(([t])=>mOf(t)===cur),nowSt=(st.find(x=>x.state==='now')||{}).name;
+    const done=now.filter(([t])=>t.status==='entregue').length;
+    const mes=`<div class="pj-mes"><div class="pj-mh"><div><span class="mk-lb">Este mês</span><h3>${mName(cur)}${nowSt?` <span class="pj-tag" style="--pc:${PHC[nowSt]||'#8f0a19'}">${E(nowSt)}</span>`:''}</h3></div>
+      ${now.length?`<div class="pj-big"><span class="n">${done}<small> de ${now.length} prontos</small></span><span class="pj-bar"><i style="width:${Math.round(done/now.length*100)}%"></i></span></div>`:''}</div>
+      <div class="pj-its">${now.sort((a,b)=>({entregue:0,fazendo:1,plano:2}[a[0].status||'plano'])-({entregue:0,fazendo:1,plano:2}[b[0].status||'plano'])).map(([t,i])=>item(t,i)).join('')||'<p class="mk-muted">Nada marcado para este mês.</p>'}</div>
+      ${ED?`<button class="mk-add" data-add="tasks" data-tpl='${E(JSON.stringify({name:'',desc:'',stage:nowSt||'',status:'fazendo',month:cur,link:''}))}'>+ Entrega neste mês</button>`:''}</div>`;
+    const ms=[1,2].map(n=>addM(cur,n));
+    const road=`<span class="mk-lb">Próximos meses</span><div class="pj-road">${ms.map(m=>{const L=all.filter(([t])=>mOf(t)===m);
+      return `<div class="pj-col"><header><b>${mName(m)}</b><small>${m.slice(0,4)}</small></header>${L.map(([t,i])=>rc(t,i)).join('')||'<p class="mk-muted">A definir.</p>'}
+      ${ED?`<button class="mk-add" data-add="tasks" data-tpl='${E(JSON.stringify({name:'',desc:'',stage:'',status:'plano',month:m,link:''}))}'>+ Entrega</button>`:''}</div>`}).join('')}</div>`;
+    const later=all.filter(([t])=>{const m=mOf(t);return m&&m>ms[1]});
+    const esc=A(B.escala),fut=esc.length||later.length||ED?`<div class="pj-esc"><div class="pj-eh"><span class="pj-tag" style="--pc:${PHC['Escala']}">Escala</span><h3>Para onde a marca vai</h3><p>Projeção: o que vem depois que a base estiver rodando.</p></div>
+      <div class="pj-ecs">${LIST('escala',(x,i,p)=>`<div class="pj-ec mk-it">${X(p)}<small>${T(p+'.when','Quando',{raw:1})}</small><b>${T(p+'.name','Ideia',{raw:1})}</b>${S(x.desc)?`<p>${T(p+'.desc','O que é',{ml:1})}</p>`:''}</div>`,{name:'',desc:'',when:''},'Projeção')}
+      ${later.map(([t,i])=>`<div class="pj-ec"><small>${mName(t.month)} ${t.month.slice(0,4)}</small><b>${E(t.name)}</b>${t.desc?`<p>${E(t.desc)}</p>`:''}${edFields(t,i)}</div>`).join('')}</div></div>`:'';
+    const ent=all.filter(([t])=>t.status==='entregue');
+    const ok=ent.length?`<span class="mk-lb">Já entregue</span><div class="pj-ent">${ent.map(([t,i])=>{const u=t.link||(A(t.files)[0]||{}).url;return u&&!ED?`<a href="${E(u)}" target="_blank" rel="noopener">${E(t.name)}</a>`:`<span>${E(t.name)}${ED&&!t.month?' <small>(sem mês)</small>':''}</span>`}).join('')}</div>`:'';
+    const loose=ED?all.filter(([t])=>t.status==='entregue'&&!t.month):[];
+    return `<div class="pj">${met}${mes}${road}${fut}${ok}${loose.length?`<details class="pj-loose"><summary>Editar entregas antigas (sem mês)</summary><div class="pj-its">${loose.map(([t,i])=>item(t,i)).join('')}</div></details>`:''}</div>`;
+  }
+
   /* ---------- métricas: antes, agora e meta ---------- */
   const sz=v=>String(v||'').length>7?' class="tx"':'';
   function metricas(){
@@ -206,15 +261,15 @@
 
   /* section: sem nada = tudo junto (gestão); 'marca' | 'projeto' | 'antes' | 'metas' = uma página do menu do portal */
   const PROJ=[['plano','O que vamos fazer'],['fazendo','Em andamento'],['entregue','Entregue']];
-  const HEAD={marca:['Sua marca','O que a sua marca é e o porquê de cada escolha.'],projeto:['Projeto da marca','O que já foi entregue, o que está em andamento e o que vem a seguir.'],antes:['Antes e depois','Como a sua marca era e como ficou.']};
+  const HEAD={marca:['Sua marca','O que a sua marca é e o porquê de cada escolha.'],projeto:['Projeto','Onde estamos no Método Stond, o que estamos fazendo e o que vem a seguir.'],antes:['Antes e depois','Como a sua marca era e como ficou.']};
   function view(b,opt={}){
-    B=b||{};ED=opt.edit?opt:null;SEC=opt.section||'';loadFonts(B);
+    B=b||{};ED=opt.edit?opt:null;SEC=opt.section||'';POSTS=A(opt.posts);loadFonts(B);
     const P=palette(B);
     const vars=`--mb:${P.base};--ma:${P.accent};--mf:${fam(B.font_title,'Montserrat,sans-serif')};--ms:${fam(B.font_accent,'Georgia,serif')}`;
-    const fn={mapa,quem,fala,visual,cuida,doc,metricas,antes,plano:()=>tasks('plano'),fazendo:()=>tasks('fazendo'),entregue:()=>tasks('entregue')};
+    const fn={projeto,mapa,quem,fala,visual,cuida,doc,metricas,antes,plano:()=>tasks('plano'),fazendo:()=>tasks('fazendo'),entregue:()=>tasks('entregue')};
     let cur=TAB,top='',body;
     if(SEC==='marca'){cur=SUB.some(([k])=>k===TAB)?TAB:'mapa';top=tabs(SUB,cur)}
-    else if(SEC==='projeto'){const def=A(B.tasks).some(t=>t.status==='fazendo')?'fazendo':'plano';cur=PROJ.some(([k])=>k===TAB)?TAB:def;top=steps()+tabs(PROJ,cur)}
+    else if(SEC==='projeto'){cur='projeto'}
     else if(SEC==='antes'||SEC==='metas'){cur=SEC==='antes'?'antes':'metricas'}
     else{cur=TABS.some(([k])=>k===TAB)||SUB.some(([k])=>k===TAB)?TAB:'mapa';top=steps()+tabs(TABS,cur,1)}
     body=fn[cur]();
@@ -247,6 +302,8 @@
     if(ch){const k=ch.dataset.chip;const a=chipsOf(B[k]);a.push('Novo ponto');B[k]=a.join('; ');FOCUS=`${k};${a.length-1}`;changed();rerender();return}
     const sm=e.target.closest('[data-st]');
     if(sm){const t=getP(B,sm.dataset.st);if(t){t.status=sm.dataset.v;changed();rerender()}return}
+    const tg=e.target.closest('[data-tg]');
+    if(tg){const ks=tg.dataset.tg.split('.');const k=ks.pop();const o=getP(B,ks.join('.'));if(o){o[k]=tg.dataset.v?(o[k]===tg.dataset.v?'':tg.dataset.v):!o[k];changed();rerender()}return}
     const cy=e.target.closest('[data-cyc]');
     if(cy){const s=getP(B,cy.dataset.cyc);if(s){s.state=s.state==='done'?'now':s.state==='now'?'':'done';changed();rerender()}return}
   });
