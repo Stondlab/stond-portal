@@ -240,16 +240,15 @@ const RES=['met','inv','lnk','auto'];
 /* no celular a barra de baixo só tem 5 botões: as páginas de cada bloco ganham pílulas no topo */
 const pills=L=>`<div class="pills">${L.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${l}</button>`).join('')}</div>`;
 const resPills=()=>pills([['met','Métricas'],['inv','Investimento'],['lnk','Links'],['auto','Automações']]);
-const marcaPills=()=>pills([['marca','A marca'],['proj','Projeto']]);
+const marcaPills=()=>pills([['marca','A marca'],['proj','Projeto'],['arq','Arquivos e links']]);
 const brl=v=>v==null||v===''||isNaN(+v)?'—':(+v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:(+v)%1?2:0});
 const mesN=m=>{const [y,mm]=String(m||'').split('-');return mm?MES[+mm-1][0].toUpperCase()+MES[+mm-1].slice(1)+' '+y:String(m||'')};
 function shell(inner){
   const M=hasMarca(),groups=[['Dia a dia',[['inicio','Início'],['aprov','Aprovações',pend().length],['cal','Calendário'],['ig','Meu Instagram']]],
-   ...(M?[['Sua marca',[['marca','A marca'],['proj','Projeto']]]]:[]),
-   ['Resultados',[['met','Métricas'],['inv','Investimento'],['lnk','Links e cliques'],['auto','Automações']]],
-   ['Arquivos',[['arq','Arquivos e links']]]];
+   ['Sua marca',[...(M?[['marca','A marca'],['proj','Projeto']]:[]),['arq','Arquivos e links']]],
+   ['Resultados',[['met','Métricas'],['inv','Investimento'],['lnk','Links e cliques'],['auto','Automações']]]];
   const tabs=[['inicio','Início'],['aprov','Aprovar',pend().length],['cal','Calendário'],...(M?[['marca','Marca']]:[]),['met','Resultados']];
-  const cur=k=>k===S||(k==='met'&&RES.includes(S))||(k==='marca'&&S==='proj');
+  const cur=k=>k===S||(k==='met'&&RES.includes(S))||(k==='marca'&&(S==='proj'||S==='arq'));
   const ph=photo();
   return `<div class="app"><aside class="side"><img class="logo" src="${LOGO}" alt="Stond">
    <div class="who">${ph?`<img src="${ph}" alt="">`:''}<div><b>${esc(D.client.name)}</b><small>${esc(D.client.handle||'')}</small></div></div>
@@ -364,7 +363,7 @@ ${esc(pr.bioNow||pr.bio||'')}</p>
   const ext=u=>{const m=String(u).split('?')[0].match(/\.([a-z0-9]{2,4})$/i);return m?m[1].toUpperCase():'LINK'};
   const host=u=>String(u).replace(/^https?:\/\//,'').replace(/^www\./,'').replace(/\/$/,'');
   const it=entregas();
-  return `<div class="top"><div><h2>Arquivos e links</h2><p>Tudo o que a Stond entregou para você. Toque para abrir ou baixar.</p></div></div>
+  return `${hasMarca()?marcaPills():''}<div class="top"><div><h2>Arquivos e links</h2><p>Tudo o que a Stond entregou para você. Toque para abrir ou baixar.</p></div></div>
   ${it.length?`<div class="vit">${it.map((x,i)=>{const pv=x.k==='pdf'?`<canvas data-pdf="${esc(x.url)}"></canvas><span class="vtag">PDF</span>`:x.k==='img'?`<img src="${esc(x.url)}" alt="" loading="lazy">`:x.k==='site'?`<iframe data-site src="${esc(x.url)}" loading="lazy" sandbox="allow-scripts allow-same-origin" tabindex="-1" aria-hidden="true" title=""></iframe><span class="vurl">${esc(host(x.url))}</span>`:x.k==='portal'?`<div class="vbr" style="${brandBg()}"><small>Sua marca</small><b>${esc(x.title)}</b></div>`:x.k==='ig'?`<div class="vig">${photo()?`<img src="${esc(photo())}" alt="">`:''}<b>@${esc(host(x.url).split('/')[1]||'')}</b></div>`:`<div class="vext">${ext(x.url)}</div>`;
     const open=x.k==='portal'?`<button class="btn sm red" data-go="${esc(x.hash)}">Abrir</button>`:`<a class="btn sm red" href="${esc(x.url)}" target="_blank" rel="noopener">Abrir</a>`;
     const dl=x.file?`<a class="btn sm ghost" href="${esc(dlUrl(x.url,x.dn||x.title))}" download="${esc(x.dn||x.title)}">Baixar</a>`:x.k==='site'?`<button class="btn sm ghost" data-copy="${esc(x.url)}">Copiar link</button>`:'';
