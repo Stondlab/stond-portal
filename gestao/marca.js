@@ -56,9 +56,9 @@
     const ids=CL().map(k=>k.id),c=fv('mc',ids[0]),b=brandOf(c).data;
     return shell(topb(title,sub,`<span class="mk-st-txt" id="mkst">${b.updated?'Salvo':''}</span>`)+`
      <div class="filters">${segF('mc',CL().map(k=>[k.id,k.name]))}</div>
-     ${StondMarca.view(b,{edit:true,head:false,section:sec,onChange:d=>queue(c,d),onUpload:upload(c)})}`);
+     ${StondMarca.view(b,{edit:true,head:false,section:sec,posts:D.posts.filter(p=>p.client_id===c),onChange:d=>queue(c,d),onUpload:upload(c)})}`);
   };
-  V.proj=page('projeto','Projetos','O que vamos fazer, o que está em andamento e o que já foi entregue, por cliente');
+  V.proj=page('projeto','Projetos','Onde cada cliente está no Método Stond, o que entra neste mês e nos próximos. É o que o cliente vê.');
   V.antes=page('antes','Antes e depois','Como cada cliente era e como ficou');
 
   document.addEventListener('click',async e=>{
