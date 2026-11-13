@@ -241,27 +241,36 @@ V.agenda=()=>{
 /* Agendados: o perfil do Instagram de cada cliente com o que vai entrar por cima (como vai ficar o feed) */
 function igGrid(){
   const ids=CL().map(c=>c.id),c=fv('pcl',ids[0]),cl=cli(c),pr=(D.profiles||{})[c]||{},m=D.metrics.filter(x=>x.client_id===c).slice(-1)[0]||{};
-  const t0=today();
+  const t0=today(),tab=fv('pgt','feed');
+  /* o que estamos fazendo e ainda não foi ao ar: só os posts do app */
   const up=posts().filter(p=>p.client_id===c&&!isDone(p)&&(p.publish_status==='agendado'||((p.status==='aprovado'||p.status==='pendente')&&(p.date||'')>=t0)))
     .sort((a,b)=>((b.publish_at||b.date||'')+(b.time||'')).localeCompare((a.publish_at||a.date||'')+(a.time||'')));
-  const pub=(D.media||[]).filter(x=>x.client_id===c).sort((a,b)=>String(b.ts).localeCompare(String(a.ts))).slice(0,30);
+  /* o feed como está hoje no Instagram; Reels de teste (não compartilhados no feed) ficam à parte */
+  const all=(D.media||[]).filter(x=>x.client_id===c).sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+  const feed=all.filter(x=>x.in_feed!==false).slice(0,45),tests=all.filter(x=>x.in_feed===false);
   const when=p=>{const d=p.publish_at?new Date(p.publish_at):pd(p.date);if(!d||isNaN(d))return '';const h=p.publish_at?d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):(p.time||'');return d.toLocaleDateString('pt-BR',{day:'numeric',month:'short'}).replace('.','')+(h?' · '+h:'')};
-  const kind=p=>p.publish_status==='agendado'?['ag','Agendado']:p.status==='pendente'?['pe','Falta aprovar']:['ap','Aprovado, sem horário'];
-  const tile=p=>{const [k,l]=kind(p),im=cover(p);return `<button class="igt ${k}" data-edit-post="${esc(p.id)}" title="${esc(p.title||'')}">${im?`<img src="${esc(im)}" alt="" loading="lazy">`:`<span class="igph">${esc(ty(p.type))}<small>${esc(p.title||'')}</small></span>`}<span class="igb">${esc(when(p))}</span><span class="igk">${l}</span></button>`};
-  const old=x=>`<a class="igt done" href="${esc(x.permalink||'#')}" target="_blank" rel="noopener">${x.thumb?`<img src="${esc(x.thumb)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span class="igph">${esc(x.format||'post')}</span>${x.format==='reels'?'<span class="igr">▶</span>':''}</a>`;
+  const I={reels:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg>',carrossel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="7.5" y="3.5" width="13" height="13" rx="2"/><path d="M16.5 20.5h-11a2 2 0 0 1-2-2v-11"/></svg>',
+    clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>'};
+  const pic=p=>{const im=cover(p);if(im)return `<img src="${esc(im)}" alt="" loading="lazy">`;const v=(p.media||[]).find(x=>x.kind==='video');
+    return v?`<video src="${esc(mediaUrl(v.url,p.client_id))}#t=0.5" muted playsinline preload="metadata"></video>`:`<span class="igph">${esc(ty(p.type))}<small>${esc(p.title||'')}</small></span>`};
+  const fmtIc=t=>/reel|video/i.test(t||'')?I.reels:/carros/i.test(t||'')?I.carrossel:'';
+  const tile=p=>{const pe=p.status==='pendente'&&p.publish_status!=='agendado';return `<button class="igt up" data-edit-post="${esc(p.id)}" title="${esc(p.title||'')}">${pic(p)}<span class="igic">${fmtIc(p.type)}</span><span class="igb${pe?' pe':''}">${pe?'Falta aprovar · ':I.clock}${esc(when(p))}</span></button>`};
+  const old=x=>`<a class="igt" href="${esc(x.permalink||'#')}" target="_blank" rel="noopener" title="${esc((x.caption||'').slice(0,90))}"><span class="igph">${esc(x.format||'post')}</span>${x.thumb?`<img src="${esc(x.thumb)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span class="igic">${fmtIc(x.format)}</span></a>`;
+  const test=x=>`<a class="igtest" href="${esc(x.permalink||'#')}" target="_blank" rel="noopener"><span class="igt">${x.thumb?`<img src="${esc(x.thumb)}" alt="" loading="lazy" onerror="this.remove()">`:''}<span class="igic">${I.reels}</span></span><b>${nf(x.views)} views</b><small>${esc(fmtD(String(x.ts).slice(0,10)).replace(/^\w+, /,''))}</small><small class="cap">${esc((x.caption||'').split('\n')[0].slice(0,60))}</small></a>`;
   const n=v=>v==null||v===''?'—':nf(v);
   const ph=cphoto(c),handle=String(pr.handle||cl.handle||'').replace(/^@/,'');
-  const cnt={ag:up.filter(p=>p.publish_status==='agendado').length,pe:up.filter(p=>p.status==='pendente'&&p.publish_status!=='agendado').length};
   return `<div class="filters">${segF('pcl',CL().map(k=>[k.id,k.name]))}</div>
   <div class="igp">
    <div class="igh">${ph?`<img class="igav" src="${esc(ph)}" alt="">`:`<span class="igav" style="background:${esc(cl.color||'#8a5560')}">${esc((cl.name||'?')[0])}</span>`}
-    <div class="igi"><b>${handle?'@'+esc(handle):esc(cl.name)}</b>
+    <div class="igi"><b>${handle?esc(handle):esc(cl.name)}</b>
      <div class="igs"><span><b>${n(pr.posts??m.posts)}</b> posts</span><span><b>${n(pr.followers??m.followers)}</b> seguidores</span><span><b>${n(pr.following??m.following)}</b> seguindo</span></div>
      ${pr.name?`<div class="ign">${esc(pr.name)}</div>`:''}${pr.bio||pr.bioNow?`<p class="igbio">${esc(pr.bioNow||pr.bio)}</p>`:''}</div></div>
-   <div class="igl"><span><i class="ag"></i>Agendado ${cnt.ag}</span><span><i class="pe"></i>Falta aprovar ${cnt.pe}</span><span><i class="dn"></i>Já no ar</span></div>
-   <div class="igg">${up.map(tile).join('')}${pub.map(old).join('')}</div>
-   ${!up.length&&!pub.length?empty('Nada agendado nem publicado para este cliente ainda.'):''}
-   ${!pub.length&&up.length?'<p class="igft">Os posts que já estão no ar aparecem aqui quando a conta do Instagram estiver conectada.</p>':''}
+   <div class="igtabs"><button data-f="pgt" data-v="feed" aria-pressed="${tab==='feed'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.5" y="3.5" width="17" height="17" rx="1"/><path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17"/></svg>Feed</button><button data-f="pgt" data-v="teste" aria-pressed="${tab==='teste'}">${I.reels}Reels de teste${tests.length?` (${tests.length})`:''}</button></div>
+   ${tab==='teste'?`<p class="igft">Reels de teste só aparecem para quem não segue. Não entram no feed do perfil.</p>${tests.length?`<div class="igtests">${tests.map(test).join('')}</div>`:empty('Nenhum Reels de teste.')}`:
+   `${up.length?`<p class="igft">${up.length} ${up.length>1?'posts nossos ainda vão':'post nosso ainda vai'} entrar por cima. O relógio mostra o dia e a hora.</p>`:''}
+   <div class="igg">${up.map(tile).join('')}${feed.map(old).join('')}</div>
+   ${!up.length&&!feed.length?empty('Nada agendado nem publicado para este cliente ainda.'):''}
+   ${!feed.length&&up.length?'<p class="igft">Os posts que já estão no ar aparecem aqui quando a conta do Instagram estiver conectada.</p>':''}`}
   </div>`;
 }
 V.pub=()=>{
