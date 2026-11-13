@@ -283,13 +283,13 @@ const V={
   const mk=`${y}-${String(m+1).padStart(2,'0')}`,mp=posts().filter(p=>String(p.date).startsWith(mk)),t0=iso(now);
   let c='';for(let i=0;i<cells;i++){const d=i-startW+1;if(d<1||d>nd){c+='<div class="cell off"></div>';continue}
     const ds=`${mk}-${String(d).padStart(2,'0')}`,ev=mp.filter(p=>p.date===ds);
-    c+=`<div class="cell ${ds===t0?'today':''}" data-day="${ds}"><span class="n">${d}</span>${ev.map(p=>`<button class="ev ${p.status==='pendente'?'pend':''}" ${(p.media||[]).length?`data-open="${esc(p.id)}"`:`data-day="${ds}"`} title="${esc((p.time||'')+' · '+p.title)}"><i class="dot t-${esc(p.type)}"></i><span>${esc(p.title)}</span></button>`).join('')}</div>`}
+    c+=`<div class="cell ${ds===t0?'today':''}" data-day="${ds}"><span class="n">${d}</span>${ev.map(p=>{const im=cover(p);return `<button class="ev ev2 t-${esc(p.type)} ${p.status==='pendente'?'pend':''}" ${(p.media||[]).length?`data-open="${esc(p.id)}"`:`data-day="${ds}"`} title="${esc((p.time||'')+' · '+p.title)}">${im?`<img src="${esc(im)}" alt="" loading="lazy">`:''}<span class="evt"><em>${ty(p.type)}${p.time?' · '+esc(p.time):''}</em><span>${esc(p.title)}</span>${p.status==='pendente'?'<strong>Aprovar</strong>':''}</span></button>`}).join('')}</div>`}
   const sel=ss.get('stond-day')&&ss.get('stond-day').startsWith(mk)?ss.get('stond-day'):(t0.startsWith(mk)?t0:(mp[0]&&mp[0].date));
   const sp=mp.filter(p=>p.date===sel);
   const prev=new Date(y,m-1,1),next=new Date(y,m+1,1);
   return `<div class="top"><div><h2>${MES[m][0].toUpperCase()+MES[m].slice(1)} ${y}</h2><p>${mp.length} publicações planejadas.</p></div><div class="seg"><button data-cal="-1">‹ ${MES[prev.getMonth()][0].toUpperCase()+MES[prev.getMonth()].slice(1)}</button><button data-cal="1">${MES[next.getMonth()][0].toUpperCase()+MES[next.getMonth()].slice(1)} ›</button></div></div>
   <div class="cal"><div class="wd">${WD.map(w=>`<div>${w}</div>`).join('')}</div><div class="cells">${c}</div></div>
-  <div class="leg"><span><i class="dot t-reels"></i>Reels</span><span><i class="dot t-carrossel"></i>Carrossel</span><span><i class="dot t-story"></i>Stories</span><span><i class="dot" style="background:var(--warn)"></i>Esperando sua aprovação</span></div>
+  <div class="leg"><span><i class="dot t-reels"></i>Reels</span><span><i class="dot t-carrossel"></i>Carrossel</span><span><i class="dot" style="background:var(--warn)"></i>Esperando sua aprovação</span></div>
   ${sel?`<div class="calday"><p class="eyebrow" style="margin-top:6px">${fmtD(sel)}</p>${sp.length?`<div class="list">${sp.map(p=>`<${(p.media||[]).length?`button data-open="${esc(p.id)}"`:'div'} class="row"><i class="dot t-${esc(p.type)}"></i><div class="t"><b>${esc(p.title)}</b><small>${ty(p.type)}${p.time?' · '+esc(p.time):''}</small></div>${chip(p)}</${(p.media||[]).length?'button':'div'}>`).join('')}</div>`:'<div class="empty">Nada neste dia.</div>'}</div>`:''}`;
  },
  met(){
