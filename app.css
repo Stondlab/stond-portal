@@ -446,3 +446,5 @@ html.light .side .nav .grp{color:rgba(255,255,255,.55)}
 .edsw i{width:32px;height:19px;border-radius:999px;background:var(--line);position:relative;transition:background .15s}
 .edsw i::after{content:"";position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .edsw.on{border-color:#1f7a4d}.edsw.on i{background:#1f7a4d}.edsw.on i::after{left:15px}
+.act .pvn{margin:10px 0 0;font-size:12px;color:var(--muted)}
+.act .btn:disabled,.act textarea:disabled{opacity:.55;cursor:not-allowed}
