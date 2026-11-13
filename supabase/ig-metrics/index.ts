@@ -162,6 +162,34 @@ async function collect(a: Acc) {
   try { extra.media_saved = await saveMedia(a, await mediaInsights(a, 50)); }
   catch (e) { errors.push(`media: ${(e as Error).message}`); }
 
+  // metas da marca: o "agora" dos indicadores que o Instagram responde se preenche sozinho
+  try {
+    const wk = Math.floor(Date.now() / 1000) - 7 * 86400;
+    let visits: number | null = null;
+    try {
+      const r = await graph(a, `/${ig}/insights`, { metric: "profile_views", period: "day", metric_type: "total_value", since: String(wk), until: String(until) });
+      const v = r.data?.[0]?.total_value?.value; if (typeof v === "number") visits = v;
+    } catch (e) { errors.push(`profile_views: ${(e as Error).message}`); }
+    const ago = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    const { data: old } = await db.from("ig_metrics").select("followers").eq("client_id", a.client_id).lte("date", ago).order("date", { ascending: false }).limit(1).maybeSingle();
+    const novos = typeof row.followers === "number" && typeof old?.followers === "number" ? (row.followers as number) - old.followers : null;
+    const br = (n: number) => n.toLocaleString("pt-BR");
+    const { data: mk } = await db.from("agency_docs").select("data").eq("collection", "marca").eq("id", a.client_id).maybeSingle();
+    const mets = (mk?.data as any)?.metrics;
+    if (Array.isArray(mets)) {
+      let changed = false;
+      for (const m of mets) {
+        const name = String(m?.name ?? "").toLowerCase();
+        let v: string | null = null;
+        if (/^seguidores$/.test(name.trim()) && typeof row.followers === "number") v = br(row.followers as number);
+        else if (/visitas ao perfil/.test(name) && visits != null) v = br(visits);
+        else if (/seguidores novos/.test(name) && novos != null) v = br(novos) + " por semana";
+        if (v != null && m.value !== v) { m.value = v; changed = true; }
+      }
+      if (changed) await db.from("agency_docs").update({ data: { ...(mk!.data as any), metrics: mets }, updated_at: new Date().toISOString(), updated_by: "meta" }).eq("collection", "marca").eq("id", a.client_id);
+    }
+  } catch (e) { errors.push(`metas: ${(e as Error).message}`); }
+
   if (errors.length) extra.errors = errors;
   row.extra = extra;
   const { error } = await db.from("ig_metrics").upsert(row, { onConflict: "client_id,date" });
