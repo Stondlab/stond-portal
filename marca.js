@@ -176,6 +176,7 @@
       <b>${T(p+'.name','Nome da entrega',{raw:1})}</b>${S(t.desc)?`<p>${T(p+'.desc','O que é e para que serve',{ml:1})}</p>`:''}
       <div class="mk-tk-f">${S(t.date)?`<small>${dl} ${T(p+'.date','dd/mm',{raw:1})}</small>`:'<small></small>'}
         ${ED?`<small class="mk-lk">Link: ${T(p+'.link','https://…',{raw:1})}</small>`:t.link?`<a class="mk-open" href="${E(t.link)}" target="_blank" rel="noopener">Abrir →</a>`:''}</div>
+      ${A(t.files).length||(ED&&ED.onUpload)?`<div class="mk-files">${A(t.files).map((f,j)=>`<span class="mk-file"><a href="${E(f.url)}" target="_blank" rel="noopener" download>${/\.pdf($|\?)/i.test(f.url)?'PDF':'Arquivo'} · ${E(f.name||'baixar')}</a>${ED?`<button class="mk-x" data-del="${p}.files.${j}" aria-label="Tirar arquivo">×</button>`:''}</span>`).join('')}${ED&&ED.onUpload?`<label class="mk-up">+ Arquivo para o cliente baixar<input type="file" data-mk-file="${p}" multiple hidden></label>`:''}</div>`:''}
       ${ED?`<div class="mk-mv">${Object.entries({plano:'A fazer',fazendo:'Fazendo',entregue:'Entregue'}).map(([k,l])=>`<button data-st="${p}" data-v="${k}" aria-pressed="${k===st}">${l}</button>`).join('')}</div>`:''}</div>`};
     const groups=STAGES.map(g=>[g,rows.filter(([t])=>t.stage===g)]).filter(([,r])=>r.length);
     const other=rows.filter(([t])=>!STAGES.includes(t.stage));
@@ -262,6 +263,13 @@
     const el=e.target.closest&&e.target.closest('.mk-ed');if(!el)return;
     if(e.key==='Enter'&&!el.classList.contains('ml')){e.preventDefault();el.blur()}
     if(e.key==='Escape'){el.blur()}
+  });
+  /* anexar arquivo numa entrega (a gestão sobe o arquivo e devolve o link) */
+  document.addEventListener('change',async e=>{
+    const inp=e.target.closest&&e.target.closest('[data-mk-file]');if(!inp||!ED||!ED.onUpload)return;
+    const t=getP(B,inp.dataset.mkFile);if(!t)return;
+    for(const f of [...inp.files]){try{const url=await ED.onUpload(f);if(url){if(!Array.isArray(t.files))t.files=[];t.files.push({url,name:f.name})}}catch(x){console.error(x)}}
+    changed();rerender();
   });
   addEventListener('resize',()=>{});
 

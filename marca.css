@@ -260,3 +260,10 @@ html.light .mk{--mk-card:#fff;--mk-chip:#f1eff0;--mk-sh:0 1px 2px rgba(40,20,25,
   .mk-card{padding:18px}
   .mk-dfl{grid-template-columns:1fr}
 }
+
+/* arquivos das entregas */
+.mk-files{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.mk-file{display:inline-flex;align-items:center;gap:6px;background:var(--glass-2,rgba(164,11,29,.07));border-radius:20px;padding:6px 12px;font-size:13px;font-weight:600}
+.mk-file a{color:var(--redtxt);text-decoration:none}
+.mk-up{display:inline-flex;align-items:center;border:1px dashed var(--line);border-radius:20px;padding:6px 12px;font-size:12.5px;color:var(--muted);cursor:pointer}
+.mk-file .mk-x{position:static;display:inline-block;width:18px;height:18px;font-size:12px;margin-left:2px}
