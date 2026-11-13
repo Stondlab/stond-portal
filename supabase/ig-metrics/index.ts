@@ -44,7 +44,10 @@ function durationOf(url?: string): number | null {
 }
 
 async function mediaInsights(a: Acc, limit: number) {
-  const list = await graph(a, `/${a.ig_user_id}/media`, { fields: "id,caption,media_type,media_product_type,timestamp,permalink,like_count,comments_count,media_url,thumbnail_url", limit: String(limit) });
+  // is_shared_to_feed = false: Reels de teste (não aparecem no feed). Se a API não aceitar o campo, pede sem ele.
+  const F = "id,caption,media_type,media_product_type,timestamp,permalink,like_count,comments_count,media_url,thumbnail_url";
+  const list = await graph(a, `/${a.ig_user_id}/media`, { fields: F + ",is_shared_to_feed", limit: String(limit) })
+    .catch(() => graph(a, `/${a.ig_user_id}/media`, { fields: F, limit: String(limit) }));
   const one = async (m: any) => {
     const metrics = m.media_product_type === "REELS"
       ? ["views", "reach", "saved", "shares", "total_interactions", "ig_reels_avg_watch_time"]
@@ -68,7 +71,8 @@ async function saveMedia(a: Acc, items: any[]) {
     const fmt = m.media_product_type === "REELS" ? "reels" : m.media_type === "CAROUSEL_ALBUM" ? "carrossel" : m.media_type === "VIDEO" ? "video" : "foto";
     return {
       ig_media_id: m.id, client_id: a.client_id, ts: m.timestamp, format: fmt,
-      caption: (m.caption ?? "").slice(0, 500), permalink: m.permalink, thumb: m.thumbnail_url || (m.media_type === "IMAGE" ? m.media_url : null) || null,
+      caption: (m.caption ?? "").slice(0, 500), permalink: m.permalink, thumb: m.thumbnail_url || (m.media_type !== "VIDEO" ? m.media_url : null) || null,
+      in_feed: m.media_product_type === "REELS" && typeof m.is_shared_to_feed === "boolean" ? m.is_shared_to_feed : null,
       duration_s: m.media_type === "VIDEO" ? durationOf(m.media_url) : null,
       views: n(I.views), reach: n(I.reach), likes: n(m.like_count), comments: n(m.comments_count), saved: n(I.saved), shares: n(I.shares),
       interactions: n(I.total_interactions), avg_watch_s: typeof I.ig_reels_avg_watch_time === "number" ? I.ig_reels_avg_watch_time / 1000 : null,
