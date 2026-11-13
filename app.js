@@ -231,22 +231,22 @@ function notaCard(){
    <div class="nsc">${Array.from({length:11},(_,i)=>`<button data-nota="${i}" class="${NOTASEL===i?'on':''}">${i}</button>`).join('')}</div>
    ${NOTASEL!=null?`<textarea id="notat" rows="2" placeholder="Quer contar o porquê? (opcional)"></textarea><button class="btn red" data-nota-ok>Enviar nota</button>`:''}</div>`;
 }
-function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','inv','lnk','auto','arq'].concat(hasMarca()?['marca','proj','antes']:[]).includes(h)?h:'inicio';render();
+function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','inv','lnk','auto','arq'].concat(hasMarca()?['marca','proj']:[]).includes(h)?h:'inicio';render();
   if(window.StondIA)StondIA.mount({sb,mode:'cliente',local:iaLocal,fab:false,title:'Assistente Stond',sub:'Responde com os dados do seu portal',hello:'Oi, '+(first()||'tudo bem')+'! Posso dizer o que falta aprovar, o que vai ao ar e como está o seu Instagram.',hints:['O que falta eu aprovar?','O que vai ao ar esta semana?','Como está meu Instagram?','Como peço um ajuste?']})}
 function go(s){S=s;OPEN=null;if(location.hash.slice(1)!==s)history.replaceState(null,'','#'+s);render();const m=$('.main');if(m)m.scrollTop=0}
 
 const hasMarca=()=>!!(D&&D.brand&&window.StondMarca);
-const RES=['met','inv','lnk','antes','auto'];
+const RES=['met','inv','lnk','auto'];
 /* no celular a barra de baixo só tem 5 botões: as páginas de cada bloco ganham pílulas no topo */
 const pills=L=>`<div class="pills">${L.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${l}</button>`).join('')}</div>`;
-const resPills=()=>pills([['met','Métricas'],['inv','Investimento'],['lnk','Links'],...(hasMarca()?[['antes','Antes e depois']]:[]),['auto','Automações']]);
+const resPills=()=>pills([['met','Métricas'],['inv','Investimento'],['lnk','Links'],['auto','Automações']]);
 const marcaPills=()=>pills([['marca','A marca'],['proj','Projeto']]);
 const brl=v=>v==null||v===''||isNaN(+v)?'—':(+v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:(+v)%1?2:0});
 const mesN=m=>{const [y,mm]=String(m||'').split('-');return mm?MES[+mm-1][0].toUpperCase()+MES[+mm-1].slice(1)+' '+y:String(m||'')};
 function shell(inner){
   const M=hasMarca(),groups=[['Dia a dia',[['inicio','Início'],['aprov','Aprovações',pend().length],['cal','Calendário'],['ig','Meu Instagram']]],
    ...(M?[['Sua marca',[['marca','A marca'],['proj','Projeto']]]]:[]),
-   ['Resultados',[['met','Métricas'],['inv','Investimento'],['lnk','Links e cliques'],...(M?[['antes','Antes e depois']]:[]),['auto','Automações']]],
+   ['Resultados',[['met','Métricas'],['inv','Investimento'],['lnk','Links e cliques'],['auto','Automações']]],
    ['Arquivos',[['arq','Arquivos e links']]]];
   const tabs=[['inicio','Início'],['aprov','Aprovar',pend().length],['cal','Calendário'],...(M?[['marca','Marca']]:[]),['met','Resultados']];
   const cur=k=>k===S||(k==='met'&&RES.includes(S))||(k==='marca'&&S==='proj');
@@ -332,7 +332,6 @@ ${esc(pr.bioNow||pr.bio||'')}</p>
  },
  marca(){return hasMarca()?marcaPills()+StondMarca.view(D.brand,{section:'marca'}):'<div class="empty">A sua marca aparece aqui quando a Stond publicar.</div>'},
  proj(){return hasMarca()?marcaPills()+StondMarca.view(D.brand,{section:'projeto'}):''},
- antes(){return hasMarca()?resPills()+StondMarca.view(D.brand,{section:'antes'}):''},
  inv(){
   const L=(D.invest||[]).slice().sort((a,b)=>String(b.month).localeCompare(String(a.month)));
   const tot=L.reduce((t,r)=>t+(+r.spent||0),0),conv=L.reduce((t,r)=>t+(+r.conversations||0),0);
