@@ -249,14 +249,14 @@ const hasMarca=()=>!!(D&&BR()&&window.StondMarca);
 const RES=['met','inv','lnk','auto'];
 /* no celular a barra de baixo só tem 5 botões: as páginas de cada bloco ganham pílulas no topo */
 const pills=L=>`<div class="pills">${L.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${l}</button>`).join('')}</div>`;
-const resPills=()=>pills([['met','Métricas'],['inv','Investimento'],['lnk','Links'],['auto','Automações']]);
+const resPills=()=>pills([['met','Métricas'],['inv','Investimento'],['lnk','Site e WhatsApp'],['auto','Automações']]);
 const marcaPills=()=>pills([['marca','A marca'],['proj','Projeto'],['arq','Arquivos e links']]);
 const brl=v=>v==null||v===''||isNaN(+v)?'—':(+v).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:(+v)%1?2:0});
 const mesN=m=>{const [y,mm]=String(m||'').split('-');return mm?MES[+mm-1][0].toUpperCase()+MES[+mm-1].slice(1)+' '+y:String(m||'')};
 function shell(inner){
   const M=hasMarca(),groups=[['Dia a dia',[['inicio','Início'],['aprov','Aprovações',pend().length],['cal','Calendário'],['ig','Meu Instagram']]],
    ['Sua marca',[...(M?[['marca','A marca'],['proj','Projeto']]:[]),['arq','Arquivos e links']]],
-   ['Resultados',[['met','Métricas'],['inv','Investimento'],['lnk','Links e cliques'],['auto','Automações']]]];
+   ['Resultados',[['met','Métricas'],['inv','Investimento'],['lnk','Site e WhatsApp'],['auto','Automações']]]];
   const tabs=[['inicio','Início'],['aprov','Aprovar',pend().length],['cal','Calendário'],...(M?[['marca','Marca']]:[]),['met','Resultados']];
   const cur=k=>k===S||(k==='met'&&RES.includes(S))||(k==='marca'&&(S==='proj'||S==='arq'));
   const ph=photo();
@@ -357,15 +357,23 @@ ${esc(pr.bioNow||pr.bio||'')}</p>
    ${r.note?`<p>${esc(r.note)}</p>`:''}</div>`).join('')}</div>`:'<div class="empty">Quando a Stond lançar o investimento do mês em anúncios, ele aparece aqui com o que trouxe de volta.</div>'}`;
  },
  lnk(){
-  const L=D.shortlinks||[],G=[...new Set(L.map(l=>l.grp||'Outros'))];
-  const short=l=>'portal.stond.com.br/l/'+l.slug;
-  const utm=u=>{try{const q=new URL(u).searchParams;return ['utm_source','utm_medium','utm_campaign'].map(k=>q.get(k)).filter(Boolean).join(' · ')}catch(e){return ''}};
-  const page=u=>{try{const x=new URL(u);return (x.hostname.replace(/^www\./,'')+x.pathname).replace(/\/$/,'')}catch(e){return u}};
-  const top=L.slice().sort((a,b)=>(b.clicks30||0)-(a.clicks30||0))[0];
-  return `${resPills()}<div class="top"><div><h2>Links e cliques</h2><p>Cada link curto conta quantas pessoas clicaram e leva para o site já com as UTMs.</p></div></div>
-  ${L.length?`<div class="sum"><div><b>${nf(L.reduce((t,l)=>t+(+l.clicks||0),0))}</b><span>Cliques no total</span></div><div><b>${nf(L.reduce((t,l)=>t+(+l.clicks30||0),0))}</b><span>Últimos 30 dias</span></div><div><b style="font-size:20px">${top&&top.clicks30?esc(top.label):'—'}</b><span>Mais clicado no mês</span></div></div>
-  ${G.map(g=>`<p class="eyebrow" style="margin-top:20px">${esc(g)}</p><div class="lnkl">${L.filter(l=>(l.grp||'Outros')===g).map(l=>`<div class="lk"><div class="t"><b>${esc(l.label)}</b><small>${esc(page(l.url))}${utm(l.url)?` · <span class="utm">${esc(utm(l.url))}</span>`:''}</small><code>${esc(short(l))}</code></div><div class="n"><b>${nf(l.clicks||0)}</b><span>cliques</span></div><div class="n"><b>${nf(l.clicks30||0)}</b><span>30 dias</span></div><button class="btn sm ghost" data-copy="https://${esc(short(l))}">Copiar</button></div>`).join('')}</div>`).join('')}`
-  :'<div class="empty">Quando a Stond criar os links curtos da bio, do direct e dos Stories, aqui aparece quantas pessoas clicaram em cada um.</div>'}`;
+  const E=D.site||[],lim=Date.now()-30*864e5,M=E.filter(e=>new Date(e.at).getTime()>=lim);
+  const vis=M.filter(e=>e.kind==='visita'),zap=M.filter(e=>e.kind==='whatsapp');
+  const pessoas=new Set(vis.map(e=>e.v)).size;
+  const MEIO={dm:'Direct do Instagram',bio:'Bio do Instagram',story:'Stories',stories:'Stories',post:'Post do Instagram',reels:'Reels',anuncio:'Anúncio',pagina:'Página do Facebook',status:'Status do WhatsApp'};
+  const FON={instagram:'Instagram',facebook:'Facebook',whatsapp:'WhatsApp','meta-ads':'Anúncio'};
+  const ori=e=>{if(!e.source)return e.ref?'Veio de '+e.ref:'Entrou direto no site';const m=MEIO[e.medium]||[FON[e.source]||e.source,e.medium].filter(Boolean).join(' · ');return e.campaign&&e.medium==='dm'?m+' · palavra '+e.campaign.toUpperCase():e.campaign?m+' · '+e.campaign:m};
+  const pag=x=>{x=String(x||'/').replace(/\/$/,'');return !x?'Página inicial':({'/gestao':'Gestão de milhas','/assessoria':'Assessoria','/planner':'Travel Planner','/visto':'Visto americano','/calculadora':'Calculadora','/links':'Links da bio'})[x]||x};
+  const quando=s=>{const d=new Date(s);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})};
+  const grp={};M.forEach(e=>{const k=ori(e);grp[k]=grp[k]||{p:new Set(),z:0};if(e.kind==='visita')grp[k].p.add(e.v);else grp[k].z++});
+  const G=Object.entries(grp).sort((a,b)=>b[1].z-a[1].z||b[1].p.size-a[1].p.size);
+  return `${resPills()}<div class="top"><div><h2>Site e WhatsApp</h2><p>Quem entrou no site, de onde veio e quem chamou você no WhatsApp. Últimos 30 dias.</p></div></div>
+  ${M.length?`<div class="sum"><div><b>${nf(pessoas)}</b><span>Pessoas no site</span></div><div><b>${nf(zap.length)}</b><span>Chamaram no WhatsApp</span></div><div><b>${pessoas?Math.round(new Set(zap.map(e=>e.v)).size/pessoas*100):0}%</b><span>Dos visitantes chamaram</span></div></div>
+  <p class="eyebrow" style="margin-top:20px">Quem chamou no WhatsApp</p>
+  <div class="lnkl">${zap.length?zap.slice(0,30).map(e=>`<div class="lk" style="grid-template-columns:minmax(0,1fr) auto"><div class="t"><b>${esc(ori(e))}</b><small>${esc(pag(e.page))}</small></div><div class="n" style="text-align:right"><b style="font-size:15px">${quando(e.at)}</b></div></div>`).join(''):'<div class="empty">Ninguém chamou pelo site ainda neste período.</div>'}</div>
+  <p class="eyebrow" style="margin-top:20px">De onde vieram</p>
+  <div class="lnkl">${G.map(([k,r])=>`<div class="lk" style="grid-template-columns:minmax(0,1fr) 72px 72px"><div class="t"><b>${esc(k)}</b></div><div class="n"><b>${nf(r.p.size)}</b><span>pessoas</span></div><div class="n"><b>${nf(r.z)}</b><span>WhatsApp</span></div></div>`).join('')}</div>`
+  :'<div class="empty">Assim que as pessoas começarem a entrar no site, aqui aparece de onde elas vieram e quem chamou você no WhatsApp.</div>'}`;
  },
  auto(){
   const L=D.automations||[];
