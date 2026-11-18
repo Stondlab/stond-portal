@@ -45,7 +45,10 @@ async function boot(){
   const volta=ls.get('stond-volta');
   if(volta&&!TOKEN){const {data:{session}}=await sb.auth.getSession();ls.set('stond-volta',null);if(session&&volta.startsWith(location.origin+'/?')){location.replace(volta);return}}
   if(TOKEN){MODE='token';try{D=await rpc('portal_get',{p_token:TOKEN})}catch(e){D=null}
-    if(!D)return screenMsg('Link inválido','Este link não funciona mais. Peça um novo para a Stond.');return start()}
+    if(!D){const {data:{session}}=await sb.auth.getSession();
+      if(!session)return teamGate();
+      return screenMsg('Link inválido','Este link não funciona mais. Peça um novo para a Stond.',true)}
+    return start()}
   const {data:{session}}=await sb.auth.getSession();
   if(location.hash.includes('type=recovery'))RECOVERY=true;
   if(RECOVERY&&session)return login('nova');
@@ -68,6 +71,10 @@ async function loadMe(){
 sb.auth.onAuthStateChange((ev)=>{if(ev==='PASSWORD_RECOVERY'){RECOVERY=true;login('nova')}});
 
 /* ---------- login ---------- */
+/* Link com código (?c=) agora só abre para a equipe Stond logada. Clientes entram com o login deles. */
+function teamGate(){cancelAnimationFrame(RAF);
+  document.getElementById('app').innerHTML=`<div class="login one"><div class="form"><img class="lg" src="${LOGO}" alt="Stond"><h2>Entre para continuar</h2><p class="sub">Este link é da equipe Stond. Se você é cliente, entre com o seu e-mail no portal.</p><button class="btn" id="tg-google">Equipe Stond: entrar com Google</button><a class="btn ghost" href="/">Sou cliente</a></div></div>`;
+  $('#tg-google').onclick=async()=>{ls.set('stond-volta',location.href);const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/'}});if(error)toast(error.message)};}
 function screenMsg(t,m,canOut){cancelAnimationFrame(RAF);
   document.getElementById('app').innerHTML=`<div class="login one"><div class="form"><img class="lg" src="${LOGO}" alt="Stond"><h2>${esc(t)}</h2><p class="sub">${esc(m)}</p>${canOut?'<button class="btn" id="sair">Sair</button>':''}</div></div>`;
   const b=$('#sair');if(b)b.onclick=async()=>{await sb.auth.signOut();login('entrar')};}
