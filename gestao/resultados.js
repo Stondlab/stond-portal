@@ -76,14 +76,15 @@
     const w=+m.avg_watch_s||0,d=+m.duration_s||0,rt=ret(m),h=doc1('reelhook',m.ig_media_id).hold3,hold=h===''||h==null?null:+h/100;
     const words=dms(c).filter(x=>x.media_id===m.ig_media_id).length,act=words+(+m.follows||0);
     const gancho=hold!=null?(hold>=.6?'ok':hold>=.45?'mid':'bad'):(w&&w<3?'bad':w<5?'mid':'ok');
-    const meio=rt==null?'mid':rt>=.4?'ok':rt>=.25?'mid':'bad';
+    const meio=rt==null?'nd':rt>=.4?'ok':rt>=.25?'mid':'bad';
     const fim=act>=3?'ok':act>=1?'mid':'bad';
     let dg,tone;
-    if(gancho==='bad'){dg='Gancho fraco';tone='r'}else if(meio==='bad'){dg='Meio cansa';tone='w'}else if(fim==='bad'){dg='CTA fraco';tone='w'}else{dg='Bom inteiro';tone='o'}
+    if(gancho==='bad'){dg='Gancho fraco';tone='r'}else if(meio==='bad'){dg='Meio cansa';tone='w'}else if(fim==='bad'){dg='CTA fraco';tone='w'}else if([gancho,meio,fim].every(z=>z==='ok')){dg='Bom inteiro';tone='o'}else{dg='Dá para melhorar';tone='n'}
     const tips=[];
     if(gancho==='bad')tips.push(['Troque a abertura','Mostre o resultado ou o número no primeiro segundo, com texto grande na tela.','r']);
     else if(gancho==='ok')tips.push(['O gancho funcionou','Repita o mesmo tipo de abertura nos próximos.','o']);
-    if(meio==='bad')tips.push(['Corte o meio','As pessoas saem antes da metade. Encurte ou divida em partes.','w']);
+    if(meio==='nd')tips.push(['Sem a duração do vídeo','O Meta não mandou a duração deste Reels, então não dá para medir o meio. Atualize em Métricas mais tarde.','n']);
+    else if(meio==='bad')tips.push(['Corte o meio','As pessoas saem antes da metade. Encurte ou divida em partes.','w']);
     else if(meio==='ok')tips.push(['Segurou até o fim','O ritmo do vídeo está bom.','o']);
     if(fim==='bad')tips.push(['O pedido final não converteu','Peça uma palavra simples para comentar, em uma frase, e diga o que a pessoa recebe.','w']);
     else tips.push(['O CTA trouxe gente',`${words} comentaram a palavra · ${nf(m.follows||0)} seguiram · ${nf(m.profile_visits||0)} visitaram o perfil`,'o']);
@@ -93,14 +94,14 @@
     const c=fv('mc',CL()[0]?.id),p=fv('rp','30'),r=range(p);
     const R=media(c).filter(m=>m.format==='reels'&&inR(m.ts,r.a,r.b)).sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
     const sel=R.find(m=>m.ig_media_id===FILT.rx)||R[0];
-    const zc={ok:'ok',mid:'',bad:'bad'};
+    const zc={ok:'ok',mid:'',bad:'bad',nd:''};
     let det='';
     if(sel){const x=read(sel,c),W=600,pos=s=>x.d?Math.min(W,s/x.d*W):0;
-      det=`<div class="rs-2 rs-rx"><div class="bx"><div class="rs-rh">${sel.thumb?`<img src="${esc(sel.thumb)}" alt="">`:'<span class="noimg"></span>'}<div><b>${capT(sel)}</b><small>${fmtD(sel.ts.slice(0,10))} · ${n1(x.d)} s · ${nf(sel.views)} views · ${nf(sel.shares)} compart. · ${nf(sel.saved)} salvos</small></div><a class="btn sm" href="${esc(sel.permalink||'#')}" target="_blank" rel="noopener">Abrir no Instagram</a></div>
-        <svg class="rs-bar" viewBox="0 0 ${W} 46" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="14" width="${W}" height="16" rx="8" fill="var(--bg-3)"/><rect x="0" y="14" width="${pos(x.w).toFixed(0)}" height="16" rx="8" fill="var(--red)"/><line x1="${pos(3).toFixed(0)}" x2="${pos(3).toFixed(0)}" y1="6" y2="38" stroke="var(--ink)" stroke-dasharray="3 3"/></svg>
-        <div class="rs-bl"><small>0 s</small><small>3 s · gancho</small><small>média assistida ${n1(x.w)} s</small><small>${n1(x.d)} s</small></div>
+      det=`<div class="rs-2 rs-rx"><div class="bx"><div class="rs-rh">${sel.thumb?`<img src="${esc(sel.thumb)}" alt="">`:'<span class="noimg"></span>'}<div><b>${capT(sel)}</b><small>${fmtD(sel.ts.slice(0,10))} · ${x.d?n1(x.d)+' s':'duração não veio do Meta'} · ${nf(sel.views)} views · ${nf(sel.shares)} compart. · ${nf(sel.saved)} salvos</small></div><a class="btn sm" href="${esc(sel.permalink||'#')}" target="_blank" rel="noopener">Abrir no Instagram</a></div>
+        ${x.d?`<svg class="rs-bar" viewBox="0 0 ${W} 46" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="14" width="${W}" height="16" rx="8" fill="var(--bg-3)"/><rect x="0" y="14" width="${pos(x.w).toFixed(0)}" height="16" rx="8" fill="var(--red)"/><line x1="${pos(3).toFixed(0)}" x2="${pos(3).toFixed(0)}" y1="6" y2="38" stroke="var(--ink)" stroke-dasharray="3 3"/></svg>
+        <div class="rs-bl"><small>0 s</small><small>3 s · gancho</small><small>média assistida ${n1(x.w)} s</small><small>${n1(x.d)} s</small></div>`:''}
         <div class="rs-z"><div class="${zc[x.gancho]}"><span class="mut">Gancho · ${x.hold!=null?'passaram dos 3 s':'tempo médio assistido'}</span><b>${x.hold!=null?pcx(x.hold):n1(x.w)+' s'}</b><button class="lnkb" data-hook="${esc(sel.ig_media_id)}">${x.hold!=null?'Corrigir':'Lançar'} o % que passou dos 3 s</button></div>
-          <div class="${zc[x.meio]}"><span class="mut">Meio · quanto do vídeo viram</span><b>${pcx(x.rt)}</b><small>${n1(x.w)} s de ${n1(x.d)} s</small></div>
+          <div class="${zc[x.meio]}"><span class="mut">Meio · quanto do vídeo viram</span><b>${pcx(x.rt)}</b><small>${x.d?n1(x.w)+' s de '+n1(x.d)+' s':'sem a duração do vídeo'}</small></div>
           <div class="${zc[x.fim]}"><span class="mut">CTA · quem agiu no fim</span><b>${nf(x.words)} <small>palavras</small></b><small>${nf(sel.follows||0)} seguiram · ${nf(sel.profile_visits||0)} visitas</small></div></div></div>
         <div class="bx rs-hot"><span class="lb">Leitura pronta · <span class="kl-${x.tone}">${x.dg}</span></span>${x.tips.map(([a,b,t])=>`<div class="rs-tip"><b>${a}</b><small>${b}</small></div>`).join('')}<button class="btn sm" data-new="post">Virar tarefa no quadro</button></div></div>`}
     return shell(topb(`Onde o vídeo <em>perde</em> gente`,`${esc(cli(c).name)} · Reels de ${r.label.toLowerCase()} · clique em um para ver o detalhe`)+filterBar('reels')+
