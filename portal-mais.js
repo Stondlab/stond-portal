@@ -37,7 +37,7 @@
     const ap=(D.feedback||[]).filter(f=>f.kind==='aprovado'&&String(f.at).startsWith(mk)).length;
     L.push(['Portal de aprovação',`${ap} ${pl(ap,'aprovação','aprovações')} em ${MES[new Date().getMonth()]}`]);
     if(last){const u=(last.extra||{}).updated_at;L.push(['Métricas do Instagram',u?`Atualizadas ${when(u)}`:`Última medição ${fmtD(last.date)}`])}
-    const sl=D.shortlinks||[];if(sl.length){const c=sl.reduce((s,x)=>s+(+x.clicks30||0),0);L.push(['Links curtos',`${sl.length} ${pl(sl.length,'link','links')} · ${c} cliques em 30 dias`])}
+    const sl=D.shortlinks||[];if(sl.length){const c=sl.reduce((s,x)=>s+(+x.clicks30||0),0);L.push(['Links curtos',`${sl.length} ${pl(sl.length,'link','links')} · ${c} ${pl(c,'clique','cliques')} em 30 dias`])}
     if((D.site||[]).length)L.push(['Site e WhatsApp',`${(D.site||[]).length} acessos e cliques em 90 dias`]);
     return L;
   }
@@ -80,7 +80,7 @@
   V.met=function(){
     const M=D.metrics||[],L=M[M.length-1]||{},u=(L.extra||{}).updated_at;
     return _met.call(V).replace('<h2>Métricas</h2><p>',`<h2>Métricas</h2><p>${u?`Atualizado ${when(u)}. `:''}`)
-      .replace(/(<span class="lb">Engajamento<\/span>[\s\S]*?)(<\/div><\/div>\s*<div class="bx w2 w2m"><span class="lb">Palavras)/,'$1<span class="ft">Das pessoas alcançadas, quantas curtiram, comentaram, salvaram ou compartilharam</span>$2');
+      .replace('curtidas, comentários e salvos por alcance','das pessoas alcançadas, quantas curtiram, comentaram, salvaram ou compartilharam');
   };
 
   /* Relatório */
