@@ -29,6 +29,7 @@
     if(window.sysAlerts)try{L.push(...sysAlerts())}catch(_){}
     const ord={r:0,w:1,b:2};return L.sort((a,b)=>ord[a.k]-ord[b.k]);
   }
+  window.osNeed=need;
   V.inicio=()=>{
     const now=new Date(),T=t0(),N=need();
     const ev=docs('events').filter(e=>e.date===T).map(e=>[e.start||'',e.client,e.title,'']);
