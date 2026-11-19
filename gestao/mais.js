@@ -160,15 +160,21 @@
     h=h.replace('<div class="top"><div><p class="eyebrow">Pasta do cliente</p>',`<div class="top os-cap"><div class="os-cap-i">${ph?`<img src="${esc(ph)}" alt="">`:`<span style="background:${esc(C.color||'#8a5560')}">${esc((C.name||'?')[0])}</span>`}</div><div><p class="eyebrow">Pasta do cliente</p>`);
     h=h.replace(/saúde (\d+)/,`saúde $1${ren?' · renova '+fmtD(ren):''}`);
     const S=sistemas(c),P=docs('pedidos').filter(p=>p.client===c).sort((a,b)=>(a.done-b.done)||String(a.due||'9').localeCompare(String(b.due||'9'))),T=timeline(c),W=healthWhy(C);
-    const add=`<div class="os-p3">
-      <div class="bx"><span class="lb">Meta do mês</span>${meta?`<div class="num">${nf(num(R.vendas))}<small>de ${nf(meta)} vendas</small></div><div class="prog"><b style="width:${Math.min(100,num(R.vendas)/meta*100)}%"></b></div>`:'<p class="wait">Sem meta lançada para este mês.</p>'}<button class="btn sm ghost" style="align-self:flex-start" data-gav="met" data-gc="${esc(c)}">${meta?'Atualizar vendas':'Definir meta'}</button></div>
-      <div class="bx"><span class="lb">Saúde ${health(C)} de 100, por quê</span><div class="os-why">${W.map(([t,v,k])=>`<div><small>${esc(t)}</small><b class="${k==='r'?'rs-dn':k==='o'?'rs-up':''}">${v}</b></div>`).join('')}</div></div>
-      <div class="bx"><span class="lb">Sistemas ligados</span>${S.length?`<div class="os-sys">${S.map(s=>`<div><i class="${STL[s.st][1]}">${STL[s.st][0]}</i><b>${esc(s.n)}</b><small>${s.d}</small></div>`).join('')}</div><span class="ft">O cliente vê essa lista no portal</span>`:'<p class="wait">Nenhum sistema ligado ainda.</p>'}</div>
-     </div>
-     <div class="os-p2">
+    // três colunas que se equilibram: meta e saúde | pedidos e sistemas | linha do tempo (rolagem própria)
+    // enxuto: o que pede ação (próximos posts, pedidos) + linha do tempo; sistemas e saúde viram uma faixa pequena
+    const bad=S.filter(s=>s.st!=='ok');
+    const strip=`<div class="os-mini"><span title="${esc(W.map(([t,v])=>t+': '+v).join(' · '))}">Saúde <b>${health(C)}</b></span>${S.map(s=>`<span class="${s.st==='ok'?'ok':'bad'}" title="${esc(String(s.d).replace(/<[^>]+>/g,''))}"><i></i>${esc(s.n)}</span>`).join('')}${meta?`<span>Meta <b>${nf(num(R.vendas))} de ${nf(meta)}</b> vendas</span>`:''}</div>${bad.length?`<div class="bx os-sysw"><span class="lb">Precisa olhar</span><div class="os-sys">${bad.map(s=>`<div><i class="${STL[s.st][1]}">${STL[s.st][0]}</i><b>${esc(s.n)}</b><small>${s.d}</small></div>`).join('')}</div></div>`:''}`;
+    const add=strip+`<div class="os-pg2">
+     <div class="os-pc">
+      ${(()=>{const N=posts().filter(p=>p.client_id===c&&p.date&&p.date>=today()&&!isDone(p)).sort((a,b)=>((a.date||'')+(a.time||'')).localeCompare((b.date||'')+(b.time||''))).slice(0,6);
+        const st=p=>p.status==='reprovado'?['Ajuste','kl-r']:p.status==='pendente'?['Com o cliente','kl-w']:p.status==='aprovado'?['Aprovado','kl-o']:['Em produção','kl-n'];
+        return `<div class="bx"><span class="lb">Próximos posts</span>${N.length?`<div class="os-nx">${N.map(p=>{const [t,k]=st(p);return `<button data-edit-post="${esc(p.id)}"><small>${esc(fmtD(p.date).replace(/^(\w+), /,'$1 '))}${p.time?' · '+esc(p.time):''}</small><b>${esc(p.title||'Sem título')}</b><i class="${k}">${t}</i></button>`}).join('')}</div>`:'<p class="wait">Nada marcado para os próximos dias.</p>'}<button class="btn sm ghost" style="align-self:flex-start" data-gav="agenda" data-gc="${esc(c)}">Ver calendário</button></div>`})()}
       <div class="bx"><span class="lb">Pedidos para o cliente</span>${P.length?`<div class="al">${P.map(p=>`<div data-edit-doc="pedidos:${esc(p.id)}" style="cursor:pointer"><b style="width:62px;flex:none">${p.due?fmtD(p.due).replace(/^\w+, /,''):''}</b><small>${esc(p.title)}</small><span class="chip ${p.done?'ok':p.due&&p.due<today()?'':'pend'}">${p.done?'Recebido':p.due&&p.due<today()?'Atrasado':'Esperando'}</span></div>`).join('')}</div>`:'<p class="wait">Fotos, vídeos ou informações que a Stond precisa. Aparece no portal com o prazo.</p>'}<button class="btn sm ghost" style="align-self:flex-start" data-pedido="${esc(c)}">Novo pedido</button></div>
-      <div class="bx"><span class="lb">Linha do tempo</span>${T.length?`<div class="os-tl">${T.map(([at,t,s,k])=>`<div><small>${esc(dm(at))}</small><i class="${k==='o'?'tl-o':k==='w'?'tl-w':k==='b'?'tl-b':''}"></i><div><b>${esc(t)}</b><small>${esc(String(s||'').slice(0,110))}</small></div></div>`).join('')}</div>`:'<p class="wait">Aprovações, ajustes, entregas e conversas aparecem aqui.</p>'}</div>
-     </div>`;
+     </div>
+     <div class="os-pc">
+      <div class="bx os-tlb"><span class="lb">Linha do tempo</span>${T.length?`<div class="os-tl">${T.map(([at,t,s,k])=>`<div><small>${esc(dm(at))}</small><i class="${k==='o'?'tl-o':k==='w'?'tl-w':k==='b'?'tl-b':''}"></i><div><b>${esc(t)}</b><small>${esc(String(s||'').slice(0,110))}</small></div></div>`).join('')}</div>`:'<p class="wait">Aprovações, ajustes, entregas e conversas aparecem aqui.</p>'}</div>
+     </div>
+    </div>`;
     return h.replace('<p class="eyebrow" style="margin-top:18px">Produção</p>',add+'<p class="eyebrow" style="margin-top:18px">Produção</p>');
   };
 
