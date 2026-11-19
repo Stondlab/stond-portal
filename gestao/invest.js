@@ -2,7 +2,7 @@
    Guarda em agency_docs (collection 'invest', id = cliente_AAAA-MM). O portal mostra em Resultados > Investimento. */
 (function(){
   ic.inv='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M14.6 9.2c-.5-.8-1.5-1.3-2.6-1.3-1.5 0-2.6.8-2.6 2s1.1 1.7 2.6 2 2.7.8 2.7 2.1-1.2 2.1-2.7 2.1c-1.2 0-2.2-.5-2.7-1.4M12 6.5v1.4M12 16.1v1.4"/></svg>';
-  const g=GROUPS.find(([t])=>t==='Clientes');if(g&&!g[1].some(([k])=>k==='inv')){const i=g[1].findIndex(([k])=>k==='met');g[1].splice(i+1,0,['inv','Investimento'])}
+  if(!GROUPS.some(g=>g[1].some(([k])=>k==='inv'))){const g=GROUPS.find(([t])=>t==='Resultados');if(g)g[1].push(['inv','Investimento'])}
   const F=[['client','Cliente','sel',()=>CL().map(c=>[c.id,c.name])],['month','Mês','month'],['spent','Valor gasto em anúncios','num'],['reach','Alcance','num'],['clicks','Cliques','num'],['conversations','Conversas no direct ou WhatsApp','num'],['note','Comentário para o cliente (opcional)','area']];
   const mesN=m=>{const [y,mm]=String(m||'').split('-');return mm?MES[+mm-1][0].toUpperCase()+MES[+mm-1].slice(1)+' '+y:String(m||'')};
   const nn=v=>v===''||v==null?'—':Number(v).toLocaleString('pt-BR');
