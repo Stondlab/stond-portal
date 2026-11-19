@@ -82,7 +82,7 @@
     const cardS=s=>{const R=runs(s);return `<article class="cm-sol${s.active===false?' off':''}"><header><span class="kl">${esc((TAG.find(t=>t[0]===s.tag)||['','Outro'])[1])}</span>${s.deadline?`<small>${esc(s.deadline)}</small>`:''}</header><b>${esc(s.name)}</b><p>${esc(s.problem||'')}</p>${s.includes?`<small class="mut">${esc(s.includes)}</small>`:''}<div class="cm-pr">${priceTxt(s)}</div><div class="cm-run">${R.length?`<small>Já roda em</small>${R.map(c=>`<span class="kav" style="background:${esc(c.color||'#8f0a19')}" title="${esc(c.name)}">${esc((c.name||'?')[0])}</span>`).join('')}<small>${R.map(c=>esc(c.name)).join(', ')}</small>`:'<small>Ainda não roda em nenhum cliente</small>'}</div><footer><button class="btn sm ghost" data-edit-doc="solucoes:${esc(s.id)}">Editar</button><button class="btn sm red" data-sol-prop="${esc(s.id)}">Pôr na proposta</button></footer></article>`};
     return shell(topb('Vitrine de <em>soluções</em>','O que a Stond vende, por quanto e onde já funciona','<button class="btn red" data-new="solucoes">Nova solução</button>')+`
     ${on.length?`<div class="cm-grid">${on.map(cardS).join('')}</div>`:`<div class="cm-tip"><b>Vitrine vazia.</b> Comece pelas sugestões abaixo: cada uma abre já preenchida, é só colocar preço e prazo.</div>`}
-    ${sug.length?`<p class="eyebrow" style="margin:22px 0 10px">Sugestões a partir do que a Stond já faz</p><div class="cm-grid">${sug.map(p=>{const R=runs(p);return `<article class="cm-sol sug"><header><span class="kl">${esc((TAG.find(t=>t[0]===p.tag)||[])[1])}</span></header><b>${esc(p.name)}</b><p>${esc(p.problem)}</p><div class="cm-run">${R.length?`<small>Já roda em ${R.map(c=>esc(c.name)).join(', ')}</small>`:'<small>Nenhum cliente ainda</small>'}</div><footer><button class="btn sm" data-sol-pre="${esc(p.tag)}">Adicionar à vitrine</button></footer></article>`}).join('')}</div>`:''}
+    ${sug.length?`<p class="eyebrow" style="margin:22px 0 10px">Sugestões a partir do que a Stond já faz</p><div class="cm-grid">${sug.map(p=>{const R=runs(p);return `<article class="cm-sol sug"><header><span class="kl">Sugestão</span></header><b>${esc(p.name)}</b><p>${esc(p.problem)}</p><div class="cm-run">${R.length?`<small>Já roda em ${R.map(c=>esc(c.name)).join(', ')}</small>`:'<small>Nenhum cliente ainda</small>'}</div><footer><button class="btn sm" data-sol-pre="${esc(p.tag)}">Adicionar à vitrine</button></footer></article>`}).join('')}</div>`:''}
     ${off.length?`<details class="cm-lost"><summary>Fora da vitrine (${off.length})</summary><div class="cm-grid">${off.map(cardS).join('')}</div></details>`:''}`);
   };
 
@@ -92,9 +92,9 @@
     if(lc){e.stopPropagation();e.preventDefault();const id=lc.dataset.leadCli,l=docs('leads').find(x=>x.id===id);if(!l)return;
       openClient();const o=MODAL.onSave;
       MODAL.onSave=async v=>{await o(v);const c=D.clients.find(x=>x.name===v.name);await saveDoc('leads',id,{...l,clientId:c?c.id:v.name})};
-      requestAnimationFrame(()=>{const f=$('#fm');if(!f)return;const set=(k,x)=>{if(f.elements[k]&&x!=null&&x!=='')f.elements[k].value=x};
+      setTimeout(()=>{const f=$('#fm');if(!f)return;const set=(k,x)=>{if(f.elements[k]&&x!=null&&x!=='')f.elements[k].value=x};
         set('name',l.name);set('fee',l.value);set('since',today());
-        const src=['Indicação','Instagram','Site'].includes(l.source)?l.source:'Outro';set('origem',src)});
+        const src=['Indicação','Instagram','Site'].includes(l.source)?l.source:'Outro';set('origem',src)},0);
       return}
     const sp=t.closest('[data-sol-prop]');
     if(sp){e.stopPropagation();const s=docs('solucoes').find(x=>x.id===sp.dataset.solProp);if(!s)return;
