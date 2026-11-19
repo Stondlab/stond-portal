@@ -6,9 +6,9 @@
   const reps=()=>(D&&D.reports)||[];
   const SP=()=>[
     ['inicio','Início',[['inicio','Início'],['aprov','Aprovações']]],
-    ['cal','Calendário',[['cal','Calendário'],['ig','Feed']]],
+    ['cal','Calendário',[['cal','Calendário'],['ig','Prévia do feed']]],
     ...(hasMarca()?[['marca','Marca',[['marca','A marca'],['proj','Projeto']]]]:[]),
-    ['met','Resultados',[['met','Mês'],...(reps().length?[['rel','Relatório']]:[]),['inv','Anúncios'],['lnk','Site e WhatsApp'],['auto','Direct']]],
+    ['met','Resultados',[['met','Mês'],...(reps().length?[['rel','Relatório']]:[]),['inv','Anúncios'],['lnk','Site e WhatsApp'],['auto','Automações']]],
     ['arq','Arquivos',[['arq','Arquivos e links']]]];
   const spOf=s=>SP().find(([,,T])=>T.some(([k])=>k===s))||SP()[0];
 
@@ -48,7 +48,16 @@
     const top=`<div class="top"><div><p class="eyebrow">${WDL[now.getDay()]}, ${now.getDate()} de ${MES[now.getMonth()]}</p><h2>${head}</h2></div><div class="tact">${part('[data-ia-open]')}</div></div>`;
     const right=`<div class="po-r">${P.length?more:''}${part('.pm-meta')}${part('.pm-ped')}${prox}</div>`;
     const body=P.length?`<div class="po-g">${hero}${right}</div>`:`${part('.pm-meta')}${part('.pm-ped')}<div class="po-g po-g0"><div>${part('.pm-mes')}</div>${prox}</div>`;
-    return top+body+part('.pm-two')+part('.nota,.nps');
+    // prévia do feed (como o perfil vai ficar) e automações do direct
+    const vis=posts().filter(x=>x.type!=='story'&&(x.media||[]).length&&['pendente','aprovado','publicado'].includes(x.status));
+    const fim=vis.map(x=>x.date).filter(Boolean).sort().slice(-1)[0]||t0;
+    const slots=posts().filter(x=>/reel|video/i.test(x.type||'')&&!(x.media||[]).length&&x.status!=='reprovado'&&(x.date||'')>=t0&&(x.date||'')<=fim);
+    const feed=vis.concat(slots).sort((a,b)=>(b.date+(b.time||'')).localeCompare(a.date+(a.time||''))).slice(0,9);
+    const fd=feed.length?`<div class="bx po-feed"><div class="po-h"><span class="lb">Como vai ficar seu feed</span><button class="po-more" data-go="ig">Ver o perfil ›</button></div><div class="po-fg">${feed.map(x=>{const c=cover(x),fut=x.date>t0&&x.status!=='publicado';return `<button ${(x.media||[]).length?`data-open="${esc(x.id)}"`:'data-go="ig"'} class="${fut?'fut':''}" title="${esc(fmtD(x.date)+' · '+x.title)}">${c?`<img src="${esc(c)}" alt="" loading="lazy">`:`<span>Reels<small>${esc(fmtD(x.date))}</small></span>`}${fut?`<i>${esc(fmtD(x.date).split(', ').pop())}</i>`:''}${/reel/i.test(x.type||'')?'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg>':''}</button>`}).join('')}</div></div>`:'';
+    const A=(D.automations||[]).slice().sort((a,b)=>(+b.asked30||0)-(+a.asked30||0)),tot=A.reduce((n,a)=>n+(+a.asked30||0),0);
+    const au=A.length?`<div class="bx po-auto"><div class="po-h"><span class="lb">Automações do direct</span><button class="po-more" data-go="auto">Ver tudo ›</button></div><div class="po-big"><b>${nf(tot)}</b><span>${tot===1?'pessoa pediu':'pessoas pediram'} o link pelo direct nos últimos 30 dias</span></div>${A.slice(0,5).map(a=>`<div class="po-kw"><span>Comentou <b>${esc(String(a.keyword||'').toUpperCase())}</b></span><small>${nf(+a.asked30||0)} em 30 dias · ${nf(+a.sent||0)} ${(+a.sent||0)===1?'link entregue':'links entregues'}</small></div>`).join('')}</div>`:'';
+    const mid=fd||au?`<div class="po-g2">${fd}${au}</div>`:'';
+    return top+body+mid+part('.pm-two')+part('.nota,.nps');
   };
   if(D&&document.querySelector(".app"))render();
 })();
