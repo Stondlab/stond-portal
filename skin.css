@@ -473,3 +473,16 @@ html.light .os-logo{content:url(/assets/logo-vermelho.png)}
 .qn-f{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.qn-f small{color:var(--muted);font-size:12px;flex:1;min-width:180px}
 @media(max-width:560px){.qn{margin-top:4vh}.qn-r{grid-template-columns:1fr;gap:6px}}
 .dtag{background:#fff0e0!important;color:#c25e00!important;font-weight:600}.dtag.ts{background:#e3f0ff!important;color:#0a64c8!important}html:not(.light) .dtag{background:rgba(255,138,0,.2)!important;color:#ffb35c!important}html:not(.light) .dtag.ts{background:rgba(30,144,255,.22)!important;color:#7cc0ff!important}
+/* Pasta: visão geral em 3 colunas equilibradas */
+.os-pg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px;align-items:stretch}
+.os-pc{display:flex;flex-direction:column;gap:12px;min-width:0}
+.os-pc .bx{display:flex;flex-direction:column;gap:10px}
+.os-pc .os-tlb{flex:1;min-height:0;max-height:520px}
+.os-tlb .os-tl{overflow:auto;padding-right:4px}
+.os-pc:nth-child(3)>.bx{flex:1}
+@media (max-width:1100px){.os-pg{grid-template-columns:repeat(2,minmax(0,1fr))}.os-pc:nth-child(3){grid-column:1/-1}}
+@media (max-width:700px){.os-pg{grid-template-columns:1fr}}
+.os-nx{display:flex;flex-direction:column}
+.os-nx button{display:grid;grid-template-columns:124px 1fr auto;gap:10px;align-items:center;text-align:left;padding:9px 0;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;font:inherit}
+.os-nx button:last-child{border-bottom:0}.os-nx small{color:var(--muted);font-size:12px;white-space:nowrap}.os-nx b{font-weight:500;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.os-nx button:hover b{color:var(--redtxt)}
