@@ -177,3 +177,30 @@ button.rs-tr:hover{background:var(--bg-3)}
 .os-gv b{display:block;font-weight:500;font-size:14px}.os-gv small{color:var(--muted);font-size:12px}
 @media (max-width:1000px){.os-gvs{grid-template-columns:repeat(2,minmax(0,1fr))}.os-wk{grid-template-columns:repeat(2,minmax(0,1fr))}.os-sum{grid-template-columns:repeat(2,minmax(0,1fr))}.os-sum>div+div{border-left:0}}
 @media (max-width:900px){.os-g{grid-template-columns:1fr}}
+
+/* ---------- Comercial (funil + vitrine) ---------- */
+.cm-tip{border:1px dashed var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;color:var(--muted);font-size:13px;line-height:1.5}
+.cm-tip b{color:var(--ink);font-weight:500}
+.kd .cm-nx{font-size:12px;color:var(--ink)}
+.kd .cm-nx.lt{color:var(--red)}
+.kd .cm-nx.no{color:var(--warn)}
+.kd .cm-ok{font-size:11px;color:var(--ok,#3fbf7f)}
+.kd .btn.sm{align-self:flex-start}
+.kc .kadd{margin-top:2px}
+.cm-lost{margin-top:16px}
+.cm-lost summary{cursor:pointer;font-size:13px;color:var(--muted);padding:6px 0}
+.cm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.cm-sol{border:1px solid var(--line);border-radius:14px;background:var(--bg-2);padding:16px;display:flex;flex-direction:column;gap:8px}
+.cm-sol.sug{border-style:dashed;background:transparent}
+.cm-sol.off{opacity:.6}
+.cm-sol header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cm-sol header small{color:var(--muted);font-size:12px}
+.cm-sol .kl{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:99px;font-weight:600;font-size:10.5px;letter-spacing:.04em;line-height:18px;padding:0 8px}
+.cm-sol>b{font-family:var(--display);font-weight:400;font-size:18px;line-height:1.25}
+.cm-sol p{margin:0;font-size:13px;line-height:1.5;color:var(--ink)}
+.cm-sol .mut{color:var(--muted);font-size:12px;line-height:1.45}
+.cm-pr{font:500 20px/1.2 var(--body);font-variant-numeric:tabular-nums;margin-top:auto;padding-top:6px}
+.cm-run{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.cm-run small{color:var(--muted);font-size:12px}
+.cm-run .kav{width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font-size:10px;font-weight:600}
+.cm-sol footer{display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
