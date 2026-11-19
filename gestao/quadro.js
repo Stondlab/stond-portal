@@ -67,5 +67,32 @@
         ${!it.length&&k==='aprovacao'?'<p class="qk-e">Nada com o cliente. Arraste para cá os cartões prontos para aprovar.</p>':''}</div>
         ${k==='ideia'||k==='producao'?`<button class="qk-add" data-newcol="${k}">+ Adicionar um cartão</button>`:''}</section>`}).join('')}</div>`);
   };
+
+  /* Nova demanda no jeito Trello: título, cliente, formato e coluna; "Criar cartão" salva e já abre o cartão completo */
+  const _op=openPost;
+  openPost=function(id,col){
+    if(id)return _op(id,col);
+    const c0=fv('dc','all')!=='all'?fv('dc'):(CL()[0]||{}).id,k0=['ideia','producao'].includes(col)?col:'ideia';
+    MODAL={nw:true,html:()=>`<div class="ovl" data-close><form class="qn" id="qn" role="dialog" aria-modal="true" aria-label="Nova demanda">
+      <div class="qn-h"><b>Nova demanda</b><button class="x" type="button" data-x aria-label="Fechar">✕</button></div>
+      <textarea name="title" rows="2" placeholder="Insira um título para este cartão…" required></textarea>
+      <div class="qn-r"><span>Cliente</span><div class="qn-cl">${CL().map(c=>`<label><input type="radio" name="client_id" value="${esc(c.id)}" ${c.id===c0?'checked':''}><i style="background:${esc(ccol(c.id))}">${esc((c.name||'?')[0])}</i>${esc(c.name)}</label>`).join('')}</div></div>
+      <div class="qn-r"><span>Formato</span><div class="qn-ch">${[['carrossel','Carrossel'],['reels','Reels'],['post','Post'],['story','Stories']].map(([k,n],i)=>`<label><input type="radio" name="type" value="${k}" ${i===0?'checked':''}><b>${n}</b></label>`).join('')}</div></div>
+      <div class="qn-r"><span>Coluna</span><div class="qn-ch">${COLS.slice(0,2).map(([k,n])=>`<label><input type="radio" name="col" value="${k}" ${k===k0?'checked':''}><b>${esc(n)}</b></label>`).join('')}</div></div>
+      <div class="qn-r"><span>Vai ao ar</span><div class="qn-d"><input type="date" name="date"><input type="time" name="time"></div></div>
+      <div class="qn-f"><button class="btn red" type="submit">Criar cartão</button><small>Depois você completa descrição, legenda, checklist e anexos no cartão.</small></div>
+    </form></div>`};
+    render();setTimeout(()=>{const t=document.querySelector('#qn textarea');if(t)t.focus()},0);
+  };
+  document.addEventListener('submit',async e=>{
+    const f=e.target.closest&&e.target.closest('#qn');if(!f)return;e.preventDefault();e.stopPropagation();
+    const v=Object.fromEntries(new FormData(f));if(!String(v.title||'').trim()){toast('Dê um título ao cartão');return}
+    const row={client_id:v.client_id,title:v.title.trim(),type:v.type,date:v.date||null,time:v.time||null,due:null,media:[],...colStatus(v.col,{}),
+      history:[{kind:'acao',text:'criou o cartão',by:(ME&&ME.name)||'Stond',at:new Date().toISOString()}]};
+    row.id=`${row.client_id}-${Date.now().toString(36)}`;
+    const b=f.querySelector('[type=submit]');b.disabled=true;
+    try{await savePost(row);MODAL=null;openPost(row.id)}catch(x){b.disabled=false;toast(x.message)}
+  },true);
+  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&e.target.matches&&e.target.matches('#qn textarea')){e.preventDefault();e.target.form.requestSubmit()}});
   document.addEventListener('change',e=>{const s=e.target.closest('[data-fsel]');if(s){FILT[s.dataset.fsel]=s.value;render()}});
 })();
