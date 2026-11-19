@@ -175,7 +175,7 @@ html.embed header.top{display:none}
 
 <script>
 if(/[?&]embed=1/.test(location.search)&&parent!==window){document.documentElement.classList.add('embed');
-  const fit=()=>{try{const f=parent.document.querySelector('iframe.wa-demo');if(f)f.style.height=document.documentElement.scrollHeight+'px'}catch(e){}};
+  const fit=()=>{try{const f=parent.document.querySelector('iframe.wa-demo');const w=document.querySelector('.wrap');if(f&&w)f.style.height=Math.ceil(w.getBoundingClientRect().bottom+scrollY+8)+'px'}catch(e){}};
   addEventListener('load',fit);if(window.ResizeObserver)new ResizeObserver(fit).observe(document.body);}
 const STG=[['novo','Novo','var(--pink)'],['contato','Em contato','var(--blue)'],['proposta','Proposta enviada','var(--orange)'],['negociacao','Negociação','var(--purple)'],['fechado','Fechado','var(--green)']];
 const OCLS={Instagram:'o-ig',Calculadora:'o-calc',Site:'o-site',Indicação:'o-ind'};
