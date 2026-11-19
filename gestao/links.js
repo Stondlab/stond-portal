@@ -2,7 +2,7 @@
    Tabelas short_links e short_clicks (supabase/sql/short_links.sql). O cliente vê em Resultados > Links e cliques. */
 (function(){
   ic.lnk='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
-  const g=GROUPS.find(([t])=>t==='Clientes');if(g&&!g[1].some(([k])=>k==='lnk')){const i=g[1].findIndex(([k])=>k==='inv');g[1].splice(i+1,0,['lnk','Links curtos'])}
+  if(!GROUPS.some(g=>g[1].some(([k])=>k==='lnk'))){const g=GROUPS.find(([t])=>t==='Resultados');if(g)g[1].push(['lnk','Links curtos'])}
   const GRP=['Bio','Site','Direct','Stories','Anúncios','Outros'].map(x=>[x,x]);
   const F=[['label','Nome do link (ex.: Calculadora no direct)'],['grp','Onde vai ser usado','sel',GRP],['dest','Página de destino (sem UTM)'],
     ['utm_source','Origem (utm_source)'],['utm_medium','Meio (utm_medium)'],['utm_campaign','Campanha (utm_campaign, opcional)'],['slug','Link curto: portal.stond.com.br/l/…'],['active','Ativo','chk']];
