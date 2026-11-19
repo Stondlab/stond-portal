@@ -66,7 +66,7 @@ const isDone=p=>p.publish_status==='publicado'||p.status==='publicado';
 
 async function load(){
   const q=(t,s='*')=>sb.from(t).select(s);
-  const [c,p,f,m,d,a,l,k,g]=await Promise.all([q('clients','id,name,handle,color,status,data,access_token').order('created_at'),q('posts').order('date'),q('post_feedback').order('created_at'),q('ig_metrics').order('date'),q('agency_docs'),q('ig_accounts'),q('client_links'),q('dm_keywords').order('created_at'),q('dm_log','client_id,keyword,from_username,status,error,created_at').order('created_at',{ascending:false}).limit(150)]);
+  const [c,p,f,m,d,a,l,k,g]=await Promise.all([q('clients','id,name,handle,color,status,data,access_token').order('created_at'),q('posts').order('date'),q('post_feedback').order('created_at'),q('ig_metrics').order('date'),q('agency_docs'),q('ig_accounts'),q('client_links'),q('dm_keywords').order('created_at'),q('dm_log','client_id,media_id,keyword,from_username,status,error,created_at').order('created_at',{ascending:false}).limit(3000)]);
   for(const r of [c,p,f,m,d])if(r.error)throw new Error(r.error.message);
   D={clients:c.data,posts:p.data,feedback:f.data,metrics:m.data,docs:d.data,accounts:a.data||[],links:l.data||[]};
   try{const {data:u}=await sb.rpc('storage_usage');D.usage=u||null}catch(_){D.usage=null}
