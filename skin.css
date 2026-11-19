@@ -472,4 +472,4 @@ html.light .os-logo{content:url(/assets/logo-vermelho.png)}
 .qn-d{display:flex;gap:8px}.qn-d input{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:transparent;color:var(--ink)}
 .qn-f{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.qn-f small{color:var(--muted);font-size:12px;flex:1;min-width:180px}
 @media(max-width:560px){.qn{margin-top:4vh}.qn-r{grid-template-columns:1fr;gap:6px}}
-.dtag.ts{background:#e6eef7;color:#3d5f85}html:not(.light) .dtag.ts{background:rgba(90,127,168,.22);color:#a9c3e0}
+.dtag{background:#fff0e0!important;color:#c25e00!important;font-weight:600}.dtag.ts{background:#e3f0ff!important;color:#0a64c8!important}html:not(.light) .dtag{background:rgba(255,138,0,.2)!important;color:#ffb35c!important}html:not(.light) .dtag.ts{background:rgba(30,144,255,.22)!important;color:#7cc0ff!important}
