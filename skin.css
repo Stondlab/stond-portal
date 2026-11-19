@@ -561,3 +561,53 @@ html.light .po .po-logo{content:url(assets/logo-vermelho.png)}
 .wa-soon small{opacity:.75}
 .wa-soon .go{font-weight:600;color:#e07800;white-space:nowrap}
 .po iframe.wa-demo{display:block;width:100%;height:1500px;border:0;border-radius:14px;margin-top:6px;background:transparent}
+/* gestão › Comercial › WhatsApp (tela de exemplo) */
+.wa-soon-tag{font-size:12px;font-weight:700;color:#fff;background:#f08a00;border-radius:999px;padding:6px 12px;white-space:nowrap}
+.wa-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 14px}
+.wa-tabs button{border:1px solid var(--line);background:var(--bg-2);color:var(--ink);border-radius:999px;padding:7px 14px;font-size:13px;cursor:pointer}
+.wa-tabs button.on{background:var(--ink);color:var(--bg-2);border-color:var(--ink)}
+.wa-cv{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.wa-cv{grid-template-columns:minmax(0,1fr)}}
+.wa-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;background:var(--bg-2);overflow:hidden}
+.wa-li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;text-align:left;padding:12px 14px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);cursor:pointer}
+.wa-li:first-child{border-top:0}.wa-li.on{background:var(--wash)}
+.wa-av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e0458a;color:#fff;font-weight:700;font-size:13px}
+.wa-lt{display:flex;flex-direction:column;gap:3px;min-width:0}.wa-lt b{font-weight:600;font-size:13.5px}
+.wa-lt small{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wa-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}.wa-tm{color:var(--faint);font-size:11.5px}
+.wa-st{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.wa-ia{background:rgba(224,69,138,.13);color:#d0307a}.wa-gb{background:rgba(47,139,224,.14);color:#1f6fc0}.wa-wait{background:rgba(240,138,0,.15);color:#c26a00}.wa-ok{background:rgba(31,157,107,.14);color:#16805a}
+.wa-chat{border:1px solid var(--line);border-radius:14px;background:var(--bg-2);display:flex;flex-direction:column;min-width:0}
+.wa-chat header{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.wa-chat header b{display:block;font-weight:600}.wa-chat header small{color:var(--muted);font-size:12px}
+.wa-msgs{display:flex;flex-direction:column;gap:6px;padding:14px;background:color-mix(in srgb,#efe7de 55%,var(--bg-3));max-height:420px;overflow-y:auto}
+.wa-m{max-width:80%;padding:7px 10px 5px;border-radius:9px;font-size:13.5px;color:#111b21;background:#fff;align-self:flex-start;display:flex;flex-direction:column;gap:2px}
+.wa-m.out{background:#d9fdd3;align-self:flex-end}.wa-m small{align-self:flex-end;font-size:10.5px;opacity:.55}
+.wa-who{font-size:11px;font-weight:700}.wa-who.ia{color:#d0307a}.wa-who.gb{color:#1f6fc0}
+.wa-doc{display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.06);border-radius:7px;padding:7px;font-weight:600;font-size:12.5px}
+.wa-doc i,.wa-pdf i{font-style:normal;font-size:10px;font-weight:700;color:#fff;background:#e2453c;border-radius:4px;padding:6px 5px}
+.wa-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:12px 14px;border-top:1px solid var(--line)}
+.wa-res .lb{grid-column:1/-1}.wa-res small{display:block;color:var(--muted);font-size:11.5px}.wa-res b{font-weight:500;font-size:13px}
+.wa-g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+@media (max-width:900px){.wa-g2{grid-template-columns:minmax(0,1fr)}}
+.wa-f{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--bg-2)}
+.wa-f textarea{width:100%;font:inherit;font-size:13.5px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--ink);resize:vertical}
+.wa-ch{display:flex;gap:6px;flex-wrap:wrap}
+.wa-ch button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer}
+.wa-ch button.on{border-color:#e0458a;background:rgba(224,69,138,.1);color:#d0307a;font-weight:600}
+.wa-no{font-size:12.5px;padding:6px 12px;border-radius:999px;background:var(--wash);color:var(--redtxt)}
+.wa-q{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.wa-ck{display:flex;gap:8px;align-items:center;font-size:13.5px}
+.wa-pdf{display:flex;gap:12px;align-items:center}.wa-pdf div{flex:1;display:flex;flex-direction:column}
+.wa-faq{border-top:1px solid var(--line);padding:8px 0}.wa-faq summary{cursor:pointer;font-size:13.5px;font-weight:500}.wa-faq p{margin:6px 0 0;font-size:13px;color:var(--muted)}
+.wa-rule{display:grid;grid-template-columns:160px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+@media (max-width:700px){.wa-rule{grid-template-columns:minmax(0,1fr)}}
+.wa-rule p{margin:0;font-size:13.5px}.wa-rule b{font-weight:600;font-size:13.5px}
+.wa-cost{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(240,138,0,.15);color:#c26a00;white-space:nowrap}
+.wa-cost.free{background:rgba(31,157,107,.14);color:#16805a}
+.wa-sum{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:700px){.wa-sum{grid-template-columns:repeat(2,minmax(0,1fr))}.wa-sum>div+div{border-left:0}}
+.wa-tot{font:500 28px var(--body)}
+.wa-o{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.wa-o.ig{background:rgba(224,69,138,.13);color:#d0307a}.wa-o.calc{background:rgba(240,138,0,.15);color:#c26a00}.wa-o.site{background:rgba(47,139,224,.14);color:#1f6fc0}.wa-o.ind{background:rgba(124,77,219,.14);color:#6a3fc8}
+.wa-f>.btn{align-self:flex-start}
