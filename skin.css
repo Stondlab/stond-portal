@@ -452,3 +452,7 @@ html.light .qk-g{background:#fff}
 .qk-g .qk-add{margin:4px 8px 8px}
 @media (max-width:900px){.qk-h{display:none}.qk-r{grid-template-columns:1fr auto}.qk-r>span:nth-child(n+2):not(:last-child){display:none}.qb-mo{margin-left:0}}
 @media (max-width:720px){.qk{flex-basis:82vw;max-height:none}}
+/* Logo original da Stond na casca */
+.os-logo{height:44px;width:auto;display:block}
+.os-logo.m{height:30px}
+html.light .os-logo{content:url(/assets/logo-vermelho.png)}

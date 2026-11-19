@@ -21,13 +21,13 @@
     const nav=SP.map(([g,l,i])=>{const go_=g?last(g):'inicio',n=g?items(g).reduce((a,[k])=>a+badge(k),0):window.osNeed?osNeed().length:0;
       return `<button data-go="${go_}" ${cur===g&&(g||S==='inicio')?'aria-current="page"':''}>${ic[i]}<span>${l}</span>${n?`<span class="bdg">${n}</span>`:''}</button>`}).join('');
     const cls=CL().filter(c=>(c.status||'ativo')!=='inativo').map(c=>{const ph=cphoto(c.id);return `<button data-pasta="${esc(c.id)}" ${S==='pasta'&&FILT.pc===c.id?'aria-current="page"':''}>${ph?`<img class="mono" src="${esc(ph)}" alt="">`:`<i class="mono" style="background:${esc(c.color||'#8a5560')}">${esc((c.name||'?')[0])}</i>`}<span>${esc(c.name)}</span></button>`}).join('');
-    return `<div class="app os"><aside class="side os-side"><div class="os-brand"><i class="os-s" aria-hidden="true"></i><span>Stond</span></div>
+    return `<div class="app os"><aside class="side os-side"><div class="os-brand"><img class="os-logo" src="/assets/logo-branco.png" alt="Stond"></div>
       <button class="srch" data-busca>${sv('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>')}<span>Buscar</span><kbd>Ctrl K</kbd></button>
       <nav class="nav os-nav">${nav}</nav>
       <p class="os-lb">Clientes</p><nav class="nav os-nav os-cls">${cls}</nav>
       <div class="os-me"><span class="av">${esc((ME.name||'?')[0])}</span><div><b>${esc(ME.name)}</b><small>${esc(ME.role==='dona'?'Stond · dona':'Stond · equipe')}</small></div></div>
       <div class="os-ft">${tt()}<button class="out os-out" data-out>Sair</button></div></aside>
-     <main class="main"><div class="mhead"><span class="os-brand"><i class="os-s"></i><span>Stond</span></span><span style="display:flex;gap:10px;align-items:center"><button class="srch m" data-busca aria-label="Buscar">${sv('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>')}</button>${tt()}<button class="out" data-out style="padding:0">Sair</button></span></div>${inner}</main>
+     <main class="main"><div class="mhead"><span class="os-brand"><img class="os-logo m" src="/assets/logo-branco.png" alt="Stond"></span><span style="display:flex;gap:10px;align-items:center"><button class="srch m" data-busca aria-label="Buscar">${sv('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>')}</button>${tt()}<button class="out" data-out style="padding:0">Sair</button></span></div>${inner}</main>
      <nav class="tabbar">${tabs.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${ic[k]}${l}${b(k)}</button>`).join('')}</nav></div>${MODAL?MODAL.html():''}`;
   };
 
