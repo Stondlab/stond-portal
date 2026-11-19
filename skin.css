@@ -67,3 +67,20 @@ html.light .pill[data-ty="reels"],.pill[data-ty="reels"]{color:var(--redtxt)!imp
 
 /* barras com cor única */
 .bars i b{background:var(--red)}
+
+/* menu lateral claro (como no mockup): branco com vermelho só no item atual */
+html.light .side{background:var(--side);border-right:1px solid var(--line);color:var(--ink)}
+html.light .side .logo{content:url(/assets/logo-vermelho.png)}
+html.light .side .nav button{color:var(--muted)}
+html.light .side .nav button:hover{color:var(--ink);background:var(--bg-3)}
+html.light .side .nav button[aria-current="page"]{background:var(--bg-3);color:var(--ink)}
+html.light .side .nav .sec,html.light .side .nav .grp{color:var(--faint)}html.light .side .nav .sec:hover{color:var(--ink)}
+html.light .side .who{border-color:var(--line)}html.light .side .who small{color:var(--muted)}html.light .side .who .av{background:var(--red);color:#fff}
+html.light .side .bdg{background:var(--red);color:#fff}
+html.light .side .tt{border-color:var(--line);background:var(--bg-3)}html.light .side .tt span{color:var(--faint)}html.light .side .tt span.on{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+html.light .side .out{color:var(--faint)}
+html.light .side::-webkit-scrollbar-thumb{background:var(--line)}
+
+/* números grandes mais contidos */
+.bx .num{font-size:clamp(22px,2.1vw,28px)!important}
+.bx.hero .num{font-size:clamp(26px,2.6vw,34px)!important}
