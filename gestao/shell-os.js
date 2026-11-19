@@ -25,8 +25,8 @@
       <button class="srch" data-busca>${sv('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>')}<span>Buscar</span><kbd>Ctrl K</kbd></button>
       <nav class="nav os-nav">${nav}</nav>
       <p class="os-lb">Clientes</p><nav class="nav os-nav os-cls">${cls}</nav>
-      <div class="os-me"><span class="av">${esc((ME.name||'?')[0])}</span><div><b>${esc(ME.name)}</b><small>${esc(ME.role==='dona'?'Stond · dona':'Stond · equipe')}</small></div>${tt()}</div>
-      <button class="out os-out" data-out>Sair</button></aside>
+      <div class="os-me"><span class="av">${esc((ME.name||'?')[0])}</span><div><b>${esc(ME.name)}</b><small>${esc(ME.role==='dona'?'Stond · dona':'Stond · equipe')}</small></div></div>
+      <div class="os-ft">${tt()}<button class="out os-out" data-out>Sair</button></div></aside>
      <main class="main"><div class="mhead"><span class="os-brand"><i class="os-s"></i><span>Stond</span></span><span style="display:flex;gap:10px;align-items:center"><button class="srch m" data-busca aria-label="Buscar">${sv('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>')}</button>${tt()}<button class="out" data-out style="padding:0">Sair</button></span></div>${inner}</main>
      <nav class="tabbar">${tabs.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${ic[k]}${l}${b(k)}</button>`).join('')}</nav></div>${MODAL?MODAL.html():''}`;
   };
@@ -57,7 +57,7 @@
     const ncl=new Set(L.map(x=>x.c)).size;
     const line=`<div class="bx os-line"><div class="os-lh"><span class="lb">Linha do dia</span><small>${ncl} ${ncl===1?'cliente':'clientes'} · ${pT.length} ${pT.length===1?'publicação':'publicações'}${eT.length?` · ${eT.length} ${eT.length===1?'compromisso':'compromissos'}`:''}</small></div>
       <div class="os-ax">${[8,10,12,14,16,18,20,22].map(h=>`<span style="left:${X(h)}%"><i></i>${String(h).padStart(2,'0')}h</span>`).join('')}
-       ${L.map((x,i)=>`<button class="os-pt" ${x.a} style="left:${X(x.h)}%;--lv:${i%2}"><i style="background:${esc(ccol(x.c))}"></i><b>${esc(x.t)}</b></button>`).join('')}
+       ${L.map((x,i)=>`<button class="os-pt${X(x.h)>62?' rt':''}" ${x.a} style="${X(x.h)>62?`right:${100-X(x.h)}%`:`left:${X(x.h)}%`};--lv:${i%2}"><i style="background:${esc(ccol(x.c))}"></i><b>${esc(x.t)}</b></button>`).join('')}
        ${nowH>=H0&&nowH<=H1?`<span class="os-now" style="left:${X(nowH)}%"><small>agora</small></span>`:''}</div>
       ${L.length?'':'<p class="wait">Nenhum post ou compromisso com horário hoje.</p>'}</div>`;
     const need=`<div class="bx os-nd"><div class="os-lh"><span class="lb" style="color:var(--redtxt)">Precisa de você</span><b class="os-nn">${N.length||''}</b></div>${N.length?N.slice(0,7).map(x=>`<div class="os-ni"><span class="${x.k==='r'?'kl-r':x.k==='w'?'kl-w':'kl-n'}">${esc(x.s)}</span><div><b>${esc(x.t)}</b></div><button class="btn sm ${x.k==='r'?'':'ghost'}" ${x.a}>${esc(x.b)}</button></div>`).join(''):'<p class="wait">Nada esperando você. Bom momento para adiantar a próxima semana.</p>'}${N.length>7?`<small class="mut">E mais ${N.length-7}.</small>`:''}</div>`;
@@ -74,6 +74,7 @@
 })();
 (function(){
   COLS.forEach(c=>{if(c[0]==='aprovacao')c[1]='Com o cliente'});
+  const _dem=V.dem;V.dem=()=>_dem().replace('<h2>Demandas</h2>','<h2>O que está <em>andando</em></h2>');
   /* pasta: abas do cliente no lugar dos botões de cliente (o cliente se escolhe no menu) */
   const _p=V.pasta;
   V.pasta=()=>{const A=CL(),c=FILT.pc&&A.find(x=>x.id===FILT.pc)?FILT.pc:A[0]?.id;if(c)FILT.pc=c;
