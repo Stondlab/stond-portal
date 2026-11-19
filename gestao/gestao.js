@@ -367,7 +367,7 @@ function diag(c){
   else g=['Sem gargalo forte','Os números dos últimos 30 dias estão no ritmo dos meses anteriores.'];
   // gráfico de alcance por post
   const L=all.slice(-50),W=760,H=180,pl=38,pb=18,mx=Math.max(100,...L.map(m=>m.reach||0)),top=Math.ceil(mx/250)*250,bw=(W-pl-4)/L.length,y=v=>H-pb-(H-pb-6)*v/top;
-  const COL={orig:'#ff2d87',rep:'#ff8a00',feed:'#8b5cf6',test:'#1e90ff'};let lastM='';
+  const COL={orig:'#9b0d20',rep:'#f59e0b',feed:'#f08fb6',test:'#2f8be0'};let lastM='';
   const bars=L.map((m,i)=>{const x=pl+i*bw,v=m.reach||0,mo=m.ts.slice(5,7),lab=mo!==lastM?(lastM=mo,`<text x="${x.toFixed(1)}" y="${H-4}" class="ax">${MES[+mo-1].slice(0,3).toLowerCase()}</text>`):'';
     return `${lab}<a href="${esc(m.permalink||'#')}" target="_blank" rel="noopener"><rect x="${(x+bw*.12).toFixed(1)}" width="${(bw*.76).toFixed(1)}" y="${y(v).toFixed(1)}" height="${Math.max(1,y(0)-y(v)).toFixed(1)}" rx="2" fill="${COL[kind(m)]}"><title>${fmtD(m.ts.slice(0,10))} · alcance ${nf(v)} · ${esc(String(m.caption||'').slice(0,60))}</title></rect></a>`}).join('');
   const grid=[0,.25,.5,.75,1].map(f=>`<line x1="${pl}" x2="${W-4}" y1="${y(top*f)}" y2="${y(top*f)}" class="gl"/><text x="${pl-5}" y="${y(top*f)+3}" text-anchor="end" class="ax">${nf(top*f)}</text>`).join('');
