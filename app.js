@@ -240,12 +240,13 @@ function notaCard(){
    <div class="nsc">${Array.from({length:11},(_,i)=>`<button data-nota="${i}" class="${NOTASEL===i?'on':''}">${i}</button>`).join('')}</div>
    ${NOTASEL!=null?`<textarea id="notat" rows="2" placeholder="Quer contar o porquê? (opcional)"></textarea><button class="btn red" data-nota-ok>Enviar nota</button>`:''}</div>`;
 }
-function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});if(PREVIEW)edCheck();const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','inv','lnk','auto','arq'].concat(hasMarca()?['marca','proj']:[]).includes(h)?h:'inicio';render();
+function start(){CALM=null;if(!PREVIEW)rpc('portal_nota_feita',{p_token:TOKEN||null}).then(v=>{if(v===false){NOTA=true;if(S==='inicio')render()}}).catch(()=>{});if(PREVIEW)edCheck();const h=location.hash.slice(1);S=['inicio','aprov','cal','met','ig','inv','lnk','auto','arq'].concat(hasMarca()?['marca','proj']:[],hasWa()?['wa']:[]).includes(h)?h:'inicio';render();
   if(window.StondIA)StondIA.mount({sb,mode:'cliente',local:iaLocal,fab:false,title:'Assistente Stond',sub:'Responde com os dados do seu portal',hello:'Oi, '+(first()||'tudo bem')+'! Posso dizer o que falta aprovar, o que vai ao ar e como está o seu Instagram.',hints:['O que falta eu aprovar?','O que vai ao ar esta semana?','Como está meu Instagram?','Como peço um ajuste?']})}
 function go(s){S=s;OPEN=null;if(location.hash.slice(1)!==s)history.replaceState(null,'','#'+s);render();const m=$('.main');if(m)m.scrollTop=0}
 
 const BR=()=>EDIT||(D&&D.brand);
 const hasMarca=()=>!!(D&&BR()&&window.StondMarca);
+const hasWa=()=>!!(D&&D.client&&D.client.id==='gabriel');
 const RES=['met','inv','lnk','auto'];
 /* no celular a barra de baixo só tem 5 botões: as páginas de cada bloco ganham pílulas no topo */
 const pills=L=>`<div class="pills">${L.map(([k,l])=>`<button data-go="${k}" ${k===S?'aria-current="page"':''}>${l}</button>`).join('')}</div>`;
@@ -379,8 +380,7 @@ ${esc(pr.bioNow||pr.bio||'')}</p>
   const L=D.automations||[];
   return `${resPills()}<div class="top"><div><h2>Automações</h2><p>Quem comenta a palavra-chave recebe o link no direct sozinho.</p></div></div>
   ${L.length?`<div class="sum"><div><b>${nf(L.reduce((t,a)=>t+(+a.asked||0),0))}</b><span>Pedidos no total</span></div><div><b>${nf(L.reduce((t,a)=>t+(+a.sent||0),0))}</b><span>Links entregues</span></div><div><b>${nf(L.reduce((t,a)=>t+(+a.asked30||0),0))}</b><span>Últimos 30 dias</span></div></div>
-  <div class="autol">${L.map(a=>`<div class="au"><span class="kw">${esc(a.keyword)}</span><div class="t"><b>${esc(String(a.title||'Link no direct').replace(/\s*👇\s*$/,''))}</b><small>Ativa desde ${a.since?new Date(a.since).toLocaleDateString('pt-BR'):'—'}</small></div><div class="n"><b>${nf(a.asked||0)}</b><span>pedidos</span></div><div class="n"><b>${nf(a.sent||0)}</b><span>entregues</span></div><div class="n"><b>${nf(a.asked30||0)}</b><span>30 dias</span></div></div>`).join('')}</div>`:'<div class="empty">Quando uma palavra-chave estiver ativa, aqui aparece quantas pessoas pediram e receberam o link.</div>'}
-  ${D.client&&D.client.id==='gabriel'?`<a class="wa-soon" href="/demo/whatsapp" target="_blank" rel="noopener"><span class="soon">Em breve</span><span><b>Atendimento no WhatsApp com IA</b><small>Quem chamar no seu WhatsApp é atendido na hora, recebe sua apresentação e chega pra você já qualificado.</small></span><span class="go">Ver como vai funcionar ›</span></a>`:''}`;
+  <div class="autol">${L.map(a=>`<div class="au"><span class="kw">${esc(a.keyword)}</span><div class="t"><b>${esc(String(a.title||'Link no direct').replace(/\s*👇\s*$/,''))}</b><small>Ativa desde ${a.since?new Date(a.since).toLocaleDateString('pt-BR'):'—'}</small></div><div class="n"><b>${nf(a.asked||0)}</b><span>pedidos</span></div><div class="n"><b>${nf(a.sent||0)}</b><span>entregues</span></div><div class="n"><b>${nf(a.asked30||0)}</b><span>30 dias</span></div></div>`).join('')}</div>`:'<div class="empty">Quando uma palavra-chave estiver ativa, aqui aparece quantas pessoas pediram e receberam o link.</div>'}`;
  },
  arq(){
   const U=D.uploads||[];

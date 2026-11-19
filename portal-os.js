@@ -9,9 +9,16 @@
     ['cal','Calendário',[['cal','Calendário'],['ig','Prévia do feed']]],
     ...(hasMarca()?[['marca','Marca',[['marca','A marca'],['proj','Projeto']]]]:[]),
     ['met','Resultados',[['met','Mês'],...(reps().length?[['rel','Relatório']]:[]),['inv','Anúncios'],['lnk','Site e WhatsApp'],['auto','Automações']]],
-    ['arq','Arquivos',[['arq','Arquivos e links']]]];
+    ['arq','Arquivos',[['arq','Arquivos e links']]],
+    ...(hasWa()?[['wa','WhatsApp',[['wa','WhatsApp']]]]:[])];
   const spOf=s=>SP().find(([,,T])=>T.some(([k])=>k===s))||SP()[0];
 
+  ic.wa='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4.6 19.4l1-3.6A8 8 0 1 1 8.4 18.6z"/><path d="M9 8.6c.2-.4.5-.4.8-.4l.6 1.4-.6.8c.5 1 1.3 1.8 2.3 2.3l.8-.6 1.4.6c0 .3 0 .6-.4.8-.6.4-1.4.4-2.1.1a7 7 0 0 1-3-3c-.3-.7-.3-1.5.2-2z"/></svg>';
+  // WhatsApp com IA: por enquanto só a demonstração, e só para quem vai ter (Gabriel)
+  V.wa=function(){
+    return `<div class="top"><div><p class="eyebrow">Em breve</p><h2>Atendimento no <em>WhatsApp</em></h2><p>Quem chamar no seu WhatsApp é atendido na hora pela assistente, recebe sua apresentação e chega pra você já qualificado. Cada conversa vira um cartão que anda sozinho até a venda. Aperte "Próximo passo" pra ver.</p></div></div>
+    <iframe class="wa-demo" src="/demo/whatsapp?embed=1" title="Demonstração do atendimento no WhatsApp" loading="lazy"></iframe>`;
+  };
   shell=function(inner){
     const L=SP(),cur=spOf(S),ph=photo(),P=pend().length;
     const b=k=>k==='inicio'&&P?`<span class="bdg">${P}</span>`:'';
