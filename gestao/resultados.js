@@ -128,7 +128,7 @@
   V.inv=()=>{
     const c=fv('ic',CL()[0]?.id),L=docs('invest').filter(d=>d.client===c).sort((a,b)=>String(b.month).localeCompare(String(a.month)));
     const mk=fv('im',L[0]?.month||new Date().toISOString().slice(0,7)),R=L.find(x=>x.month===mk)||{},C=docs('criativos').filter(d=>d.client===c&&d.month===mk);
-    const cpm=dv(R.spent,R.impressions)!=null?dv(R.spent,R.impressions)*1000:null,freq=dv(R.impressions,R.reach),ctr=dv(R.clicks,R.impressions),cpc=dv(R.spent,R.clicks),cpv=dv(R.spent,R.conversations),cac=dv(R.spent,R.sales),roas=dv(R.revenue,R.spent);
+    const cpm=dv(R.spent,R.impressions)!=null?dv(R.spent,R.impressions)*1000:null,freq=dv(R.impressions,R.reach),ctr=dv(R.clicks,R.impressions),cpc=dv(R.spent,R.clicks),cpv=dv(R.spent,R.conversations),cac=dv(R.spent,R.sales),roas=R.revenue?dv(R.revenue,R.spent):null;
     const best=C.length?C.map(x=>({...x,cc:dv(x.spent,x.conversations)})).sort((a,b)=>(a.cc??1e9)-(b.cc??1e9)):[];
     const dec=(x,i)=>x.cc==null?['Sem conversa','r']:i===0&&best.length>1?['Pôr mais verba','o']:i===best.length-1&&best.length>2?['Desligar','r']:['Manter',''];
     const money=v=>v==null?'—':brl(v);
