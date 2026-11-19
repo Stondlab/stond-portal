@@ -52,7 +52,7 @@
     const mk=mkey(new Date()),RD=resDoc(c,mk),meta=+RD.meta_vendas||0;
     const lastMet=D.metrics.filter(x=>x.client_id===c).slice(-1)[0];
     const top=S.M.map(m=>({m,w:dms(c).filter(x=>x.media_id===m.ig_media_id&&inR(x.created_at,r.a,r.b)).length})).map(o=>({...o,score:o.w*3+(+o.m.follows||0)*2+(+o.m.profile_visits||0)*.2})).filter(o=>o.score>0).sort((x,y)=>y.score-x.score).slice(0,4);
-    return shell(topb(`Do alcance à <em>venda</em>`,`${esc(cli(c).name)} · ${r.label} · comparado com o período anterior${lastMet?` · Meta atualizado em ${fmtD(lastMet.date)}`:''}`,
+    return shell(topb(`Do alcance à <em>venda</em>`,`${esc(cli(c).name)} · ${r.label} · comparado com o período anterior${lastMet?` · ${(u=>u?`atualizado ${iso(new Date(u))===today()?'hoje':fmtD(iso(new Date(u)))}, ${new Date(u).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`:`atualizado em ${fmtD(lastMet.date)}`)((lastMet.extra||{}).updated_at)}`:''}`,
       `<span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-ig-connect>Reconectar Instagram</button><button class="btn" data-sync-met>Atualizar agora</button><button class="btn red" data-res-lanc>Lançar vendas</button></span>`)+
      filterBar('met',`<button class="btn sm" data-res-pdf>Baixar PDF</button><button class="btn sm" data-res-csv>Baixar planilha</button>`)+`
      <div class="rs-meta"><div><span class="lb">Vendas no mês</span><b>${nf(+RD.vendas||0)}${meta?`<small>de ${meta}</small>`:'<small>sem meta</small>'}</b>${meta?`<div class="prog"><b style="width:${Math.min(100,(+RD.vendas||0)/meta*100)}%"></b></div>`:''}</div>

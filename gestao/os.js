@@ -25,6 +25,8 @@
     docs('leads').filter(l=>!['fechado','perdido'].includes(l.stage)&&l.nextDate&&l.nextDate<=T).forEach(l=>L.push({c:null,t:`${l.name}: ${l.nextStep||'próximo passo'}`,s:'Comercial',k:'b',a:'data-go="com"',b:'Abrir'}));
     docs('contracts').filter(k=>k.status==='assinado'&&k.renewAt&&k.renewAt>=T&&(pd(k.renewAt)-now)/864e5<=30).forEach(k=>L.push({c:k.client,t:`Contrato de ${cli(k.client).name} vence ${fmtD(k.renewAt)}`,s:'Renovar',k:'w',a:'data-go="prop"',b:'Ver'}));
     active().filter(c=>health(c)<55).forEach(c=>L.push({c:c.id,t:`${c.name} está com saúde ${health(c)}`,s:'Risco de cancelar',k:'r',a:`data-pasta="${esc(c.id)}"`,b:'Abrir pasta'}));
+    docs('pedidos').filter(x=>!x.done&&x.due&&x.due<=T).forEach(x=>L.push({c:x.client,t:`${cli(x.client).name} ainda não mandou: ${x.title}`,s:'Pedido ao cliente',k:x.due<T?'w':'b',a:`data-edit-doc="pedidos:${esc(x.id)}"`,b:'Ver'}));
+    if(window.sysAlerts)try{L.push(...sysAlerts())}catch(_){}
     const ord={r:0,w:1,b:2};return L.sort((a,b)=>ord[a.k]-ord[b.k]);
   }
   V.inicio=()=>{
