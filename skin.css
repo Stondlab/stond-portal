@@ -1,0 +1,95 @@
+/* Stond OS: pele nova (claro é o padrão, escuro é opção).
+   Carrega depois de app.css e gestao.css e só troca aparência: cores, fontes, bordas. */
+@font-face{font-family:"Melodrama";src:url(/assets/fonts/melodrama.woff2) format("woff2");font-weight:300 700;font-display:swap}
+
+/* escuro: grafite quente, sem brilho vermelho no fundo */
+:root{
+  --bg:#141012; --bg-2:#1b1618; --bg-3:#231d1f; --ink:#f2ecec; --muted:#a0979a; --faint:#6c6366;
+  --line:rgba(242,236,236,.09); --glass:#1b1618; --glass-2:#231d1f;
+  --red:#f80b1d; --redtxt:#ff4a57; --ok:#4cc38a; --warn:#e8b04a;
+  --glow:transparent; --side:#100d0e; --hov:rgba(242,236,236,.22); --ring:rgba(248,11,29,.18);
+  --wash:rgba(248,11,29,.08); --mel:"Melodrama",var(--display);
+}
+/* claro: off-white quente, superfícies brancas, vermelho só em ação */
+html.light{
+  --bg:#f5f4f4; --bg-2:#ffffff; --bg-3:#efeded; --ink:#231d1f; --muted:#6a6164; --faint:#9b9295;
+  --line:rgba(35,29,31,.09); --glass:#ffffff; --glass-2:#efeded;
+  --red:#d10a1c; --redtxt:#b30a1a; --ok:#1f8a57; --warn:#a86d10;
+  --glow:transparent; --side:#ffffff; --hov:rgba(35,29,31,.22); --ring:rgba(209,10,28,.14); --wash:rgba(209,10,28,.06);
+}
+
+/* fundo liso */
+.app{background:var(--bg)}
+.bx,.bx.hero,.rep{background:var(--glass)}
+.bx:hover{transform:none}
+
+/* títulos: Gill Sans; a palavra em <em> sai em Melodrama vermelha */
+.top h2,.login h2{font:400 32px/1.15 var(--display);letter-spacing:-.005em}
+.top h2 em,.login h2 em{font-family:var(--mel);font-style:normal;font-weight:300;color:var(--redtxt);font-size:1.14em}
+.top p{font-size:13.5px}
+.eyebrow,.bx .lb,.fld label{font-size:10.5px;letter-spacing:.22em;color:var(--faint)}
+
+/* números sempre Montserrat 500 */
+.sum b,.bx .num,.cs b,.rk b,.mt>div>b,.tl b,.day .d,.stats b{font-family:var(--body)!important;font-weight:500!important;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.bx .num{font-size:clamp(24px,2.4vw,32px)}
+.sum b{font-size:26px}.cs b,.rk b,.mt>div>b{font-size:21px}.tl b,.day .d{font-size:17px}
+
+/* menu lateral */
+.side{gap:18px;padding:20px 12px}
+.nav button{border-radius:9px;padding:8px 10px;font-size:13px}
+.nav button svg{width:17px;height:17px}
+.nav button[aria-current="page"]{background:var(--bg-3);color:var(--ink)}
+.nav button[aria-current="page"] svg{color:var(--red)}
+.nav .bdg{background:var(--red)}
+.nav .sec{letter-spacing:.2em}
+.who{border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 6px 0}
+
+/* cartões e painéis: menos arredondado, sem degradê */
+.bx,.cc,.rep,.kc,.list,.sum,.card,.flow div,.cal,.doc{border-radius:14px}
+.bx{border-color:var(--line)}
+.kc{background:var(--bg-3)!important;border-color:transparent}
+.kd{background:var(--bg-2)!important}
+html.light .kd{box-shadow:none;border-color:var(--line)}
+
+/* botões: pílula; vermelho cheio só na ação principal */
+.btn{border-color:var(--hov);padding:9px 18px;font-size:13px}
+.btn:hover{background:var(--bg-3)}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.red:hover{background:color-mix(in srgb,var(--red) 88%,#000)}
+.btn.sm{padding:6px 13px;font-size:12px}
+
+/* chips de estado iguais em todo o app: contorno colorido, sem fundo pastel */
+.chip,html.light .chip{background:transparent!important;font-weight:600;letter-spacing:.06em}
+.chip.ok{border-color:color-mix(in srgb,var(--ok) 40%,transparent);color:var(--ok)}
+.chip.pend{border-color:color-mix(in srgb,var(--warn) 40%,transparent);color:var(--warn)}
+.pill,html.light .pill[data-ty]{background:transparent!important;border:1px solid var(--line);color:var(--muted)!important}
+html.light .pill[data-ty="reels"],.pill[data-ty="reels"]{color:var(--redtxt)!important;border-color:color-mix(in srgb,var(--red) 35%,transparent)}
+
+/* barras com cor única */
+.bars i b{background:var(--red)}
+
+/* menu lateral claro (como no mockup): branco com vermelho só no item atual */
+html.light .side{background:var(--side);border-right:1px solid var(--line);color:var(--ink)}
+html.light .side .logo{content:url(/assets/logo-vermelho.png)}
+html.light .side .nav button{color:var(--muted)}
+html.light .side .nav button:hover{color:var(--ink);background:var(--bg-3)}
+html.light .side .nav button[aria-current="page"]{background:var(--bg-3);color:var(--ink)}
+html.light .side .nav .sec,html.light .side .nav .grp{color:var(--faint)}html.light .side .nav .sec:hover{color:var(--ink)}
+html.light .side .who{border-color:var(--line)}html.light .side .who small{color:var(--muted)}html.light .side .who .av{background:var(--red);color:#fff}
+html.light .side .bdg{background:var(--red);color:#fff}
+html.light .side .tt{border-color:var(--line);background:var(--bg-3)}html.light .side .tt span{color:var(--faint)}html.light .side .tt span.on{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+html.light .side .out{color:var(--faint)}
+html.light .side::-webkit-scrollbar-thumb{background:var(--line)}
+
+/* números grandes mais contidos */
+.bx .num{font-size:clamp(22px,2.1vw,28px)!important}
+.bx.hero .num{font-size:clamp(26px,2.6vw,34px)!important}
+
+/* quadro: as 5 colunas cabem na tela; etiquetas no mesmo estilo dos chips */
+.kb{grid-auto-columns:minmax(168px,1fr)}
+.kd.tr .kcov{aspect-ratio:16/9}
+.kd .kl:not(.add){background:transparent!important;border:1px solid var(--line);color:var(--muted);border-radius:99px;font-weight:600;font-size:10.5px;letter-spacing:.04em;line-height:18px}
+.kd .kl[data-ty="reels"]{color:var(--redtxt);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
+.kd .kl[data-ty="carrossel"]{color:var(--ink)}
+.kd .kl.aj{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.kd .kl.lt{color:var(--red);border-color:color-mix(in srgb,var(--red) 45%,transparent)}

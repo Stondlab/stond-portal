@@ -47,6 +47,7 @@ const ic={
  com:sv('<path d="M4 5h16l-6 7v6l-4 2v-8z"/>'),
  prop:sv('<path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4M9.5 12h6M9.5 15.5h6"/>'),
  fin:sv('<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h4"/>'),
+ site:sv('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 3.6 5.4 3.6 8.5s-1.1 5.9-3.6 8.5c-2.5-2.6-3.6-5.4-3.6-8.5S9.5 6.1 12 3.5z"/>'),
  adm:sv('<path d="M4 20V8l8-4.5L20 8v12"/><path d="M9 20v-6h6v6M3 20h18"/>'),
 };
 
@@ -120,13 +121,14 @@ function login(){
 
 /* ---------- casca ---------- */
 const GROUPS=[['',[['inicio','Hoje']]],
- ['Dia a dia',[['agenda','Calendário de posts'],['dem','Demandas'],['aprov','Aprovação'],['pub','Agendados']]],
- ['Planejar',[['plano','Planejamento dos meses']]],
- ['Resultados',[['met','Métricas'],['auto','Automações']]],
- ['Gestão',[['cli','Clientes'],['fin','Financeiro']]],
- ['Mais',[['msg','Mensagens'],['rel','Relatórios'],['inv','Investimento'],['lnk','Links curtos'],['com','Comercial'],['prop','Propostas e contratos'],['gest','Gestão da Stond'],['cres','Crescimento'],['adm','Administrativo']]]];
+ ['Comercial',[['com','Funil'],['prop','Propostas e contratos']]],
+ ['Clientes',[['cli','Todos os clientes'],['plano','Plano do mês'],['marca','Marca'],['proj','Projetos'],['antes','Antes e depois'],['msg','Mensagens']]],
+ ['Produção',[['dem','Quadro'],['agenda','Calendário'],['aprov','Aprovações'],['pub','Agendados']]],
+ ['Resultados',[['met','Métricas'],['site','Site e WhatsApp'],['auto','Automações'],['inv','Anúncios'],['lnk','Links curtos'],['rel','Relatórios']]],
+ ['Stond',[['fin','Financeiro'],['gest','Saúde da Stond'],['cres','Crescimento'],['adm','Administrativo']]]];
+const LABEL=k=>{for(const [,it] of GROUPS)for(const [kk,l] of it)if(kk===k)return l;return ''};
 function badge(k){if(k==='aprov')return pend().length;if(k==='dem')return late().length;if(k==='pub')return queue().filter(p=>p.publish_status==='agendado').length;if(k==='msg')return docs('messages').filter(m=>m.who==='Cliente'&&!m.readStond).length;return 0}
-function menuClosed(){const v=ls.get('sg-menu2');return v==null?['Mais']:v.split('|').filter(Boolean)}
+function menuClosed(){const v=ls.get('sg-menu3');return v==null?['Comercial','Stond']:v.split('|').filter(Boolean)}
 function shell(inner){
   const tabs=[['inicio','Hoje'],['agenda','Posts'],['aprov','Aprovar'],['pub','Agendados'],['fin','Financeiro']];
   const b=k=>{const n=badge(k);return n?`<span class="bdg">${n}</span>`:''};
@@ -189,7 +191,7 @@ V.inicio=()=>{
   docs('contracts').filter(k=>k.status==='assinado'&&k.renewAt&&k.renewAt>=t0&&(pd(k.renewAt)-now)/864e5<=30).forEach(k=>alerts.push([k.client,'Contrato vence '+fmtD(k.renewAt),'prop','Renovar']));
   pend().filter(p=>p.date&&p.date<=iso(new Date(now.getTime()+2*864e5))).forEach(p=>alerts.push([p.client_id,`"${p.title}" vai ao ar ${fmtD(p.date)} sem aprovação`,'aprov','Ver']));
   const leads=docs('leads').filter(l=>!['fechado','perdido'].includes(l.stage));
-  return shell(topb(`Bom dia, ${esc(ME.name.split(' ')[0])}`,`${items.length} ${items.length===1?'coisa':'coisas'} para hoje, ${pend().length} posts com os clientes${alerts.length?' e '+alerts.length+' alertas':''}`,'<button class="btn red" data-new="post">Nova demanda</button>').replace('<h2>',`<p class="eyebrow">${WDL[now.getDay()]}, ${now.getDate()} de ${MES[now.getMonth()]}</p><h2>`)+spaceBanner()+`
+  return shell(topb(`${now.getHours()<12?'Bom dia':now.getHours()<18?'Boa tarde':'Boa noite'}, <em>${esc(ME.name.split(' ')[0])}</em>`,`${items.length} ${items.length===1?'coisa':'coisas'} para hoje, ${pend().length} posts com os clientes${alerts.length?' e '+alerts.length+' alertas':''}`,'<button class="btn red" data-new="post">Nova demanda</button>').replace('<h2>',`<p class="eyebrow">${WDL[now.getDay()]}, ${now.getDate()} de ${MES[now.getMonth()]}</p><h2>`)+spaceBanner()+`
   <div class="bento">
    <div class="bx hero w2 w2m"><span class="lb">Receita recorrente</span><div class="num">${brl(M)}${goal?`<small>meta ${brl(goal)}</small>`:''}</div>${goal?`<div class="prog"><b style="width:${Math.min(100,M/goal*100)}%"></b></div><span class="ft">${M>=goal?'Meta batida':'Faltam '+brl(goal-M)}</span>`:'<span class="ft">Defina a meta em Gestão da Stond</span>'}</div>
    <div class="bx"><span class="lb">Ticket médio</span><div class="num">${brl(A.length?M/A.length:0)}</div><span class="ft">${A.length} clientes ativos</span></div>
@@ -782,6 +784,7 @@ function openSchedule(id){
 function render(){
   const m=$('.main'),y=m?m.scrollTop:0;
   document.getElementById('app').innerHTML=V[S]();
+  document.title=(LABEL(S)||'Gestão')+' · Stond';
   const n=$('.main');if(n&&MODAL)n.scrollTop=y;
 }
 function go(s){S=s;MODAL=null;history.replaceState(null,'','#'+s);render();const m=$('.main');if(m)m.scrollTop=0}
@@ -796,7 +799,7 @@ document.addEventListener('click',async e=>{
       const r=(data.res||[])[0]||{};if(r.error)throw new Error(r.error);await load();render();toast(r.errors&&r.errors.length?'Seguidores atualizados. Alcance e visualizações precisam da permissão de métricas no Meta.':'Números atualizados do Meta')}
     catch(x){toast(x.message);sy.disabled=false;sy.textContent='Puxar do Meta'}return}
   const ek=t.closest('[data-edit-kw]');if(ek){openKw(ek.dataset.editKw);return}
-  const sm=t.closest('[data-sec]');if(sm){const k=sm.dataset.sec,c=menuClosed();ls.set('sg-menu2',(c.includes(k)?c.filter(x=>x!==k):[...c,k]).join('|'));render();return}
+  const sm=t.closest('[data-sec]');if(sm){const k=sm.dataset.sec,c=menuClosed();ls.set('sg-menu3',(c.includes(k)?c.filter(x=>x!==k):[...c,k]).join('|'));render();return}
   if(MODAL){
     if(t.closest('[data-x]')||(t.matches('[data-close]'))){MODAL=null;render();return}
     const rm=t.closest('[data-rmmedia]');if(rm){POST_EDIT.media.splice(+rm.dataset.rmmedia,1);rm.parentElement.remove();return}
