@@ -71,13 +71,13 @@
   const _dem=V.dem;
   V.dem=()=>{
     const f=fv('dq','all');let h=_dem();
-    h=h.replace('<div class="filters">','<div class="filters">'+segF('dq',[['all','Todos os cartões'],['adj','Só com ajuste'],['stuck','Parados há 3+ dias'],['late','Atrasados']]));
+    h=h.replace('<div class="filters">','<div class="filters">'+segF('dq',[['all','Todos os cartões'],['adj','Só com ajuste'],['stuck','Parados há 3+ dias (produção e cliente)'],['late','Atrasados']]));
     h=h.replace(/<article class="kd tr"[^>]*data-edit-post="([^"]+)">([\s\S]*?)<\/article>/g,(all,id,body)=>{
       const p=D.posts.find(x=>x.id===id);if(!p)return all;
       const n=dd(p.updated_at),adj=p.status==='reprovado'&&lastAdj(id),late=p.due&&p.due<today()&&!isDone(p)&&p.status!=='aprovado';
-      const stuck=n>=3&&!isDone(p);
+      const col=colOf(p),stuck=n>=3&&['producao','aprovacao'].includes(col);
       if(f==='adj'&&p.status!=='reprovado')return '';if(f==='stuck'&&!stuck)return '';if(f==='late'&&!late)return '';
-      const extra=`<small class="kx">${cdot(p.client_id)}${esc(cli(p.client_id).name)}${!isDone(p)&&n!=null?` · <span class="${stuck?'kx-w':''}">${n===0?'mexido hoje':n===1?'há 1 dia nesta coluna':`há ${n} dias nesta coluna`}</span>`:''}</small>${adj?`<small class="kx-a">“${esc(String(adj.text).slice(0,140))}”</small>`:''}`;
+      const extra=`<small class="kx">${cdot(p.client_id)}${esc(cli(p.client_id).name)}${['producao','aprovacao'].includes(col)&&n!=null?` · <span class="${stuck?'kx-w':''}">${n===0?'mexido hoje':n===1?'sem mexer há 1 dia':`sem mexer há ${n} dias`}</span>`:''}</small>${adj?`<small class="kx-a">“${esc(String(adj.text).slice(0,140))}”</small>`:''}`;
       return all.replace('<div class="kft">',extra+'<div class="kft">');
     });
     h=h.replace(/(<section class="kc" data-drop="aprovacao"[^>]*><header>[\s\S]*?<\/header>)(<\/section>|<button)/,(a,hd,end)=>hd+'<p class="kx-e">Nada com o cliente. Mande o próximo lote: arraste os cartões prontos para cá.</p>'+end);
@@ -124,7 +124,7 @@
     const pub=posts().filter(p=>p.client_id===c&&p.publish_status),perr=pub.filter(p=>p.publish_status==='erro').length,lp=pub.filter(isDone).map(p=>p.published_at||p.updated_at).sort().slice(-1)[0];
     if(acc||pub.length)out.push({k:'pub',n:'Publicação automática',st:!acc?'parado':perr?'erro':'ok',d:`${acc?'@'+esc(acc.username||''):'Conta não conectada'}${lp?' · último post '+dm(lp):''}${perr?` · ${perr} com erro`:''}`});
     const m=D.metrics.filter(x=>x.client_id===c).slice(-1)[0],mu=m&&m.extra&&m.extra.updated_at;
-    if(m)out.push({k:'met',n:'Métricas do Instagram',st:dd(mu||m.date)>2?'parado':'ok',d:mu?`Lê o Meta 1 vez por dia · atualizado ${dm(mu)} às ${hm(mu)}`:`Última medição ${fmtD(m.date)}`});
+    if(m){const meta=(m.extra||{}).source==='meta';out.push({k:'met',n:'Métricas do Instagram',st:meta&&dd(mu||m.date)>2?'parado':'ok',d:meta?(mu?`Lê o Meta 1 vez por dia · atualizado ${dm(mu)} às ${hm(mu)}`:`Última leitura ${fmtD(m.date)}`):`Lançadas à mão · última ${fmtD(m.date)}`})}
     if(C.access_token){const fb=D.feedback.filter(f=>f.client_id===c).slice(-1)[0];out.push({k:'portal',n:'Portal do cliente',st:'ok',d:fb?`Última resposta do cliente ${dm(fb.created_at)}`:'Ligado, cliente ainda não respondeu'})}
     if((D.links||[]).some(l=>l.client_id===c))out.push({k:'lnk',n:'Links curtos',st:'ok',d:`${(D.links||[]).filter(l=>l.client_id===c).length} links`});
     return out;
