@@ -86,7 +86,7 @@ html.light .side::-webkit-scrollbar-thumb{background:var(--line)}
 .bx.hero .num{font-size:clamp(26px,2.6vw,34px)!important}
 
 /* quadro: as 5 colunas cabem na tela; etiquetas no mesmo estilo dos chips */
-.kb{grid-auto-columns:minmax(190px,1fr)}
+.kb{grid-auto-columns:minmax(168px,1fr)}
 .kd.tr .kcov{aspect-ratio:16/9}
 .kd .kl:not(.add){background:transparent!important;border:1px solid var(--line);color:var(--muted);border-radius:99px;font-weight:600;font-size:10.5px;letter-spacing:.04em;line-height:18px}
 .kd .kl[data-ty="reels"]{color:var(--redtxt);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
