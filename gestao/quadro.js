@@ -31,7 +31,7 @@
     const cl=Array.isArray(p.checklist)?p.checklist:[],cd=cl.filter(x=>x.done).length,fb=D.feedback.filter(f=>f.post_id===p.id&&f.text).length;
     const adj=p.status==='reprovado'&&adjTxt(p.id),stuck=['producao','aprovacao'].includes(col)&&n>=3;
     return `<article class="qc" draggable="true" data-drag="${esc(p.id)}" data-edit-post="${esc(p.id)}">${im?`<div class="qc-cv"><img src="${esc(im)}" alt="" loading="lazy"></div>`:''}
-      <div class="qc-in">${labels.length||p.status==='reprovado'||late?`<div class="qc-lb">${labels.map(l=>`<i style="background:${LCOL[l]||'#8a5560'}" title="${esc(l)}">${esc(l)}</i>`).join('')}${p.status==='reprovado'?'<i style="background:#d9363e">Ajuste</i>':''}${late?'<i style="background:#e8a11c">Atrasada</i>':''}</div>`:''}
+      <div class="qc-in">${labels.length||p.status==='reprovado'||late?`<div class="qc-lb">${labels.map(l=>`<i style="background:${lcol(l)}" title="${esc(l)}">${esc(l)}</i>`).join('')}${p.status==='reprovado'?'<i style="background:#d9363e">Ajuste</i>':''}${late?'<i style="background:#e8a11c">Atrasada</i>':''}</div>`:''}
        <b>${esc(p.title||'Sem título')}</b>
        ${adj?`<small class="qc-aj">“${esc(String(adj).slice(0,110))}”</small>`:''}
        <div class="qc-ft"><span class="qc-ty" data-ty="${esc(p.type||'post')}">${ty(p.type)}</span>

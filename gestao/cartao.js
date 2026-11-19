@@ -8,6 +8,11 @@
   const who=()=>(ME&&ME.name)||'Stond';
   const LBL=['Urgente','Gravar','Editar','Revisar','Esperando cliente','Tráfego'];
   const LCOL={'Urgente':'#d9363e','Gravar':'#8f0a19','Editar':'#5a7fa8','Revisar':'#e8a11c','Esperando cliente':'#c868b8','Tráfego':'#3f9f6f'};
+  // etiquetas criadas por ela ganham uma cor viva fixa pelo nome (vinho, rosa, azul, laranja, roxo, turquesa, coral, verde)
+  const LPAL=['#9b0d20','#e0458a','#2f8be0','#f08a00','#7c4ddb','#0e9fb3','#ef5b4c','#1f9d6b'];
+  window.lcol=l=>{if(LCOL[l])return LCOL[l];
+    const all=[...new Set((D.posts||[]).flatMap(p=>Array.isArray(p.labels)?p.labels:[]).filter(x=>typeof x==='string'&&!LCOL[x]))].sort((a,b)=>a.localeCompare(b,'pt'));
+    const i=all.indexOf(l);return LPAL[(i<0?all.length:i)%LPAL.length]};
   const ago=s=>{if(!s)return '';const d=new Date(s);return d.toLocaleDateString('pt-BR',{day:'numeric',month:'short'})+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})};
   const ic=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${p}</svg>`;
   const I={card:ic('<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9h17"/>'),txt:ic('<path d="M4 6h16M4 11h16M4 16h10"/>'),chk:ic('<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="m8 12 3 3 5-6"/>'),clip:ic('<path d="M20 12.5 12.6 20a5 5 0 0 1-7-7l8-8a3.3 3.3 0 0 1 4.7 4.7l-8 8a1.7 1.7 0 0 1-2.4-2.4l7.3-7.3"/>'),act:ic('<path d="M4 6h16M4 12h16M4 18h16"/>'),tag:ic('<path d="M3.5 12V4.5H11l9.5 9.5-7.5 7.5z"/><circle cx="8" cy="8.5" r="1.3"/>'),clk:ic('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),img:ic('<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m4 18 5-5 4 4 3-3 4 4"/>'),mv:ic('<path d="M5 12h14M13 6l6 6-6 6"/>'),arc:ic('<rect x="3.5" y="4" width="17" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/>'),cap:ic('<path d="M4 5h16v14H4zM8 9h8M8 13h6"/>')};
@@ -35,7 +40,7 @@
       <div class="cdb"><div class="cdm">
         <div class="cdrow">
           <div><span class="cdl">Formato</span><div class="cdtags">${[['reels','Reels'],['carrossel','Carrossel'],['post','Post']].map(([k,n])=>`<button type="button" class="kl ${p.type===k?'':'off'}" data-ty="${k}" data-cd-type="${k}">${n}</button>`).join('')}</div></div>
-          <div><span class="cdl">Etiquetas</span><div class="cdtags">${labels.map(l=>`<span class="kl" style="background:${LCOL[l]||'#8a5560'}">${esc(l)}<button type="button" data-cd-unlabel="${esc(l)}" aria-label="Tirar">×</button></span>`).join('')}<details class="cdpop"><summary class="kl add">+</summary><div>${LBL.filter(l=>!labels.includes(l)).map(l=>`<button type="button" class="kl" style="background:${LCOL[l]}" data-cd-label="${esc(l)}">${esc(l)}</button>`).join('')}<input placeholder="Nova etiqueta" data-cd-newlabel></div></details></div></div>
+          <div><span class="cdl">Etiquetas</span><div class="cdtags">${labels.map(l=>`<span class="kl" style="background:${lcol(l)}">${esc(l)}<button type="button" data-cd-unlabel="${esc(l)}" aria-label="Tirar">×</button></span>`).join('')}<details class="cdpop"><summary class="kl add">+</summary><div>${LBL.filter(l=>!labels.includes(l)).map(l=>`<button type="button" class="kl" style="background:${LCOL[l]}" data-cd-label="${esc(l)}">${esc(l)}</button>`).join('')}<input placeholder="Nova etiqueta" data-cd-newlabel></div></details></div></div>
         </div>
         <div class="cdrow">
           <div><span class="cdl">Publicação</span><div class="cdd"><input type="date" data-cd="date" value="${esc(p.date||'')}"><input type="time" data-cd="time" value="${esc(p.time||'')}"></div></div>
