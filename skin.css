@@ -84,3 +84,12 @@ html.light .side::-webkit-scrollbar-thumb{background:var(--line)}
 /* números grandes mais contidos */
 .bx .num{font-size:clamp(22px,2.1vw,28px)!important}
 .bx.hero .num{font-size:clamp(26px,2.6vw,34px)!important}
+
+/* quadro: as 5 colunas cabem na tela; etiquetas no mesmo estilo dos chips */
+.kb{grid-auto-columns:minmax(190px,1fr)}
+.kd.tr .kcov{aspect-ratio:16/9}
+.kd .kl:not(.add){background:transparent!important;border:1px solid var(--line);color:var(--muted);border-radius:99px;font-weight:600;font-size:10.5px;letter-spacing:.04em;line-height:18px}
+.kd .kl[data-ty="reels"]{color:var(--redtxt);border-color:color-mix(in srgb,var(--red) 40%,transparent)}
+.kd .kl[data-ty="carrossel"]{color:var(--ink)}
+.kd .kl.aj{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.kd .kl.lt{color:var(--red);border-color:color-mix(in srgb,var(--red) 45%,transparent)}
