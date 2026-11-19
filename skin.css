@@ -286,6 +286,8 @@ html.light .bk-b{background:#fff}
 .pm-ped>div .chip{grid-row:1/span 2;grid-column:2}
 .pm-ped .lnkb{align-self:flex-start}
 .pm-mes .sum{margin-top:8px}
+.pm-mes .sum,.pm-rep .sum{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-bottom:0}
+.pm-rep .sum div+div{border-left:1px solid var(--line)}
 .pm-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
 .pm-rel{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--bg-2);color:var(--ink);font:inherit;cursor:pointer}
 .pm-rel .eyebrow{margin:0}.pm-rel b{font:400 17px/1.4 var(--display)}.pm-rel span{color:var(--redtxt);font-size:13px;font-weight:600;margin-top:auto}
@@ -302,7 +304,7 @@ html.light .bk-b{background:#fff}
 @media (max-width:720px){
   .pm-two{grid-template-columns:1fr}
   .pm-cl{display:flex;flex-direction:column;gap:14px;margin-top:6px}
-  .pm-cl+*,.cal,.calday,.leg{display:none}
+  .main:has(.pm-cl) .cal,.main:has(.pm-cl) .calday,.main:has(.pm-cl) .leg{display:none}
   .ovl:has(.sheet){padding:0}
   .ovl .sheet .media{max-width:none}
 }
