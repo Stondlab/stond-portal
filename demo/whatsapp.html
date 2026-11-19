@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Recepcionista do WhatsApp</title>
+<style>
+/* Layout: à esquerda o celular com a conversa; à direita o funil do Comercial, onde o cartão anda sozinho a cada passo */
+:root{
+  --bg:#f6f3f4; --card:#ffffff; --fg:#1f1416; --mut:#76666a; --line:#e7dfe1;
+  --wine:#9b0d20; --pink:#e0458a; --blue:#2f8be0; --orange:#f08a00; --purple:#7c4ddb; --green:#1f9d6b;
+  --wa-bg:#efe7de; --wa-in:#ffffff; --wa-out:#d9fdd3; --wa-head:#1f7a5c; --wa-fg:#111b21; --wa-sys:#fff5c4;
+  --soft-pink:#fde7f1; --soft-blue:#e3f0fc; --soft-orange:#fff0dc; --soft-purple:#efe8fc; --soft-green:#e1f5ec; --soft-wine:#f9e5e8;
+  --f:"Gill Sans","Gill Sans MT","Segoe UI",Calibri,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141012; --card:#1f191b; --fg:#f3ecee; --mut:#a9999d; --line:#352b2e;
+  --wine:#e0485c; --wa-bg:#0b141a; --wa-in:#202c33; --wa-out:#005c4b; --wa-head:#1f2c34; --wa-fg:#e9edef; --wa-sys:#3a3320;
+  --soft-pink:#3a1a29; --soft-blue:#14283c; --soft-orange:#3a2a12; --soft-purple:#261c3c; --soft-green:#12301f; --soft-wine:#3a1a20; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141012; --card:#1f191b; --fg:#f3ecee; --mut:#a9999d; --line:#352b2e;
+  --wine:#e0485c; --wa-bg:#0b141a; --wa-in:#202c33; --wa-out:#005c4b; --wa-head:#1f2c34; --wa-fg:#e9edef; --wa-sys:#3a3320;
+  --soft-pink:#3a1a29; --soft-blue:#14283c; --soft-orange:#3a2a12; --soft-purple:#261c3c; --soft-green:#12301f; --soft-wine:#3a1a20; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+.soon{font-size:12px;font-weight:700;color:#fff;background:var(--orange);border-radius:999px;padding:4px 10px;white-space:nowrap}
+body{background:var(--bg);color:var(--fg);font-family:var(--f);font-size:15px;line-height:1.45;padding-block:24px 40px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--wine);font-weight:600;margin:0 0 4px}
+h1{font-size:28px;line-height:1.15;margin:0;font-weight:500;text-wrap:balance}
+h1 em{font-style:normal;color:var(--wine)}
+.sub{color:var(--mut);margin:6px 0 0;max-width:62ch}
+.ex{font-size:12px;color:var(--mut);border:1px dashed var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.ctrl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;cursor:pointer}
+.btn{border:0;border-radius:10px;padding:10px 16px;font-weight:600;background:var(--wine);color:#fff}
+.btn.ghost{background:var(--card);color:var(--fg);border:1px solid var(--line)}
+.btn:focus-visible,.dot:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+.steps{display:flex;gap:6px;align-items:center}
+.dot{width:10px;height:10px;border-radius:50%;border:0;background:var(--line);padding:0}
+.dot.on{background:var(--wine)}
+.now{font-size:13px;color:var(--mut)}
+.grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+/* celular */
+.phone{background:var(--wa-bg);border-radius:26px;border:8px solid var(--fg);overflow:hidden;display:flex;flex-direction:column;height:640px;max-width:100%}
+.wah{background:var(--wa-head);color:#fff;padding:10px 12px;display:flex;gap:10px;align-items:center}
+.wah .av{width:34px;height:34px;border-radius:50%;background:#fff;color:var(--wine);display:grid;place-items:center;font-weight:700;font-size:13px}
+.wah b{display:block;font-size:15px}.wah small{opacity:.8;font-size:12px}
+.msgs{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
+.m{max-width:84%;padding:7px 10px 5px;border-radius:9px;color:var(--wa-fg);font-size:14px;box-shadow:0 1px 0 rgba(0,0,0,.08);animation:in .25s ease-out}
+.m.in{background:var(--wa-in);align-self:flex-start;border-top-left-radius:2px}
+.m.out{background:var(--wa-out);align-self:flex-end;border-top-right-radius:2px}
+.m .who{display:block;font-size:11px;font-weight:700;margin-bottom:2px}
+.m.ia .who{color:var(--pink)}.m.gb .who{color:var(--blue)}
+.m .t{display:block;text-align:right;font-size:10.5px;opacity:.6;margin-top:2px}
+.doc{display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.06);border-radius:7px;padding:8px}
+.doc i{font-style:normal;font-size:10px;font-weight:700;color:#fff;background:#e2453c;border-radius:4px;padding:6px 5px}
+.doc b{display:block;font-size:13px}.doc small{font-size:11.5px;opacity:.7}
+.sys{align-self:center;background:var(--wa-sys);color:var(--wa-fg);font-size:12px;padding:4px 10px;border-radius:8px;text-align:center;max-width:92%;animation:in .25s ease-out}
+@keyframes in{from{transform:translateY(6px);opacity:.3}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.m,.sys,.kd{animation:none!important;transition:none!important}}
+
+/* lado direito */
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.lb{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.what{display:flex;gap:12px;align-items:flex-start}
+.what .ic{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--soft-wine);color:var(--wine);font-weight:700}
+.what p{margin:2px 0 0}
+.what .cost{display:inline-block;margin-top:6px;font-size:12px;padding:2px 8px;border-radius:999px;background:var(--soft-green);color:var(--green);font-weight:600}
+.what .cost.pay{background:var(--soft-orange);color:var(--orange)}
+
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:560px){.stats{grid-template-columns:minmax(0,1fr)}}
+.st b{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;display:block;line-height:1.1}
+.st small{color:var(--mut)}
+.orig{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+.or{display:grid;grid-template-columns:90px minmax(0,1fr) 22px;gap:8px;align-items:center;font-size:13px}
+.or i{display:block;height:8px;border-radius:4px;transition:width .4s}
+.or span:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--mut)}
+
+.kb{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:10px;overflow-x:auto;padding-bottom:4px}
+.kc{background:var(--bg);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:8px;min-height:250px;border-top:4px solid var(--cc)}
+.kc header{display:flex;justify-content:space-between;font-size:13px;padding:2px 4px}
+.kc header span{color:var(--mut);font-variant-numeric:tabular-nums}
+.kd{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:13px;display:flex;flex-direction:column;gap:5px}
+.kd b{font-size:14px;font-weight:600}
+.kd small{color:var(--mut)}
+.kd.me{border:2px solid var(--wine);box-shadow:0 4px 14px rgba(155,13,32,.15);animation:in .35s ease-out}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.tg{font-size:11px;padding:2px 7px;border-radius:999px;font-weight:600;background:var(--soft-blue);color:var(--blue)}
+.tg.o-ig{background:var(--soft-pink);color:var(--pink)}
+.tg.o-calc{background:var(--soft-orange);color:var(--orange)}
+.tg.o-site{background:var(--soft-blue);color:var(--blue)}
+.tg.o-ind{background:var(--soft-purple);color:var(--purple)}
+.tg.hot{background:var(--soft-wine);color:var(--wine)}
+.tg.ia{background:var(--soft-pink);color:var(--pink)}
+.tg.gb{background:var(--soft-blue);color:var(--blue)}
+.tg.ok{background:var(--soft-green);color:var(--green)}
+.res{margin:2px 0 0;padding:6px 8px;border-radius:8px;background:var(--bg);font-size:12.5px}
+.res dt{color:var(--mut);font-size:11px}
+.res dd{margin:0 0 3px}
+.vir{border:0;border-radius:8px;padding:6px 8px;background:var(--wine);color:#fff;font-weight:600;font-size:12px}
+
+.costs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.costs{grid-template-columns:minmax(0,1fr)}}
+.costs div{display:flex;flex-direction:column;gap:2px}
+.costs b{font-size:18px;font-variant-numeric:tabular-nums}
+.costs small{color:var(--mut)}
+.foot{font-size:12.5px;color:var(--mut)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Como vai funcionar · Gabriel Souza Travel</p>
+      <h1>A recepcionista atende no WhatsApp e o <em>funil anda sozinho</em></h1>
+      <p class="sub">Aperte "Próximo passo" pra ver a conversa acontecer. A cada mensagem, o cartão do lead muda de etapa no Comercial e guarda o que a pessoa contou.</p>
+    </div>
+    <span style="display:flex;gap:8px;flex-wrap:wrap"><span class="soon">Em breve</span><span class="ex">Nomes e números de exemplo</span></span>
+  </header>
+
+  <div class="ctrl">
+    <button class="btn ghost" id="prev">‹ Voltar</button>
+    <button class="btn" id="next">Próximo passo ›</button>
+    <div class="steps" id="dots" aria-label="Passos"></div>
+    <span class="now" id="now"></span>
+  </div>
+
+  <div class="grid">
+    <div class="phone" aria-label="Conversa no WhatsApp">
+      <div class="wah"><span class="av">GS</span><div><b>Gabriel Souza Travel</b><small>conta comercial · API oficial da Meta</small></div></div>
+      <div class="msgs" id="msgs"></div>
+    </div>
+
+    <div class="side">
+      <div class="box what" id="what"></div>
+
+      <div class="box">
+        <div class="stats">
+          <div class="st"><b id="sHot">0</b><small>quentes hoje</small></div>
+          <div class="st"><b id="sOpen">0</b><small>em aberto no funil</small></div>
+          <div class="st"><b id="sGb">0</b><small>esperando o Gabriel</small></div>
+        </div>
+        <div style="margin-top:12px"><span class="lb">De onde vieram este mês</span><div class="orig" id="orig"></div></div>
+      </div>
+
+      <div class="box">
+        <span class="lb">Comercial · funil de leads</span>
+        <div class="kb" id="kb" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="box">
+    <span class="lb">Quanto custou essa conversa</span>
+    <div class="costs" style="margin-top:8px">
+      <div><b>R$ 0,00</b><small>Tudo o que foi resposta a quem chamou, dentro de 24h. A Meta não cobra.</small></div>
+      <div><b>~R$ 0,35</b><small>O lembrete de 2 dias depois, porque foi o Gabriel que puxou a conversa (mensagem de marketing).</small></div>
+      <div><b>~R$ 0,10</b><small>A IA lendo e respondendo a conversa inteira.</small></div>
+    </div>
+    <p class="foot" style="margin:10px 0 0">Valores aproximados. A Meta cobra em dólar no cartão do app. Sem mensalidade de número e sem empresa intermediária.</p>
+  </div>
+</div>
+
+<script>
+const STG=[['novo','Novo','var(--pink)'],['contato','Em contato','var(--blue)'],['proposta','Proposta enviada','var(--orange)'],['negociacao','Negociação','var(--purple)'],['fechado','Fechado','var(--green)']];
+const OCLS={Instagram:'o-ig',Calculadora:'o-calc',Site:'o-site',Indicação:'o-ind'};
+// outros leads de exemplo, pra o funil não ficar vazio
+const OTHERS=[
+  {n:'Rafael M.',o:'Calculadora',s:'novo',d:'Entrou hoje',hot:true,i:'quer saber quanto valem 180 mil milhas'},
+  {n:'Paula e Léo',o:'Site',s:'contato',d:'há 1 dia',i:'lua de mel em maio'},
+  {n:'Cláudia R.',o:'Indicação',s:'proposta',d:'há 2 dias',i:'gestão de milhas da família'},
+  {n:'Tiago F.',o:'Instagram',s:'negociacao',d:'Parado há 6 dias',late:true,i:'Europa em setembro'},
+  {n:'Bruna S.',o:'Calculadora',s:'fechado',d:'ontem',i:'gestão de milhas'}
+];
+const ORIG0={Instagram:5,Calculadora:4,Site:2,Indicação:1};
+
+// cada passo: mensagens que entram, etapa do cartão e o que a IA anotou
+const STEPS=[
+ {now:'Mariana comentou VISTO num Reels e clicou no link do WhatsApp',
+  msgs:[{k:'sys',t:'Mariana veio do Reels "Visto americano: os 3 erros" (palavra VISTO)'},{k:'in',t:'Oi! Vi o vídeo do visto americano, queria saber como funciona',h:'21:04'}],
+  stage:'novo',tags:[],res:{Origem:'Instagram · Reels VISTO'},
+  what:['Novo lead criado sozinho','A pessoa chamou e o cartão nasce em Novo, já com a origem: Instagram, palavra VISTO. Ninguém precisou cadastrar nada.',0]},
+ {now:'A IA responde na hora e faz a primeira pergunta',
+  msgs:[{k:'ia',t:'Oi, Mariana! Aqui é a assistente do Gabriel. Te ajudo sim. Pra eu entender: é o primeiro visto ou renovação? E é só pra você?',h:'21:04'},{k:'in',t:'Primeiro visto, pra mim e pro meu marido',h:'21:06'}],
+  stage:'novo',tags:['ia'],res:{Serviço:'Visto americano (1º)',Pessoas:'2'},
+  what:['IA qualificando','Ela faz as perguntas que a gente definir. Cada resposta vai direto pro cartão, sem você ler a conversa toda.',0]},
+ {now:'Com as respostas certas, o cartão passa pra Em contato e fica quente',
+  msgs:[{k:'ia',t:'Perfeito. Vocês já têm ideia de quando querem viajar?',h:'21:06'},{k:'in',t:'Queria ir pra Orlando em julho. E vocês veem passagem com milha também?',h:'21:08'}],
+  stage:'contato',tags:['ia','hot'],res:{Destino:'Orlando, julho',Interesse:'Visto + passagem com milhas'},
+  what:['Lead qualificado e quente','Tem data, tem destino e pediu mais de um serviço. A IA marca como quente e ele sobe no "quentes hoje".',0]},
+ {now:'A IA manda a apresentação e passa a conversa pro Gabriel',
+  msgs:[{k:'ia',t:'Vemos sim! Julho dá tempo pro visto. Te mando aqui a apresentação do Gabriel, com tudo o que ele faz e alguns clientes que já viajaram com ele:',h:'21:08'},{k:'doc',t:'Apresentação Gabriel Souza Travel.pdf',s:'8 páginas · visto, milhas e emissão',h:'21:08'},{k:'ia',t:'A partir daqui o próprio Gabriel continua com você. Ele te chama ainda hoje com os valores.',h:'21:09'},{k:'sys',t:'Aviso pro Gabriel: Mariana (Orlando, julho, 2 vistos + passagem) recebeu a apresentação e quer valores'}],
+  stage:'contato',tags:['gb','hot'],res:{'Recebeu':'Apresentação (PDF)','Próximo passo':'Gabriel mandar valores hoje'},
+  what:['Apresentação e Gabriel assume','A IA fecha a parte dela mandando a apresentação. Daí em diante só o Gabriel responde: ele recebe o resumo no celular e o cartão ganha a etiqueta "Com o Gabriel".',0]},
+ {now:'Gabriel manda a proposta pelo mesmo WhatsApp',
+  msgs:[{k:'gb',t:'Oi Mariana, Gabriel aqui! Pro visto dos dois fica R$ 900 com tudo (DS-160, agendamento e treino pra entrevista). Já te mando 2 opções de passagem com milhas pra Orlando.',h:'21:31'}],
+  stage:'proposta',tags:['gb'],res:{Valor:'R$ 900 (visto) + passagens'},
+  what:['Proposta enviada','O sistema percebe que saiu um valor e move o cartão sozinho pra Proposta enviada. O relógio do "parado há N dias" começa a contar.',0]},
+ {now:'Dois dias sem resposta: sai um lembrete automático',
+  msgs:[{k:'sys',t:'2 dias depois'},{k:'ia',t:'Oi Mariana! Conseguiu ver as opções que o Gabriel mandou? Se quiser, ele segura a data de julho pra vocês.',h:'10:00'},{k:'in',t:'Vi sim! Só confirmando com meu marido, amanhã te falo',h:'12:40'}],
+  stage:'negociacao',tags:['ia'],res:{'Próximo passo':'Ela confirma amanhã'},
+  what:['Lembrete que não deixa esfriar','Esse é o único tipo de mensagem que custa: foi a gente que puxou a conversa. Como ela respondeu, o cartão vai pra Negociação.',1]},
+ {now:'Fechou: o cartão vai pra Fechado e vira cliente com um clique',
+  msgs:[{k:'in',t:'Fechado! Pode começar o visto 🙌',h:'09:12'},{k:'gb',t:'Bora! Te mando o contrato e o formulário agora.',h:'09:15'}],
+  stage:'fechado',tags:['ok'],res:{Resultado:'Fechou visto (R$ 900)'},
+  what:['Venda fechada, origem guardada','No fim do mês dá pra ver quantas vendas cada Reels e cada palavra trouxe. É o "provado em reais" do GestMiles, só que pro conteúdo.',0]}
+];
+
+let cur=0;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function render(){
+  const s=STEPS[cur];
+  // conversa até o passo atual
+  $('msgs').innerHTML=STEPS.slice(0,cur+1).flatMap(x=>x.msgs).map(m=>{
+    if(m.k==='sys')return `<div class="sys">${esc(m.t)}</div>`;
+    if(m.k==='doc')return `<div class="m out ia"><span class="who">Assistente (IA)</span><span class="doc"><i>PDF</i><span><b>${esc(m.t)}</b><small>${esc(m.s)}</small></span></span><span class="t">${m.h||''}</span></div>`;
+    const cls=m.k==='in'?'in':'out '+m.k, who=m.k==='ia'?'Assistente (IA)':m.k==='gb'?'Gabriel':'';
+    return `<div class="m ${cls}">${who?`<span class="who">${who}</span>`:''}${esc(m.t)}<span class="t">${m.h||''}</span></div>`}).join('');
+  $('msgs').scrollTop=$('msgs').scrollHeight;
+
+  // o que está acontecendo
+  const [t,d,pay]=s.what;
+  $('what').innerHTML=`<span class="ic">${cur+1}</span><div><b>${esc(t)}</b><p>${esc(d)}</p><span class="cost${pay?' pay':''}">${pay?'Custa ~R$ 0,35':'Grátis'}</span></div>`;
+  $('now').textContent=s.now;
+
+  // resumo acumulado do cartão
+  const res=Object.assign({},...STEPS.slice(0,cur+1).map(x=>x.res));
+  const tagTxt={ia:['ia','IA atendendo'],gb:['gb','Com o Gabriel'],hot:['hot','Quente'],ok:['ok','Virou venda']};
+  const me=`<article class="kd me"><div class="tags"><span class="tg o-ig">Instagram · VISTO</span>${s.tags.map(k=>`<span class="tg ${tagTxt[k][0]}">${tagTxt[k][1]}</span>`).join('')}</div>
+    <b>Mariana C.</b><small>${s.stage==='fechado'?'Fechou hoje':'Entrou hoje'} · WhatsApp</small>
+    <dl class="res">${Object.entries(res).filter(([k])=>k!=='Origem').map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+    ${s.stage==='fechado'?'<button class="vir" type="button">Virar cliente</button>':''}</article>`;
+
+  $('kb').innerHTML=STG.map(([k,n,c])=>{
+    const o=OTHERS.filter(x=>x.s===k), mine=s.stage===k;
+    const cards=(mine?me:'')+o.map(x=>`<article class="kd"><div class="tags"><span class="tg ${OCLS[x.o]}">${x.o}</span>${x.hot?'<span class="tg hot">Quente</span>':''}</div><b>${esc(x.n)}</b><small${x.late?' style="color:var(--wine)"':''}>${esc(x.d)}</small><small>${esc(x.i)}</small></article>`).join('');
+    return `<section class="kc" style="--cc:${c}"><header><b>${n}</b><span>${o.length+(mine?1:0)}</span></header>${cards}</section>`}).join('');
+
+  // números do topo
+  const hot=OTHERS.filter(x=>x.hot).length+(s.tags.includes('hot')?1:0);
+  const open=OTHERS.filter(x=>x.s!=='fechado').length+(s.stage!=='fechado'?1:0);
+  $('sHot').textContent=hot;$('sOpen').textContent=open;$('sGb').textContent=s.tags.includes('gb')&&s.stage==='contato'?1:0;
+  const og={...ORIG0};og.Instagram++;const mx=Math.max(...Object.values(og));
+  const col={Instagram:'var(--pink)',Calculadora:'var(--orange)',Site:'var(--blue)',Indicação:'var(--purple)'};
+  $('orig').innerHTML=Object.entries(og).map(([k,v])=>`<div class="or"><span>${k}</span><i style="width:${v/mx*100}%;background:${col[k]}"></i><span>${v}</span></div>`).join('');
+
+  $('dots').innerHTML=STEPS.map((_,i)=>`<button class="dot${i<=cur?' on':''}" data-i="${i}" aria-label="Passo ${i+1}"></button>`).join('');
+  $('prev').disabled=cur===0;
+  $('next').textContent=cur===STEPS.length-1?'Ver de novo ↺':'Próximo passo ›';
+}
+$('next').onclick=()=>{cur=cur===STEPS.length-1?0:cur+1;render()};
+$('prev').onclick=()=>{if(cur>0){cur--;render()}};
+$('dots').onclick=e=>{const b=e.target.closest('.dot');if(b){cur=+b.dataset.i;render()}};
+render();
+</script>
+</body>
+</html>
