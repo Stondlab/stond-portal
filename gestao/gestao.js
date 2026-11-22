@@ -52,7 +52,20 @@ const ic={
 };
 
 /* ---------- dados ---------- */
-let ME=null,D={clients:[],posts:[],feedback:[],metrics:[],docs:[],accounts:[],links:[],kw:new Set()},S='inicio',FILT={},MODAL=null,CALM=null;
+/* Filtro de cliente único: todas as telas (Métricas, Reels, Site, Anúncios, Links, Relatórios, Automação, Agendados, Pasta, Planejamento...)
+   leem e gravam o mesmo cliente, que fica salvo no navegador para voltar igual ao recarregar. 'dc' (Demandas) fica de fora porque tem "Todos". */
+const CLI_KEYS=new Set(['pcl','ac','mc','rc','gc','ic','lc','sc','pc']);
+function mkFilt(){
+  const o={},ck=k=>typeof k==='string'&&CLI_KEYS.has(k);
+  const saved=ls.get('sg-cli');if(saved)o.cli=saved;
+  return new Proxy(o,{
+    get:(t,k)=>{if(!ck(k))return t[k];const v=t.cli;if(v==null)return undefined;const A=(typeof D!=='undefined'&&D.clients)||[];return !A.length||A.some(c=>c.id===v)?v:undefined},
+    set:(t,k,v)=>{if(!ck(k)){t[k]=v;return true}t.cli=v;ls.set('sg-cli',v==null?null:String(v));return true},
+    has:(t,k)=>ck(k)?t.cli!=null:k in t,
+    deleteProperty:(t,k)=>{if(ck(k)){delete t.cli;ls.set('sg-cli',null)}else delete t[k];return true}
+  });
+}
+let ME=null,D={clients:[],posts:[],feedback:[],metrics:[],docs:[],accounts:[],links:[],kw:new Set()},S='inicio',FILT=mkFilt(),MODAL=null,CALM=null;
 const CL=()=>D.clients;
 const cli=id=>D.clients.find(c=>c.id===id)||{id,name:id||'Stond',color:'#8a5560'};
 const ccol=id=>cli(id).color||'#8a5560';
