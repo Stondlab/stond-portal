@@ -197,6 +197,20 @@ async function collect(a: Acc) {
   return { client_id: a.client_id, followers: row.followers, reach: row.reach ?? null, views: row.views ?? null, engagement: row.engagement ?? null, errors };
 }
 
+// Token do Login com Instagram (api "ig") vale 60 dias: renova quando passa de 7 dias
+async function refreshIg(a: Acc & { token_updated_at?: string | null }) {
+  if (a.api !== "ig") return a;
+  const age = Date.now() - new Date(a.token_updated_at ?? 0).getTime();
+  if (age < 7 * 864e5) return a;
+  const u = new URL("https://graph.instagram.com/refresh_access_token");
+  u.searchParams.set("grant_type", "ig_refresh_token");
+  u.searchParams.set("access_token", a.access_token);
+  const j = await fetch(u).then((r) => r.json()).catch(() => ({}));
+  if (!j?.access_token) return a;
+  await db.from("dm_accounts").update({ access_token: j.access_token, token_updated_at: new Date().toISOString() }).eq("client_id", a.client_id);
+  return { ...a, access_token: j.access_token };
+}
+
 async function isTeam(req: Request) {
   const auth = req.headers.get("authorization");
   if (!auth) return false;
@@ -216,8 +230,9 @@ Deno.serve(async (req) => {
   if (body.action === "run") {
     const { data: k } = await db.from("dm_config").select("value").eq("key", "cron_key").maybeSingle();
     if (!k?.value || req.headers.get("x-cron-key") !== k.value) return out({ error: "não autorizado" }, 401);
-    const { data } = await db.from("dm_accounts").select("client_id,api,ig_user_id,access_token,active").neq("active", false);
-    accs = (data ?? []) as Acc[];
+    const { data } = await db.from("dm_accounts").select("client_id,api,ig_user_id,access_token,active,token_updated_at").neq("active", false);
+    accs = [];
+    for (const a of (data ?? []) as Acc[]) accs.push(await refreshIg(a).catch(() => a));
   } else if (body.action === "now") {
     if (!(await isTeam(req))) return out({ error: "Acesso restrito" }, 401);
     const { data } = await db.from("dm_accounts").select("client_id,api,ig_user_id,access_token").eq("client_id", body.client_id).maybeSingle();

@@ -99,6 +99,7 @@ async function boot(){
   if(location.hash.length>1)S=location.hash.slice(1).split('?')[0];
   if(!V[S])S='inicio';
   render();
+  igFinish();
   if(window.StondIA)sb.functions.invoke('ia',{body:{action:'ping'}}).then(({data})=>{if(data&&data.on)StondIA.mount({sb,mode:'gestao',title:'IA da Stond',sub:'Enxerga clientes, posts, métricas e finanças',hello:'Oi, '+((ME.name||'').split(' ')[0]||'Helo')+'! Pergunte sobre a agência, um cliente ou peça um texto.',hints:['O que está atrasado ou parado esta semana?','Como está o Gabriel este mês?','Sugira 5 pautas para a Crys em dezembro','Como está o caixa da Stond?']})}).catch(()=>{});
 }
 function msgScreen(t,m,out=true){document.getElementById('app').innerHTML=`<div class="login one"><div class="form"><h2>${esc(t)}</h2><p class="sub">${esc(m)}</p>${out?'<button class="btn" id="sair">Sair</button>':''}</div></div>`;const b=$('#sair');if(b)b.onclick=async()=>{await sb.auth.signOut();login()}}
@@ -755,7 +756,7 @@ function openInvite(id){
 function openConnect(){
   const c=fv('mc',CL()[0]?.id);
   const SC='pages_show_list,pages_read_engagement,pages_manage_metadata,business_management,instagram_basic,instagram_manage_comments,instagram_manage_messages,instagram_content_publish,instagram_manage_insights';
-  const extra=`<ol class="sub" style="margin:0 20px 8px;padding-left:18px;font-size:12.5px;line-height:1.6"><li>Abra o <a href="https://developers.facebook.com/tools/explorer/1350565907033729/?method=GET&path=me%2Faccounts&version=v23.0" target="_blank" rel="noopener">Explorador da Graph API</a> (app Stond já selecionado)</li><li>Em Permissões, adicione: <code style="font-size:11px;word-break:break-all">${SC.replaceAll(',',', ')}</code></li><li>Clique em <b>Generate Access Token</b>, confirme com o seu Facebook e marque a Página do ${esc(cli(c).name)}</li><li>Copie o token e cole aqui. Ele vai direto para o banco, ninguém mais vê</li></ol>`;
+  const extra=`<div style="margin:0 20px 14px;padding:12px 14px;border:1px solid var(--line,#e3e3e3);border-radius:10px"><b style="font-size:13px">Conta sem Página do Facebook</b><p class="sub" style="margin:4px 0 10px;font-size:12.5px">Entre direto no Instagram do cliente (conta profissional). Não precisa de token.</p><button class="btn" type="button" data-ig-login="${esc(c)}">Entrar pelo Instagram</button></div><p class="sub" style="margin:0 20px 6px;font-size:12.5px"><b>Ou pela Página do Facebook:</b></p><ol class="sub" style="margin:0 20px 8px;padding-left:18px;font-size:12.5px;line-height:1.6"><li>Abra o <a href="https://developers.facebook.com/tools/explorer/1350565907033729/?method=GET&path=me%2Faccounts&version=v23.0" target="_blank" rel="noopener">Explorador da Graph API</a> (app Stond já selecionado)</li><li>Em Permissões, adicione: <code style="font-size:11px;word-break:break-all">${SC.replaceAll(',',', ')}</code></li><li>Clique em <b>Generate Access Token</b>, confirme com o seu Facebook e marque a Página do ${esc(cli(c).name)}</li><li>Copie o token e cole aqui. Ele vai direto para o banco, ninguém mais vê</li></ol>`;
   formModal('Reconectar Instagram · '+cli(c).name,[['token','Token do Facebook','password']],{},async v=>{
     if(!v.token)throw new Error('Cole o token');
     const {data,error}=await sb.functions.invoke('ig-connect',{body:{client_id:c,token:v.token}});
@@ -764,6 +765,18 @@ function openConnect(){
     const miss=SC.split(',').filter(x=>!(data.scopes||[]).includes(x));
     return '@'+data.username+' conectado'+(miss.length?'. Faltou: '+miss.join(', '):'. Todas as permissões ok');
   },null,extra,'Conectar');
+}
+// Volta do Login com Instagram (gestao/ig.html guardou o código): termina a conexão
+async function igFinish(){
+  let r,st;try{r=JSON.parse(sessionStorage.getItem('stond-ig-cb')||'null');st=sessionStorage.getItem('stond-ig-state');sessionStorage.removeItem('stond-ig-cb');sessionStorage.removeItem('stond-ig-state')}catch(_){return}
+  if(!r)return;
+  if(r.error||!r.code)return toast('Instagram não conectado: '+(r.error||'login cancelado'));
+  if(!st||r.state!==st)return toast('Instagram não conectado: a volta do login não bate com o pedido. Tente de novo.');
+  const c=st.split('.')[0];toast('Conectando o Instagram…');
+  const {data,error}=await sb.functions.invoke('ig-connect',{body:{action:'ig_code',client_id:c,code:r.code}});
+  let e=data&&data.error;if(!data?.ok&&!e&&error){try{e=(await error.context.json()).error}catch(_){e=error.message}}
+  if(!data?.ok)return toast('Instagram não conectado: '+(e||'erro'));
+  toast('@'+data.username+' conectado pelo Instagram');
 }
 function openMetric(){
   const c=fv('mc',CL()[0]?.id);
@@ -796,6 +809,12 @@ document.addEventListener('click',async e=>{
   if(t.closest('[data-theme-toggle]')){ls.set('stond-tema',document.documentElement.classList.contains('light')?'dark':'light');applyTheme();render();return}
   if(t.closest('[data-out]')){await sb.auth.signOut();location.reload();return}
   if(t.closest('[data-ig-connect]')){openConnect();return}
+  const igl=t.closest('[data-ig-login]');if(igl){igl.disabled=true;igl.textContent='Abrindo…';
+    try{const {data,error}=await sb.functions.invoke('ig-connect',{body:{action:'ig_start',client_id:igl.dataset.igLogin}});
+      if(!data?.ok)throw new Error(data?.error||(error&&(await error.context.json().catch(()=>({}))).error)||'Não deu para abrir');
+      try{sessionStorage.setItem('stond-ig-state',new URL(data.url).searchParams.get('state'))}catch(_){}
+      location.href=data.url}catch(err){toast(err.message);igl.disabled=false;igl.textContent='Entrar pelo Instagram'}
+    return}
   const sy=t.closest('[data-sync-met]');if(sy){const c=fv('mc',CL()[0]?.id);sy.disabled=true;sy.textContent='Puxando…';
     try{const {data,error}=await sb.functions.invoke('ig-metrics',{body:{action:'now',client_id:c}});if(error)throw new Error((await error.context.json().catch(()=>({}))).error||error.message);
       const r=(data.res||[])[0]||{};if(r.error)throw new Error(r.error);await load();render();toast(r.errors&&r.errors.length?'Seguidores atualizados. Alcance e visualizações precisam da permissão de métricas no Meta.':'Números atualizados do Meta')}
